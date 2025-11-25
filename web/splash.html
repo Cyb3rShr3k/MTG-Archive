@@ -1,0 +1,24 @@
+<!-- web/splash.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Loading...</title>
+  <link rel="stylesheet" href="style.css?v=4">
+  <style>
+    body.splash { display:flex; align-items:center; justify-content:center; height:100vh; margin:0; padding:0; background-color: transparent; }
+    .box { text-align:center; }
+    .title { font-family: 'Cinzel Decorative', 'Segoe UI', serif; font-size: clamp(8.8px, 2.2vw, 26.4px); font-weight: 700; color: #000; }
+    .progress { width: min(60vw, 480px); min-width: 200px; height: 10px; background: rgba(255,255,255,0.6); border-radius: 999px; margin: 12px auto 0 auto; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.2) inset; }
+    .progress-bar { height: 100%; width: 0%; background: #1e66ff; animation: fillbar 5s linear forwards; }
+    @keyframes fillbar { from { width: 0%; } to { width: 100%; } }
+  </style>
+</head>
+<body class="bg-splash splash">
+  <div class="box">
+    <div class="title">MTG ARCHIVE</div>
+    <div class="progress"><div class="progress-bar"></div></div>
+  </div>
+
+</body>
+</html>

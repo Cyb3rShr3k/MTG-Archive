@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Database files (user data - should not be in repo)
+*.db
+*.sqlite
+*.sqlite3
+collection.db
+scryfall_cache.db
+decklist_cards.db
+
+# JSON data files (user-specific)
+app_state.json
+cards_db.json
+
+# Build outputs
+build/
+dist/
+*.exe
+*.msi
+
+# Installer build artifacts
+MTG_Archive_Setup.exe
+
+# Recycle bin (temporary folder)
+Recycle/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# API Keys (if stored in config files)
+config.json
+*.env
+.env
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
