@@ -5,7 +5,7 @@
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "RB LABS"
 #define MyAppURL "https://github.com/Cyb3rShr3k/MTG-Archive.git"
-#define MyAppExeName "MTG_Archive.bat"
+#define MyAppExeName "MTG_Archive_Silent.bat"
 #define PythonExeName "python.exe"
 
 [Setup]
@@ -37,7 +37,6 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1; Check: not IsAdminInstallMode
 
 [Files]
 ; Main application files
@@ -54,6 +53,17 @@ Source: "core\*"; DestDir: "{app}\core"; Flags: ignoreversion recursesubdirs cre
 ; Web interface
 Source: "web\*"; DestDir: "{app}\web"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+; Assets folder for precon decks
+; If Commander.zip exists, it will be extracted during installation
+; Otherwise, fall back to individual JSON files
+#ifexist "assets\Commander.zip"
+Source: "assets\Commander.zip"; DestDir: "{app}\assets"; Flags: ignoreversion
+#endif
+#ifnexist "assets\Commander.zip"
+Source: "assets\Commander\*.json"; DestDir: "{app}\assets\Commander"; Flags: ignoreversion
+#endif
+Source: "assets\AllDeckFiles\*"; DestDir: "{app}\assets\AllDeckFiles"; Flags: ignoreversion recursesubdirs createallsubdirs
+
 ; Database files (if exist)
 Source: "cards_db.json"; DestDir: "{app}"; Flags: ignoreversion; Check: FileExists(ExpandConstant('{#SourcePath}\cards_db.json'))
 Source: "app_state.json"; DestDir: "{app}"; Flags: ignoreversion; Check: FileExists(ExpandConstant('{#SourcePath}\app_state.json'))
@@ -66,10 +76,11 @@ Source: "app_state.json"; DestDir: "{app}"; Flags: ignoreversion; Check: FileExi
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\web\assets\icons\MTG Icon.ico"
+Name: "{group}\MTG Card Scanner"; Filename: "{app}\Launch_Scanner.bat"; IconFilename: "{app}\web\assets\icons\Scan Icon.ico"; Comment: "Launch the MTG Card Scanner utility"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: quicklaunchicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\web\assets\icons\MTG Icon.ico"; Tasks: desktopicon
+Name: "{autodesktop}\MTG Card Scanner"; Filename: "{app}\Launch_Scanner.bat"; IconFilename: "{app}\web\assets\icons\Scan Icon.ico"; Tasks: desktopicon; Comment: "Launch the MTG Card Scanner utility"
 
 [Run]
 Filename: "{cmd}"; Parameters: "/c python --version"; Flags: runhidden waituntilterminated; StatusMsg: "Checking Python installation..."; Check: CheckPython
@@ -83,6 +94,10 @@ var
   PythonWarningPage: TOutputMsgWizardPage;
   HasPython: Boolean;
   APIKey: String;
+  APIKeyLink: TNewStaticText;
+
+// Forward declarations
+procedure OpenAPIKeyURL(Sender: TObject); forward;
 
 // Check if Python is installed
 function CheckPython(): Boolean;
@@ -115,8 +130,6 @@ end;
 
 // Initialize wizard pages
 procedure InitializeWizard();
-var
-  InfoText: String;
 begin
   // Check for Python immediately
   CheckPython();
@@ -143,21 +156,36 @@ begin
     'MTG Archive needs an OCR.space API key for card scanning',
     'Please obtain a FREE API key from OCR.space and enter it below.' + #13#10#13#10 +
     'Steps to get your API key:' + #13#10 +
-    '1. Visit: https://ocr.space/ocrapi/freekey' + #13#10 +
+    '1. Click the link below to visit OCR.space' + #13#10 +
     '2. Register for a free account (takes 2 minutes)' + #13#10 +
     '3. Copy your API key from the dashboard' + #13#10 +
-    '4. Paste it in the field below' + #13#10#13#10 +
-    'The API key is required for the card scanning feature to work.');
+    '4. Paste it in the field below' + #13#10#13#10);
+  
+  // Create clickable hyperlink
+  APIKeyLink := TNewStaticText.Create(APIKeyPage);
+  APIKeyLink.Parent := APIKeyPage.Surface;
+  APIKeyLink.Caption := 'Get your FREE API key here: https://ocr.space/ocrapi/freekey';
+  APIKeyLink.Font.Color := clBlue;
+  APIKeyLink.Font.Style := [fsUnderline];
+  APIKeyLink.Cursor := crHand;
+  APIKeyLink.OnClick := @OpenAPIKeyURL;
+  APIKeyLink.Top := ScaleY(90);
+  APIKeyLink.Left := ScaleX(0);
   
   APIKeyPage.Add('API Key:', False);
   APIKeyPage.Values[0] := '';
 end;
 
+// Open API key URL in browser
+procedure OpenAPIKeyURL(Sender: TObject);
+var
+  ErrorCode: Integer;
+begin
+  ShellExec('open', 'https://ocr.space/ocrapi/freekey', '', '', SW_SHOW, ewNoWait, ErrorCode);
+end;
+
 // Validate API key before proceeding
 function NextButtonClick(CurPageID: Integer): Boolean;
-var
-  HTTPGetText: String;
-  ResultCode: Integer;
 begin
   Result := True;
   
@@ -184,28 +212,38 @@ end;
 // Create the launcher batch file
 procedure CreateLauncherBatch();
 var
-  BatchContent: AnsiString;
+  BatchContent: String;
   BatchFile: String;
+  ScannerBatchContent: String;
+  ScannerBatchFile: String;
 begin
-  BatchFile := ExpandConstant('{app}\MTG_Archive.bat');
+  BatchFile := ExpandConstant('{app}\MTG_Archive_Silent.bat');
+  ScannerBatchFile := ExpandConstant('{app}\Launch_Scanner.bat');
   
+  // Create batch file that runs Python without showing console window
+  // Using START with /B (background) and pythonw (windowless Python)
   BatchContent := '@echo off' + #13#10 +
                   'cd /d "%~dp0"' + #13#10 +
-                  'echo Starting MTG Archive...' + #13#10 +
-                  'echo.' + #13#10 +
-                  'python main.py' + #13#10 +
-                  'if errorlevel 1 (' + #13#10 +
-                  '    echo.' + #13#10 +
-                  '    echo ERROR: Failed to start MTG Archive.' + #13#10 +
-                  '    echo.' + #13#10 +
-                  '    echo Please ensure Python 3.11+ is installed and added to PATH.' + #13#10 +
-                  '    echo Download from: https://www.python.org/downloads/' + #13#10 +
-                  '    echo.' + #13#10 +
-                  '    echo Press any key to exit...' + #13#10 +
-                  '    pause > nul' + #13#10 +
-                  ')' + #13#10;
+                  'if not ERRORLEVEL 1 start /B pythonw.exe main.py' + #13#10;
   
   SaveStringToFile(BatchFile, BatchContent, False);
+  
+  // Create batch file to launch scanner that STAYS OPEN to show errors
+  ScannerBatchContent := '@echo off' + #13#10 +
+                         'cd /d "%~dp0"' + #13#10 +
+                         'echo Starting MTG Scanner GUI...' + #13#10 +
+                         'echo.' + #13#10 +
+                         'python.exe mtg_scanner_gui.py' + #13#10 +
+                         'echo.' + #13#10 +
+                         'if errorlevel 1 (' + #13#10 +
+                         '    echo.' + #13#10 +
+                         '    echo ERROR: Scanner failed to start!' + #13#10 +
+                         '    echo Check the error message above.' + #13#10 +
+                         ')' + #13#10 +
+                         'echo.' + #13#10 +
+                         'pause' + #13#10;
+  
+  SaveStringToFile(ScannerBatchFile, ScannerBatchContent, False);
 end;
 
 // Configure API key in mtg_scanner_gui.py after installation
@@ -239,6 +277,33 @@ begin
   end;
 end;
 
+// Extract Commander.zip if it exists using native Windows PowerShell
+procedure ExtractCommanderZip();
+var
+  ZipFile: String;
+  DestDir: String;
+  ResultCode: Integer;
+begin
+  ZipFile := ExpandConstant('{app}\assets\Commander.zip');
+  DestDir := ExpandConstant('{app}\assets\Commander');
+  
+  if FileExists(ZipFile) then
+  begin
+    // Create destination directory if it doesn't exist
+    if not DirExists(DestDir) then
+      CreateDir(DestDir);
+    
+    // Use PowerShell Expand-Archive (built into Windows, no external tools needed)
+    Exec('powershell.exe', 
+         '-NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path ''' + ZipFile + ''' -DestinationPath ''' + DestDir + ''' -Force"',
+         '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    
+    // Delete the zip file after successful extraction
+    if ResultCode = 0 then
+      DeleteFile(ZipFile);
+  end;
+end;
+
 // Run configuration after installation completes
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
@@ -246,6 +311,7 @@ begin
   begin
     CreateLauncherBatch();
     ConfigureAPIKey();
+    ExtractCommanderZip();
   end;
 end;
 

@@ -7,6 +7,7 @@ from typing import List, Dict, Any
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS collection (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL DEFAULT 1,
     name TEXT NOT NULL,
     set_code TEXT NOT NULL DEFAULT '',
     number TEXT NOT NULL DEFAULT '',
@@ -33,13 +34,16 @@ CREATE TABLE IF NOT EXISTS collection (
 );
 CREATE INDEX IF NOT EXISTS idx_collection_name ON collection(name);
 CREATE INDEX IF NOT EXISTS idx_collection_ident ON collection(name, set_code, number);
+CREATE INDEX IF NOT EXISTS idx_collection_user ON collection(user_id);
 -- Decks and deck card links
 CREATE TABLE IF NOT EXISTS decks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    name TEXT NOT NULL,
     deck_type TEXT NOT NULL DEFAULT '',
     deck_colors TEXT NOT NULL DEFAULT '[]',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, name)
 );
 CREATE TABLE IF NOT EXISTS deck_cards (
     deck_id INTEGER NOT NULL,
@@ -49,6 +53,7 @@ CREATE TABLE IF NOT EXISTS deck_cards (
 );
 CREATE INDEX IF NOT EXISTS idx_deck_cards_deck ON deck_cards(deck_id);
 CREATE INDEX IF NOT EXISTS idx_deck_cards_name ON deck_cards(name);
+CREATE INDEX IF NOT EXISTS idx_decks_user ON decks(user_id);
 """
 
 def _open_conn(path: Path) -> sqlite3.Connection:
@@ -82,6 +87,9 @@ def ensure_db(path: Path) -> None:
                 conn.execute("ALTER TABLE decks ADD COLUMN deck_colors TEXT NOT NULL DEFAULT '[]'")
             if 'commander' not in cols:
                 conn.execute("ALTER TABLE decks ADD COLUMN commander TEXT NOT NULL DEFAULT ''")
+            if 'user_id' not in cols:
+                conn.execute("ALTER TABLE decks ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_decks_user ON decks(user_id)")
         except Exception:
             pass
         # Migration: ensure collection.repaired exists
@@ -89,6 +97,9 @@ def ensure_db(path: Path) -> None:
             cols = [r[1] for r in conn.execute("PRAGMA table_info(collection)")]
             if 'repaired' not in cols:
                 conn.execute("ALTER TABLE collection ADD COLUMN repaired INTEGER DEFAULT 0")
+            if 'user_id' not in cols:
+                conn.execute("ALTER TABLE collection ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_collection_user ON collection(user_id)")
             # Add double-faced card columns
             if 'back_name' not in cols:
                 conn.execute("ALTER TABLE collection ADD COLUMN back_name TEXT")

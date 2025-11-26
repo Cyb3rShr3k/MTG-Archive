@@ -1,294 +1,525 @@
-<!-- web/card_addition.html -->
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
 <head>
-  <title>Add Card</title>
-  <link rel="stylesheet" href="style.css">
+	<title>MTG Archive - Add Cards</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
+	<script src="api.js"></script>
+	<script src="shared-nav.js"></script>
+	<style>
+		.import-method {
+			cursor: pointer;
+			transition: all 0.3s ease;
+			border: 2px solid transparent;
+		}
+		.import-method:hover {
+			transform: translateY(-3px);
+			border-color: #f56a6a;
+		}
+		.import-method.active {
+			border-color: #4c84ff;
+			background: rgba(76, 132, 255, 0.1);
+		}
+		.modal {
+			display: none;
+			position: fixed;
+			z-index: 1000;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+			background-color: rgba(0,0,0,0.6);
+		}
+		.modal-content {
+			background-color: #242943;
+			margin: 5% auto;
+			padding: 2em;
+			border: 1px solid #888;
+			border-radius: 4px;
+			width: 80%;
+			max-width: 800px;
+			color: #fff;
+		}
+		.close {
+			color: #aaa;
+			float: right;
+			font-size: 28px;
+			font-weight: bold;
+			cursor: pointer;
+		}
+		.close:hover,
+		.close:focus {
+			color: #f56a6a;
+		}
+		.session-stats {
+			background: rgba(245, 106, 106, 0.1);
+			padding: 1em;
+			border-radius: 4px;
+			border-left: 4px solid #f56a6a;
+			margin-bottom: 1em;
+		}
+		.collection-table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+		.collection-table th {
+			background: #242943;
+			color: #fff;
+			padding: 0.75em;
+			text-align: left;
+			border-bottom: 2px solid #f56a6a;
+		}
+		.collection-table td {
+			padding: 0.5em 0.75em;
+			border-bottom: 1px solid #ddd;
+		}
+		.collection-table tr:nth-child(even) {
+			background: #f9f9f9;
+		}
+		.collection-table tr:hover {
+			background: #f0f0f0;
+		}
+		.preview-card {
+			display: none;
+			position: fixed;
+			pointer-events: none;
+			z-index: 2000;
+			background: white;
+			border: 2px solid #242943;
+			border-radius: 8px;
+			padding: 4px;
+			box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+		}
+		.preview-card img {
+			max-width: 260px;
+			height: auto;
+			border-radius: 4px;
+		}
+		#manualEntry {
+			min-height: 150px;
+			font-family: monospace;
+		}
+	</style>
 </head>
-<body class="bg-addition">
-  <nav class="nav">
-    <a href="index.html">Home</a>
-    <a href="deckbuilding.html">Deckbuilding</a>
-    <a href="card_addition.html" class="active">Add Card</a>
-  </nav>
+<body class="is-preload">
 
-  <h2>Add a Card</h2>
-  <div id="backendBanner" class="banner-warn" style="display:none;">
-    Backend not connected. Run with Python 3.11 and install requirements (pywebview). Card processing is disabled.
-  </div>
-  <div class="row">
-    <div class="col" style="flex:1;">
-      <textarea id="cardName" rows="10" placeholder="Enter quantities and names, separated by commas or newlines. Example: 3 Sol Ring, 2 Command Tower"></textarea>
-      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-        <button id="btnAdd">Add</button>
-      </div>
-    </div>
-  </div>
+	<!-- Wrapper -->
+	<div id="wrapper">
 
-  
+		<!-- Main -->
+		<div id="main">
+			<div class="inner">
 
-  <div class="panel" style="margin-top:10px;">
-    <strong>Session added:</strong> <span id="sessionCount">0</span>
-    &nbsp; | &nbsp;
-    <strong>Total in collection:</strong> <span id="totalCount">0</span>
-  </div>
+				<!-- Header -->
+				<script>document.write(sharedNav.header('Add Cards'));</script>
 
-  <!-- Bottom wide table: current collection contents -->
-  <div class="panel" style="margin-top:10px;">
-    <h3 style="margin:0 0 6px 0;">Collection</h3>
-    <div style="overflow:auto; max-height:300px; background:#000; color:#fff; border-radius:8px; border:1px solid #333;">
-      <table id="collectionTable" style="width:100%; border-collapse:collapse;">
-        <thead>
-          <tr style="background:#f7f7f7;">
-            <th style="text-align:left; padding:6px 8px;">Name</th>
-            <th style="text-align:left; padding:6px 8px;">Colors</th>
-            <th style="text-align:left; padding:6px 8px;">CMC</th>
-            <th style="text-align:left; padding:6px 8px;">P/T</th>
-            <th style="text-align:left; padding:6px 8px;">Text</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
+				<!-- Session Stats -->
+				<div class="session-stats">
+					<strong>Session Added:</strong> <span id="sessionCount">0</span> cards
+					&nbsp; • &nbsp;
+					<strong>Total Collection:</strong> <span id="totalCount">0</span> cards
+				</div>
 
-  <!-- floating card preview -->
-  <div id="cardPreview" style="display:none; position:fixed; top:0; left:0; z-index:1000; pointer-events:none; padding:4px; background:rgba(255,255,255,0.95); border:1px solid #ddd; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,.15);">
-    <img id="cardPreviewImg" src="" alt="preview" style="max-width:260px; height:auto; display:block;"/>
-  </div>
+				<!-- Import Methods -->
+				<section>
+					<header class="major">
+						<h2>Choose Import Method</h2>
+					</header>
+					<div class="row gtr-200">
+						<div class="col-4 col-12-medium">
+							<div class="import-method" onclick="selectMethod('manual')">
+								<span class="icon solid fa-keyboard" style="font-size:3em; color:#f56a6a;"></span>
+								<h3>Manual Entry</h3>
+								<p>Type card names with quantities</p>
+							</div>
+						</div>
+						<div class="col-4 col-12-medium">
+							<div class="import-method" onclick="selectMethod('csv')">
+								<span class="icon solid fa-file-csv" style="font-size:3em; color:#4c84ff;"></span>
+								<h3>CSV Import</h3>
+								<p>Import from CSV file with Scryfall IDs</p>
+							</div>
+						</div>
+						<div class="col-4 col-12-medium">
+							<div class="import-method" onclick="selectMethod('scan')">
+								<span class="icon solid fa-camera" style="font-size:3em; color:#39c088;"></span>
+								<h3>OCR Scanner</h3>
+								<p>Scan cards from images</p>
+							</div>
+						</div>
+					</div>
+				</section>
 
-  <script>
-    // Backend detection and control disabling
-    function disableControls() {
-      document.querySelectorAll('button, input, textarea').forEach(el => {
-        el.disabled = true; el.style.opacity = '0.6';
-      });
-    }
-    (function(){
-      const banner = document.getElementById('backendBanner');
-      function enableControls(){
-        document.querySelectorAll('button, input, textarea').forEach(el => {
-          el.disabled = false; el.style.opacity = '';
-        });
-      }
-      if (!window.pywebview || !window.pywebview.api) {
-        banner.style.display = 'block';
-        disableControls();
-      } else {
-        banner.style.display = 'none';
-        enableControls();
-      }
-      window.addEventListener('pywebviewready', function(){
-        if (window.pywebview && window.pywebview.api) {
-          banner.style.display = 'none';
-          enableControls();
-        }
-      });
-      // Polling fallback
-      let tries = 0;
-      const t = setInterval(() => {
-        tries += 1;
-        if (window.pywebview && window.pywebview.api) {
-          banner.style.display = 'none';
-          enableControls();
-          clearInterval(t);
-        }
-        if (tries > 20) clearInterval(t);
-      }, 500);
-    })();
+				<!-- Manual Entry Panel -->
+				<section id="manualPanel" style="display:none;">
+					<header class="major">
+						<h2>Manual Entry</h2>
+					</header>
+					<p>Enter card names with optional quantities. Examples: <code>3 Sol Ring</code>, <code>Command Tower</code>, or multiple per line separated by commas.</p>
+					<textarea id="manualEntry" class="form-control" rows="10" placeholder="Example:&#10;3 Sol Ring&#10;2 Command Tower&#10;Lightning Bolt"></textarea>
+					<ul class="actions" style="margin-top:1em;">
+						<li><button class="button primary icon solid fa-plus" onclick="addManualCards()">Add Cards</button></li>
+						<li><button class="button" onclick="clearManual()">Clear</button></li>
+					</ul>
+				</section>
 
-    const inputArea = document.getElementById('cardName');
-    const btnAdd = document.getElementById('btnAdd');
-    // no process button anymore
-    const resultsTable = null; // removed results panel
-    const btnAddSelected = null; // removed
-    const sessionCountEl = document.getElementById('sessionCount');
-    const totalCountEl = document.getElementById('totalCount');
-    const collectionTable = document.getElementById('collectionTable');
-    // removed grid/process images, using table + Add button instead
+				<!-- CSV Import Panel -->
+				<section id="csvPanel" style="display:none;">
+					<header class="major">
+						<h2>CSV Import</h2>
+					</header>
+					<p>Upload a CSV file with Scryfall IDs or card names. The file should have columns like: <code>name</code>, <code>scryfall_id</code>, <code>quantity</code>.</p>
+					<div class="row gtr-uniform">
+						<div class="col-12">
+							<input type="file" id="csvFile" accept=".csv" />
+						</div>
+						<div class="col-12">
+							<ul class="actions">
+								<li><button class="button primary icon solid fa-upload" onclick="importCSV()">Import CSV</button></li>
+							</ul>
+						</div>
+					</div>
+				</section>
 
-    let sessionAdded = 0;
-    let debounceTimer = null;
-    let selectedItem = null; // removed selection
-    let currentResults = [];
-    const selectedResults = new Set();
-    const preview = document.getElementById('cardPreview');
-    const previewImg = document.getElementById('cardPreviewImg');
+				<!-- Scanner Panel -->
+				<section id="scanPanel" style="display:none;">
+					<header class="major">
+						<h2>OCR Card Scanner</h2>
+					</header>
+					<p>Upload images of your cards and use OCR to identify them automatically.</p>
+					<div class="row gtr-uniform">
+						<div class="col-12">
+							<input type="file" id="scanImages" accept="image/*" multiple />
+						</div>
+						<div class="col-12">
+							<ul class="actions">
+								<li><button class="button primary icon solid fa-camera" onclick="scanCards()">Scan Cards</button></li>
+							</ul>
+						</div>
+					</div>
+					<div id="scanResults" style="margin-top:2em; display:none;">
+						<h3>Scan Results</h3>
+						<div id="scanResultsList"></div>
+						<ul class="actions" style="margin-top:1em;">
+							<li><button class="button primary" onclick="addScannedCards()">Add Selected Cards</button></li>
+						</ul>
+					</div>
+				</section>
 
-    async function refreshTotals() {
-      try {
-        const total = await window.pywebview.api.get_collection_count();
-        totalCountEl.textContent = total;
-      } catch (e) { console.error(e); }
-    }
+				<!-- Collection View -->
+				<section id="collectionView">
+					<header class="major">
+						<h2>Your Collection</h2>
+					</header>
+					<div style="overflow-x:auto;">
+						<table class="collection-table" id="collectionTable">
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>Set</th>
+									<th>Colors</th>
+									<th>CMC</th>
+									<th>Type</th>
+									<th>Rarity</th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+					</div>
+				</section>
 
-    async function refreshCollection() {
-      try {
-        const items = await window.pywebview.api.get_collection_items();
-        renderCollection(items || []);
-      } catch (e) { console.error(e); }
-    }
+			</div>
+		</div>
 
-    function renderCollection(items) {
-      if (!collectionTable) return;
-      const tbody = collectionTable.querySelector('tbody');
-      tbody.innerHTML = '';
-      (items || []).forEach((it, idx) => {
-        const tr = document.createElement('tr');
-        if (idx % 2 === 1) tr.style.background = '#fafafa';
-        const tdName = document.createElement('td'); tdName.style.padding = '6px 8px'; tdName.textContent = it.name || '';
-        const tdColors = document.createElement('td'); tdColors.style.padding = '6px 8px'; tdColors.textContent = (it.colors || []).join(', ');
-        const tdCmc = document.createElement('td'); tdCmc.style.padding = '6px 8px'; tdCmc.textContent = (it.cmc ?? '') + '';
-        const tdPT = document.createElement('td'); tdPT.style.padding = '6px 8px'; tdPT.textContent = `${it.power ?? ''}/${it.toughness ?? ''}`;
-        const tdText = document.createElement('td'); tdText.style.padding = '6px 8px'; tdText.textContent = it.text || '';
-        tr.append(tdName, tdColors, tdCmc, tdPT, tdText);
-        tbody.appendChild(tr);
-      });
-    }
+		<!-- Sidebar -->
+		<script>document.write(sharedNav.sidebar);</script>
 
-    function incSession(n) {
-      sessionAdded += n;
-      sessionCountEl.textContent = sessionAdded;
-    }
+	</div>
 
-    async function quickAddNames(text) {
-      const parts = [];
-      for (const line of (text || '').split('\n')) {
-        for (const p of line.split(',')) {
-          const v = p.trim(); if (v) parts.push(v);
-        }
-      }
-      let added = 0;
-      for (const name of parts) {
-        const ok = await window.pywebview.api.add_card(name);
-        if (ok) added += 1;
-      }
-      incSession(added);
-      await refreshTotals();
-      alert(`Quick added ${added} item(s).`);
-    }
+	<!-- Card Preview -->
+	<div id="cardPreview" class="preview-card">
+		<img id="cardPreviewImg" src="" alt="Card Preview" />
+	</div>
 
-    // Add: parse quantities like "3 Sol Ring, 2 Command Tower" and add metadata copies.
-    btnAdd.addEventListener('click', async () => {
-      const raw = String(inputArea.value || '');
-      const entries = [];
-      for (const line of raw.split('\n')) {
-        for (const p of line.split(',')) {
-          const s = p.trim(); if (!s) continue;
-          // parse leading quantity (e.g., "3 Sol Ring")
-          const m = s.match(/^(\d+)\s+(.*)$/i);
-          if (m) {
-            const qty = parseInt(m[1], 10);
-            const nm = m[2].trim(); if (nm && qty > 0) entries.push({ name: nm, count: qty });
-          } else {
-            entries.push({ name: s, count: 1 });
-          }
-        }
-      }
-      if (!entries.length) return;
-      let added = 0;
-      for (const ent of entries) {
-        try {
-          const items = await window.pywebview.api.search_scryfall(ent.name, 1);
-          const best = (items && items[0]) ? items[0] : null;
-          if (!best) continue;
-          for (let i=0;i<ent.count;i++) {
-            const res = await window.pywebview.api.add_card_with_metadata(best);
-            if (res && res.added) added += res.added;
-          }
-        } catch (e) { console.error(e); }
-      }
-      incSession(added);
-      await refreshTotals();
-      await refreshCollection();
-      alert(`Added ${added} item(s).`);
-    });
+	<!-- Scripts -->
+	<script src="HTML5up/assets/js/jquery.min.js"></script>
+	<script src="HTML5up/assets/js/browser.min.js"></script>
+	<script src="HTML5up/assets/js/breakpoints.min.js"></script>
+	<script src="HTML5up/assets/js/util.js"></script>
+	<script src="HTML5up/assets/js/main.js"></script>
 
-    // removed processing via AllPrintings; searches drive right table
+	<script>
+		let sessionAdded = 0;
+		let scannedCards = [];
+		let currentMethod = null;
 
-    // Live search removed with results panel; keep input debounce reserved (no-op)
-    inputArea.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {}, 250);
-    });
+		// Method selection
+		function selectMethod(method) {
+			currentMethod = method;
+			// Hide all panels
+			document.getElementById('manualPanel').style.display = 'none';
+			document.getElementById('csvPanel').style.display = 'none';
+			document.getElementById('scanPanel').style.display = 'none';
 
-    function rowKey(it){
-      return `${String(it.name||'').toLowerCase()}|${String(it.set||'').toLowerCase()}|${String(it.number||'').toLowerCase()}`;
-    }
+			// Remove active class from all
+			document.querySelectorAll('.import-method').forEach(el => el.classList.remove('active'));
 
-    // Results panel removed
+			// Show selected panel and activate
+			if (method === 'manual') {
+				document.getElementById('manualPanel').style.display = 'block';
+				document.querySelectorAll('.import-method')[0].classList.add('active');
+			} else if (method === 'csv') {
+				document.getElementById('csvPanel').style.display = 'block';
+				document.querySelectorAll('.import-method')[1].classList.add('active');
+			} else if (method === 'scan') {
+				document.getElementById('scanPanel').style.display = 'block';
+				document.querySelectorAll('.import-method')[2].classList.add('active');
+			}
+		}
 
-    function imageUrlFor(it){
-      // Prefer local image_path if present and looks like a URI/path
-      const p = (it && it.image_path) ? String(it.image_path) : '';
-      // If Scryfall image_url provided, use it first
-      const su = (it && it.image_url) ? String(it.image_url) : '';
-      if (su) return su;
-      if (p) {
-        if (p.startsWith('file://') || p.startsWith('http')) return p;
-        // try to build file URI from path-like
-        return 'file:///' + p.replace(/\\/g,'/');
-      }
-      // Fallback to Scryfall by set/number if available
-      const setc = (it && it.set) ? String(it.set).trim() : '';
-      const num = (it && it.number) ? String(it.number).trim() : '';
-      if (setc && num) {
-        return `https://api.scryfall.com/cards/${setc}/${num}?format=image`;
-      }
-      // Final fallback placeholder
-      return 'assets/public/mtg-color-wheel.png';
-    }
+		// Manual entry
+		async function addManualCards() {
+			const text = document.getElementById('manualEntry').value.trim();
+			if (!text) {
+				alert('Please enter at least one card name.');
+				return;
+			}
 
-    function showPreviewFor(it, evt){
-      const src = imageUrlFor(it);
-      previewImg.src = src;
-      preview.style.display = 'block';
-      movePreview(evt);
-    }
-    function movePreview(evt){
-      const pad = 14;
-      let x = evt.clientX + pad;
-      let y = evt.clientY + pad;
-      // keep in viewport if possible
-      const vw = window.innerWidth, vh = window.innerHeight;
-      const w = 280, h = 420; // rough
-      if (x + w > vw) x = evt.clientX - w - pad;
-      if (y + h > vh) y = evt.clientY - h - pad;
-      preview.style.left = x + 'px';
-      preview.style.top = y + 'px';
-    }
-    function hidePreview(){
-      preview.style.display = 'none';
-      previewImg.removeAttribute('src');
-    }
+			const entries = [];
+			for (const line of text.split('\n')) {
+				for (const part of line.split(',')) {
+					const s = part.trim();
+					if (!s) continue;
+					
+					// Parse quantity (e.g., "3 Sol Ring")
+					const match = s.match(/^(\d+)\s+(.+)$/);
+					if (match) {
+						const qty = parseInt(match[1], 10);
+						const name = match[2].trim();
+						if (name && qty > 0) {
+							entries.push({ name, count: qty });
+						}
+					} else {
+						entries.push({ name: s, count: 1 });
+					}
+				}
+			}
 
-    // Drag/drop import removed; only manual entry + best match display remain
+			if (entries.length === 0) return;
 
-    btnAddSelected.addEventListener('click', async () => {
-      if (selectedResults.size === 0) { alert('Please check at least one card to add.'); return; }
-      try {
-        let added = 0;
-        // Map keys back to item objects
-        const map = new Map();
-        currentResults.forEach(it => { const k = rowKey(it); if (selectedResults.has(k) && !map.has(k)) map.set(k, it); });
-        for (const it of map.values()) {
-          const res = await window.pywebview.api.add_card_with_metadata(it);
-          added += (res && res.added) ? res.added : 0;
-        }
-        selectedResults.clear();
-        incSession(added);
-        await refreshTotals();
-        await refreshCollection();
-        alert(`Added ${added} item(s).`);
-        // Re-render to clear checkboxes
-        renderResults(currentResults);
-      } catch (e) { console.error(e); alert('Failed to add selected'); }
-    });
+			let added = 0;
+			for (const entry of entries) {
+				try {
+					// Search Scryfall for best match
+					const results = await window.pywebview.api.search_scryfall(entry.name, 1);
+					const card = results && results[0] ? results[0] : null;
+					
+					if (card) {
+						// Add card multiple times for quantity
+						for (let i = 0; i < entry.count; i++) {
+							const result = await window.pywebview.api.add_card_with_metadata(card);
+							if (result && result.added) {
+								added += result.added;
+							}
+						}
+					}
+				} catch (error) {
+					console.error('Error adding card:', entry.name, error);
+				}
+			}
 
-    (async function init() {
-      await refreshTotals();
-      await refreshCollection();
-    })();
-  </script>
+			sessionAdded += added;
+			document.getElementById('sessionCount').textContent = sessionAdded;
+			await refreshCollection();
+			alert(`Added ${added} card(s) to your collection!`);
+		}
+
+		function clearManual() {
+			document.getElementById('manualEntry').value = '';
+		}
+
+		// CSV Import
+		async function importCSV() {
+			const fileInput = document.getElementById('csvFile');
+			const file = fileInput.files[0];
+			
+			if (!file) {
+				alert('Please select a CSV file.');
+				return;
+			}
+
+			try {
+				const result = await window.pywebview.api.import_csv(file.name);
+				if (result && result.added) {
+					sessionAdded += result.added;
+					document.getElementById('sessionCount').textContent = sessionAdded;
+					await refreshCollection();
+					alert(`Imported ${result.added} card(s) from CSV!`);
+				}
+			} catch (error) {
+				console.error('CSV import error:', error);
+				alert('Failed to import CSV. Check the file format.');
+			}
+		}
+
+		// OCR Scanner
+		async function scanCards() {
+			const fileInput = document.getElementById('scanImages');
+			const files = fileInput.files;
+			
+			if (!files || files.length === 0) {
+				alert('Please select at least one image.');
+				return;
+			}
+
+			try {
+				scannedCards = [];
+				const resultsDiv = document.getElementById('scanResultsList');
+				resultsDiv.innerHTML = '<p>Scanning images...</p>';
+				document.getElementById('scanResults').style.display = 'block';
+
+				for (const file of files) {
+					const result = await window.pywebview.api.scan_card_image(file.name);
+					if (result && result.cards) {
+						scannedCards.push(...result.cards);
+					}
+				}
+
+				// Display results
+				if (scannedCards.length > 0) {
+					const html = scannedCards.map((card, idx) => `
+						<div style="padding:1em; border:1px solid #ddd; margin-bottom:0.5em; border-radius:4px;">
+							<input type="checkbox" id="scan_${idx}" checked style="margin-right:0.5em;">
+							<label for="scan_${idx}">${card.name} (${card.set || 'Unknown'})</label>
+						</div>
+					`).join('');
+					resultsDiv.innerHTML = html;
+				} else {
+					resultsDiv.innerHTML = '<p>No cards detected in the images.</p>';
+				}
+			} catch (error) {
+				console.error('Scan error:', error);
+				alert('Failed to scan images. Make sure OCR is enabled.');
+			}
+		}
+
+		async function addScannedCards() {
+			let added = 0;
+			
+			for (let i = 0; i < scannedCards.length; i++) {
+				const checkbox = document.getElementById(`scan_${i}`);
+				if (checkbox && checkbox.checked) {
+					try {
+						const result = await window.pywebview.api.add_card_with_metadata(scannedCards[i]);
+						if (result && result.added) {
+							added += result.added;
+						}
+					} catch (error) {
+						console.error('Error adding scanned card:', error);
+					}
+				}
+			}
+
+			sessionAdded += added;
+			document.getElementById('sessionCount').textContent = sessionAdded;
+			await refreshCollection();
+			alert(`Added ${added} scanned card(s)!`);
+			
+			// Clear scan results
+			document.getElementById('scanResults').style.display = 'none';
+			scannedCards = [];
+		}
+
+		// Collection management
+		async function refreshCollection() {
+			try {
+				const total = await window.pywebview.api.get_collection_count();
+				document.getElementById('totalCount').textContent = total || 0;
+
+				const items = await window.pywebview.api.get_collection_items();
+				renderCollection(items || []);
+			} catch (error) {
+				console.error('Failed to refresh collection:', error);
+			}
+		}
+
+		function renderCollection(items) {
+			const tbody = document.querySelector('#collectionTable tbody');
+			tbody.innerHTML = '';
+
+			items.forEach(card => {
+				const tr = document.createElement('tr');
+				tr.innerHTML = `
+					<td>${card.name || 'Unknown'}</td>
+					<td>${card.set ? card.set.toUpperCase() : 'N/A'}</td>
+					<td>${(card.colors || []).join(', ') || 'Colorless'}</td>
+					<td>${card.cmc ?? 'N/A'}</td>
+					<td>${card.type || 'N/A'}</td>
+					<td>${card.rarity || 'N/A'}</td>
+				`;
+				
+				// Add hover preview
+				tr.addEventListener('mouseenter', (e) => showCardPreview(card, e));
+				tr.addEventListener('mousemove', (e) => moveCardPreview(e));
+				tr.addEventListener('mouseleave', hideCardPreview);
+				
+				tbody.appendChild(tr);
+			});
+		}
+
+		// Card preview
+		function showCardPreview(card, event) {
+			const preview = document.getElementById('cardPreview');
+			const img = document.getElementById('cardPreviewImg');
+			
+			const imageUrl = card.image_url || card.image_path || 
+				`https://api.scryfall.com/cards/${card.set}/${card.number}?format=image`;
+			
+			img.src = imageUrl;
+			preview.style.display = 'block';
+			moveCardPreview(event);
+		}
+
+		function moveCardPreview(event) {
+			const preview = document.getElementById('cardPreview');
+			const offset = 20;
+			let x = event.clientX + offset;
+			let y = event.clientY + offset;
+
+			// Keep preview in viewport
+			if (x + 280 > window.innerWidth) {
+				x = event.clientX - 280 - offset;
+			}
+			if (y + 400 > window.innerHeight) {
+				y = event.clientY - 400 - offset;
+			}
+
+			preview.style.left = x + 'px';
+			preview.style.top = y + 'px';
+		}
+
+		function hideCardPreview() {
+			const preview = document.getElementById('cardPreview');
+			preview.style.display = 'none';
+		}
+
+		// Initialize
+		window.addEventListener('DOMContentLoaded', async () => {
+			await refreshCollection();
+			
+			// Auto-select manual entry if hash present
+			const hash = window.location.hash;
+			if (hash === '#csv') {
+				selectMethod('csv');
+			} else if (hash === '#scan') {
+				selectMethod('scan');
+			} else {
+				selectMethod('manual');
+			}
+		});
+	</script>
+
 </body>
 </html>

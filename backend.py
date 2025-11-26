@@ -8,7 +8,6 @@ import urllib.request
 import urllib.error
 import threading
 import time
-import webview
 import os
 import httpx
 
@@ -55,6 +54,12 @@ class Api:
         self._precon_running = False
         self._precon_current = 0
         self._precon_total = 0
+        
+        # Scanner GUI window reference
+        self._scanner_window = None
+        
+        # Multi-user support: current user ID (set by main.py from session)
+        self._current_user_id = 1  # Default to user 1 for backward compatibility
         
 
     def get_card_names(self):
@@ -189,15 +194,8 @@ class Api:
             return { 'ok': False, 'state': {}, 'error': str(e) }
 
     def close_app(self):
-        try:
-            import sys
-            # Close all webview windows
-            for window in webview.windows:
-                window.destroy()
-            # Exit the application
-            sys.exit(0)
-        except Exception as e:
-            return { 'ok': False, 'error': str(e) }
+        """No-op for web version - browser handles closing."""
+        return { 'ok': True }
 
     def get_decklist_deck_cards(self, deck_id: str):
         """Return cards for a given deck_id from decklist_cards.db as a list of {name, set_code, collector_number, quantity, type_line}."""
@@ -226,107 +224,84 @@ class Api:
             return []
 
     def pick_precon_json(self):
-        """Open a native file dialog filtered to JSON under the precon directory and return the chosen path."""
-        try:
-            paths = webview.create_file_dialog(
-                webview.OPEN_DIALOG,
-                directory=str(Path(self._precon_dir)),
-                file_types=("JSON (*.json)",)
-            )
-            if paths and len(paths) > 0:
-                return str(paths[0])
-        except Exception:
-            pass
+        """For web version, file selection handled by HTML input."""
+        # This method is not used in web version - files uploaded via HTML form
         return ''
 
     def pick_csv_file(self):
-        """Open a native file dialog to choose a CSV file and return its absolute path."""
-        try:
-            paths = webview.create_file_dialog(
-                webview.OPEN_DIALOG,
-                directory=str(Path('.').resolve()),
-                file_types=("CSV (*.csv)",)
-            )
-            if paths and len(paths) > 0:
-                return str(paths[0])
-        except Exception:
-            pass
+        """For web version, file selection handled by HTML input."""
+        # This method is not used in web version - files uploaded via HTML form
         return ''
 
     def launch_scanner_gui(self):
-        """Launch the MTG scanner GUI as a separate process."""
-        import subprocess
-        import sys
+        """Launch the MTG scanner GUI as a separate window in the same application."""
         try:
-            script_path = Path('mtg_scanner_gui.py')
-            if not script_path.exists():
-                return {'ok': False, 'error': 'Scanner script not found'}
+            # Import the scanner GUI class
+            from mtg_scanner_gui import MTGScannerApp
+            from PySide6.QtWidgets import QApplication
+            from PySide6.QtCore import QTimer
             
-            # Launch as detached process
-            if sys.platform == 'win32':
-                # Use CREATE_NEW_CONSOLE only, without DETACHED_PROCESS
-                subprocess.Popen([sys.executable, str(script_path)], 
-                               creationflags=subprocess.CREATE_NEW_CONSOLE,
-                               cwd=str(Path.cwd()))
-            else:
-                subprocess.Popen([sys.executable, str(script_path)], 
-                               start_new_session=True)
+            # Get or create QApplication instance
+            app = QApplication.instance()
+            if app is None:
+                return {'ok': False, 'error': 'Qt application not available'}
             
-            return {'ok': True}
+            # Check if scanner window already exists and is hidden
+            if hasattr(self, '_scanner_window') and self._scanner_window is not None:
+                # Just show the existing window
+                self._scanner_window.show()
+                self._scanner_window.raise_()
+                self._scanner_window.activateWindow()
+                return {'ok': True, 'method': 'reused'}
+            
+            # Create scanner window using a timer to avoid blocking
+            def create_scanner():
+                try:
+                    self._scanner_window = MTGScannerApp()
+                    self._scanner_window.show()
+                    self._scanner_window.raise_()
+                    self._scanner_window.activateWindow()
+                except Exception as e:
+                    print(f"Error creating scanner: {e}")
+                    import traceback
+                    traceback.print_exc()
+            
+            # Use QTimer to create window on next event loop iteration
+            QTimer.singleShot(0, create_scanner)
+            
+            return {'ok': True, 'method': 'integrated'}
+        except ImportError as e:
+            return {'ok': False, 'error': f'Failed to import scanner: {str(e)}'}
         except Exception as e:
-            return {'ok': False, 'error': str(e)}
+            import traceback
+            return {'ok': False, 'error': str(e), 'traceback': traceback.format_exc()}
 
     # --- Preconstructed deck import ---
     def list_precon_decks(self, query: str | None = None):
-        """List available preconstructed decks from the precon directory.
-        - Only considers .json files
-        - If query provided, performs case-insensitive multi-word fuzzy match against filename and JSON 'name'
-        Returns a list of { name, filename, path, image_uri, size_bytes }.
-        Images are resolved by matching basename with common image extensions.
+        """List available preconstructed decks from the decklist_cards.db database.
+        - Searches for Commander decks in the database
+        - If query provided, performs case-insensitive multi-word fuzzy match against deck name
+        Returns a list of { name, deck_id, deck_type, card_count, image_uri }.
         """
-        root = Path(self._precon_dir)
-        if not root.exists():
-            return []
-        q = (query or '').strip().lower()
-        words = [w for w in q.split() if w]
-        image_exts = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'}
+        # Use the existing search_decklist_db function
+        decks = self.search_decklist_db(query)
+        
+        # Filter to only Commander decks and format for frontend
         out = []
-        for p in sorted(root.iterdir()):
-            if not (p.is_file() and p.suffix.lower() == '.json'):
-                continue
-            base = p.stem
-            # optional JSON 'name'
-            json_name = ''
-            try:
-                with p.open('r', encoding='utf-8') as f:
-                    obj = json.load(f)
-                    if isinstance(obj, dict):
-                        json_name = str(obj.get('name') or '')
-            except Exception:
-                json_name = ''
-            target = (base + ' ' + json_name).lower()
-            if words and not all(w in target for w in words):
-                continue
-            # Find a matching image next to the file
-            img_path = None
-            for ext in image_exts:
-                cand = p.with_suffix(ext)
-                if cand.exists():
-                    img_path = cand
-                    break
-            image_uri = ''
-            if img_path:
-                try:
-                    image_uri = img_path.as_uri()
-                except Exception:
-                    image_uri = 'file:///' + str(img_path).replace('\\','/')
-            out.append({
-                'name': json_name or base,
-                'filename': p.name,
-                'path': str(p),
-                'image_uri': image_uri,
-                'size_bytes': p.stat().st_size
-            })
+        for deck in decks:
+            # Only show Commander decks in precon list (deck_type is "Commander Deck")
+            deck_type = deck.get('deck_type', '').lower()
+            if 'commander' in deck_type:
+                out.append({
+                    'name': deck['deck_name'],
+                    'deck_id': deck['deck_id'],
+                    'deck_type': deck['deck_type'],
+                    'card_count': deck['card_count'],
+                    'filename': deck['deck_name'],  # For compatibility with frontend
+                    'path': f"deck_id:{deck['deck_id']}",  # Virtual path
+                    'image_uri': '',  # Could be enhanced to fetch commander card image
+                    'size_bytes': 0
+                })
         return out
 
     # --- Decklist.db integrations ---
@@ -495,8 +470,12 @@ class Api:
         This is identical to import_deck_from_db but saves the commander field.
         """
         import sqlite3, time
+        print(f"\n=== IMPORT DEBUG: import_deck_from_db_with_commander called ===")
+        print(f"deck_id: {deck_id}")
+        print(f"commander: {commander}")
         p = Path(self._decklist_db_path)
         if not p.exists():
+            print(f"ERROR: decklist.db not found at {p}")
             return { 'added': 0, 'total': self.get_collection_count(), 'errors': [f'decklist.db not found'] }
         deck_name = ''
         try:
@@ -634,7 +613,9 @@ class Api:
         with self._precon_lock:
             self._precon_running = False
         
-        return { 'added': int(inserted), 'total': total, 'errors': errors, 'deck_name': deck_name }
+        result = { 'added': int(inserted), 'total': total, 'errors': errors, 'deck_name': deck_name }
+        print(f"=== IMPORT RESULT: {result} ===\n")
+        return result
 
     def update_deck_commander(self, deck_name: str, commander: str):
         """Update the commander for an existing deck"""
@@ -817,8 +798,10 @@ class Api:
         normalized records into the 'collection' table.
         Returns { ok, added, total, errors }.
         """
+        print(f"[DEBUG] run_importscryfall called with path: {csv_path}")
         import csv, time
         p = Path(str(csv_path or '')).resolve()
+        print(f"[DEBUG] Resolved path: {p}, exists: {p.exists()}")
         if not p.exists() or not p.is_file():
             return { 'ok': False, 'added': 0, 'total': self.get_collection_count(), 'errors': [f'CSV not found: {csv_path}'] }
         added = 0
@@ -840,6 +823,8 @@ class Api:
                         with self._import_lock:
                             self._import_total += 1
             
+            print(f"[DEBUG] Total rows to process: {self._import_total}")
+            
             # Second pass: process rows
             with p.open('r', encoding='utf-8', newline='') as f:
                 reader = csv.reader(f)
@@ -853,6 +838,8 @@ class Api:
                     with self._import_lock:
                         self._import_current += 1
                     
+                    print(f"[DEBUG] Processing row {self._import_current}/{self._import_total}: {scry_id}")
+                    
                     try:
                         url = f"https://api.scryfall.com/cards/{urllib.parse.quote(scry_id)}"
                         data = self._http_get_json(url)
@@ -860,17 +847,27 @@ class Api:
                             it = self._map_scryfall_card(data)
                             it['source'] = 'csv-import'
                             items_batch.append(it)
+                            print(f"[DEBUG] Added card to batch: {it.get('name', 'Unknown')}")
+                        else:
+                            print(f"[DEBUG] Invalid card data for {scry_id}")
                         # polite throttle
                         time.sleep(0.12)
                     except Exception as e:
+                        print(f"[DEBUG] Error processing {scry_id}: {e}")
                         errors.append(f"{scry_id}: {e}")
             
             if items_batch:
+                print(f"[DEBUG] Attempting to insert {len(items_batch)} items into collection.db")
                 added = csql.insert_items(Path(self._collection_db_path), items_batch)
+                print(f"[DEBUG] insert_items returned: {added}")
                 self._sync_card_names_from_collection()
             total = self.get_collection_count()
+            print(f"[DEBUG] Import complete - added: {added}, total in collection: {total}")
             return { 'ok': True, 'added': int(added), 'total': total, 'errors': errors }
         except Exception as e:
+            print(f"[DEBUG] Import exception: {e}")
+            import traceback
+            traceback.print_exc()
             return { 'ok': False, 'added': 0, 'total': self.get_collection_count(), 'errors': [str(e)] }
         finally:
             with self._import_lock:
@@ -2224,3 +2221,16 @@ class Api:
         self._sync_card_names_from_collection()
         total = self.get_collection_count()
         return { 'added': added, 'total': total, 'items': new_items }
+
+    # --- Window control methods (no-op for web version) ---
+    def minimize_window(self):
+        """No-op for web version."""
+        return {'ok': True}
+
+    def toggle_maximize(self):
+        """No-op for web version."""
+        return {'ok': True}
+
+    def close_window(self):
+        """No-op for web version."""
+        return {'ok': True}

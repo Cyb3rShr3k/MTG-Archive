@@ -1,0 +1,295 @@
+<!-- web/card_addition.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add Card</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="api.js"></script>
+</head>
+<body class="bg-addition">
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="deckbuilding.html">Deckbuilding</a>
+    <a href="card_addition.html" class="active">Add Card</a>
+  </nav>
+
+  <h2>Add a Card</h2>
+  <div id="backendBanner" class="banner-warn" style="display:none;">
+    Backend not connected. Run with Python 3.11 and install requirements (pywebview). Card processing is disabled.
+  </div>
+  <div class="row">
+    <div class="col" style="flex:1;">
+      <textarea id="cardName" rows="10" placeholder="Enter quantities and names, separated by commas or newlines. Example: 3 Sol Ring, 2 Command Tower"></textarea>
+      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="btnAdd">Add</button>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <div class="panel" style="margin-top:10px;">
+    <strong>Session added:</strong> <span id="sessionCount">0</span>
+    &nbsp; | &nbsp;
+    <strong>Total in collection:</strong> <span id="totalCount">0</span>
+  </div>
+
+  <!-- Bottom wide table: current collection contents -->
+  <div class="panel" style="margin-top:10px;">
+    <h3 style="margin:0 0 6px 0;">Collection</h3>
+    <div style="overflow:auto; max-height:300px; background:#000; color:#fff; border-radius:8px; border:1px solid #333;">
+      <table id="collectionTable" style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f7f7f7;">
+            <th style="text-align:left; padding:6px 8px;">Name</th>
+            <th style="text-align:left; padding:6px 8px;">Colors</th>
+            <th style="text-align:left; padding:6px 8px;">CMC</th>
+            <th style="text-align:left; padding:6px 8px;">P/T</th>
+            <th style="text-align:left; padding:6px 8px;">Text</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- floating card preview -->
+  <div id="cardPreview" style="display:none; position:fixed; top:0; left:0; z-index:1000; pointer-events:none; padding:4px; background:rgba(255,255,255,0.95); border:1px solid #ddd; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,.15);">
+    <img id="cardPreviewImg" src="" alt="preview" style="max-width:260px; height:auto; display:block;"/>
+  </div>
+
+  <script>
+    // Backend detection and control disabling
+    function disableControls() {
+      document.querySelectorAll('button, input, textarea').forEach(el => {
+        el.disabled = true; el.style.opacity = '0.6';
+      });
+    }
+    (function(){
+      const banner = document.getElementById('backendBanner');
+      function enableControls(){
+        document.querySelectorAll('button, input, textarea').forEach(el => {
+          el.disabled = false; el.style.opacity = '';
+        });
+      }
+      if (!window.pywebview || !window.pywebview.api) {
+        banner.style.display = 'block';
+        disableControls();
+      } else {
+        banner.style.display = 'none';
+        enableControls();
+      }
+      window.addEventListener('pywebviewready', function(){
+        if (window.pywebview && window.pywebview.api) {
+          banner.style.display = 'none';
+          enableControls();
+        }
+      });
+      // Polling fallback
+      let tries = 0;
+      const t = setInterval(() => {
+        tries += 1;
+        if (window.pywebview && window.pywebview.api) {
+          banner.style.display = 'none';
+          enableControls();
+          clearInterval(t);
+        }
+        if (tries > 20) clearInterval(t);
+      }, 500);
+    })();
+
+    const inputArea = document.getElementById('cardName');
+    const btnAdd = document.getElementById('btnAdd');
+    // no process button anymore
+    const resultsTable = null; // removed results panel
+    const btnAddSelected = null; // removed
+    const sessionCountEl = document.getElementById('sessionCount');
+    const totalCountEl = document.getElementById('totalCount');
+    const collectionTable = document.getElementById('collectionTable');
+    // removed grid/process images, using table + Add button instead
+
+    let sessionAdded = 0;
+    let debounceTimer = null;
+    let selectedItem = null; // removed selection
+    let currentResults = [];
+    const selectedResults = new Set();
+    const preview = document.getElementById('cardPreview');
+    const previewImg = document.getElementById('cardPreviewImg');
+
+    async function refreshTotals() {
+      try {
+        const total = await window.pywebview.api.get_collection_count();
+        totalCountEl.textContent = total;
+      } catch (e) { console.error(e); }
+    }
+
+    async function refreshCollection() {
+      try {
+        const items = await window.pywebview.api.get_collection_items();
+        renderCollection(items || []);
+      } catch (e) { console.error(e); }
+    }
+
+    function renderCollection(items) {
+      if (!collectionTable) return;
+      const tbody = collectionTable.querySelector('tbody');
+      tbody.innerHTML = '';
+      (items || []).forEach((it, idx) => {
+        const tr = document.createElement('tr');
+        if (idx % 2 === 1) tr.style.background = '#fafafa';
+        const tdName = document.createElement('td'); tdName.style.padding = '6px 8px'; tdName.textContent = it.name || '';
+        const tdColors = document.createElement('td'); tdColors.style.padding = '6px 8px'; tdColors.textContent = (it.colors || []).join(', ');
+        const tdCmc = document.createElement('td'); tdCmc.style.padding = '6px 8px'; tdCmc.textContent = (it.cmc ?? '') + '';
+        const tdPT = document.createElement('td'); tdPT.style.padding = '6px 8px'; tdPT.textContent = `${it.power ?? ''}/${it.toughness ?? ''}`;
+        const tdText = document.createElement('td'); tdText.style.padding = '6px 8px'; tdText.textContent = it.text || '';
+        tr.append(tdName, tdColors, tdCmc, tdPT, tdText);
+        tbody.appendChild(tr);
+      });
+    }
+
+    function incSession(n) {
+      sessionAdded += n;
+      sessionCountEl.textContent = sessionAdded;
+    }
+
+    async function quickAddNames(text) {
+      const parts = [];
+      for (const line of (text || '').split('\n')) {
+        for (const p of line.split(',')) {
+          const v = p.trim(); if (v) parts.push(v);
+        }
+      }
+      let added = 0;
+      for (const name of parts) {
+        const ok = await window.pywebview.api.add_card(name);
+        if (ok) added += 1;
+      }
+      incSession(added);
+      await refreshTotals();
+      alert(`Quick added ${added} item(s).`);
+    }
+
+    // Add: parse quantities like "3 Sol Ring, 2 Command Tower" and add metadata copies.
+    btnAdd.addEventListener('click', async () => {
+      const raw = String(inputArea.value || '');
+      const entries = [];
+      for (const line of raw.split('\n')) {
+        for (const p of line.split(',')) {
+          const s = p.trim(); if (!s) continue;
+          // parse leading quantity (e.g., "3 Sol Ring")
+          const m = s.match(/^(\d+)\s+(.*)$/i);
+          if (m) {
+            const qty = parseInt(m[1], 10);
+            const nm = m[2].trim(); if (nm && qty > 0) entries.push({ name: nm, count: qty });
+          } else {
+            entries.push({ name: s, count: 1 });
+          }
+        }
+      }
+      if (!entries.length) return;
+      let added = 0;
+      for (const ent of entries) {
+        try {
+          const items = await window.pywebview.api.search_scryfall(ent.name, 1);
+          const best = (items && items[0]) ? items[0] : null;
+          if (!best) continue;
+          for (let i=0;i<ent.count;i++) {
+            const res = await window.pywebview.api.add_card_with_metadata(best);
+            if (res && res.added) added += res.added;
+          }
+        } catch (e) { console.error(e); }
+      }
+      incSession(added);
+      await refreshTotals();
+      await refreshCollection();
+      alert(`Added ${added} item(s).`);
+    });
+
+    // removed processing via AllPrintings; searches drive right table
+
+    // Live search removed with results panel; keep input debounce reserved (no-op)
+    inputArea.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {}, 250);
+    });
+
+    function rowKey(it){
+      return `${String(it.name||'').toLowerCase()}|${String(it.set||'').toLowerCase()}|${String(it.number||'').toLowerCase()}`;
+    }
+
+    // Results panel removed
+
+    function imageUrlFor(it){
+      // Prefer local image_path if present and looks like a URI/path
+      const p = (it && it.image_path) ? String(it.image_path) : '';
+      // If Scryfall image_url provided, use it first
+      const su = (it && it.image_url) ? String(it.image_url) : '';
+      if (su) return su;
+      if (p) {
+        if (p.startsWith('file://') || p.startsWith('http')) return p;
+        // try to build file URI from path-like
+        return 'file:///' + p.replace(/\\/g,'/');
+      }
+      // Fallback to Scryfall by set/number if available
+      const setc = (it && it.set) ? String(it.set).trim() : '';
+      const num = (it && it.number) ? String(it.number).trim() : '';
+      if (setc && num) {
+        return `https://api.scryfall.com/cards/${setc}/${num}?format=image`;
+      }
+      // Final fallback placeholder
+      return 'assets/public/mtg-color-wheel.png';
+    }
+
+    function showPreviewFor(it, evt){
+      const src = imageUrlFor(it);
+      previewImg.src = src;
+      preview.style.display = 'block';
+      movePreview(evt);
+    }
+    function movePreview(evt){
+      const pad = 14;
+      let x = evt.clientX + pad;
+      let y = evt.clientY + pad;
+      // keep in viewport if possible
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const w = 280, h = 420; // rough
+      if (x + w > vw) x = evt.clientX - w - pad;
+      if (y + h > vh) y = evt.clientY - h - pad;
+      preview.style.left = x + 'px';
+      preview.style.top = y + 'px';
+    }
+    function hidePreview(){
+      preview.style.display = 'none';
+      previewImg.removeAttribute('src');
+    }
+
+    // Drag/drop import removed; only manual entry + best match display remain
+
+    btnAddSelected.addEventListener('click', async () => {
+      if (selectedResults.size === 0) { alert('Please check at least one card to add.'); return; }
+      try {
+        let added = 0;
+        // Map keys back to item objects
+        const map = new Map();
+        currentResults.forEach(it => { const k = rowKey(it); if (selectedResults.has(k) && !map.has(k)) map.set(k, it); });
+        for (const it of map.values()) {
+          const res = await window.pywebview.api.add_card_with_metadata(it);
+          added += (res && res.added) ? res.added : 0;
+        }
+        selectedResults.clear();
+        incSession(added);
+        await refreshTotals();
+        await refreshCollection();
+        alert(`Added ${added} item(s).`);
+        // Re-render to clear checkboxes
+        renderResults(currentResults);
+      } catch (e) { console.error(e); alert('Failed to add selected'); }
+    });
+
+    (async function init() {
+      await refreshTotals();
+      await refreshCollection();
+    })();
+  </script>
+</body>
+</html>

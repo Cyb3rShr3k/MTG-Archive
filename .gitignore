@@ -57,3 +57,7 @@ config.json
 *.bak
 *.swp
 *~
+
+# Upload folder (temporary files)
+uploads/
+!uploads/.gitkeep

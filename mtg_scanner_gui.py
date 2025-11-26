@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import re
 import requests
@@ -28,7 +29,7 @@ from core.image_utils import detect_tesseract_path
 ensure_db(Path('collection.db'))
 
 CONFIG_FILE = "config.json"
-OCR_SPACE_API_KEY = "K89950406288957"
+OCR_SPACE_API_KEY = "Enter API KEY Here"
 
 # ---------------- OCR & Preprocessing ----------------
 def preprocess_image(image_path):
@@ -205,6 +206,16 @@ class MTGScannerApp(QMainWindow):
         super().__init__()
         self.setWindowTitle("MTG Card Image Processor")
         self.setGeometry(200, 200, 800, 600)
+        
+        # Make window stay on top and persistent
+        self.setWindowFlags(
+            Qt.Window | 
+            Qt.WindowStaysOnTopHint |
+            Qt.CustomizeWindowHint |
+            Qt.WindowTitleHint |
+            Qt.WindowMinimizeButtonHint
+        )
+        
         self.setStyleSheet("""
             QMainWindow {
                 background-color: #1e1e1e;
@@ -275,10 +286,29 @@ class MTGScannerApp(QMainWindow):
         self.status_label = QLabel("Ready - Load images to process", self)
         self.status_label.setAlignment(Qt.AlignCenter)
 
-        self.load_button = QPushButton("📂 Load Single Image")
-        self.load_folder_button = QPushButton("📁 Load Folder (Batch Process)")
-        self.ocr_api_button = QPushButton("🚀 Smart OCR (OCR.space + Scryfall)")
-        self.clear_button = QPushButton("🗑️ Clear All Images")
+        self.load_button = QPushButton("[+] Load Single Image")
+        self.load_folder_button = QPushButton("[*] Load Folder (Batch Process)")
+        self.ocr_api_button = QPushButton("[>] Smart OCR (OCR.space + Scryfall)")
+        self.clear_button = QPushButton("[X] Clear All Images")
+        self.close_window_button = QPushButton("[X] Close Scanner Window")
+        self.close_window_button.setStyleSheet("""
+            QPushButton {
+                background-color: #d32f2f;
+                color: white;
+                border: none;
+                padding: 10px;
+                font-family: 'Cinzel', serif;
+                font-size: 11pt;
+                font-weight: bold;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #f44336;
+            }
+            QPushButton:pressed {
+                background-color: #b71c1c;
+            }
+        """)
 
         # Table for batch file view with file size - ALWAYS visible
         self.file_table = QTableWidget()
@@ -318,6 +348,7 @@ class MTGScannerApp(QMainWindow):
         layout.addWidget(self.ocr_api_button)
         layout.addWidget(self.clear_button)
         layout.addWidget(self.output_text)
+        layout.addWidget(self.close_window_button)
 
         container = QWidget()
         container.setLayout(layout)
@@ -327,12 +358,24 @@ class MTGScannerApp(QMainWindow):
         self.load_folder_button.clicked.connect(self.load_folder)
         self.ocr_api_button.clicked.connect(self.extract_with_ocr_api)
         self.clear_button.clicked.connect(self.clear_all_images)
+        self.close_window_button.clicked.connect(self.close_scanner_window)
 
         self.last_image = None
         self.last_card_name = None
         self.last_ocr_api_data = None
         self.current_folder_images = []
         self.current_image_index = 0
+    
+    def closeEvent(self, event):
+        """Prevent closing via X button - only allow close via Close button."""
+        event.ignore()
+        self.output_text.append("\n[!] Please use the 'Close Scanner Window' button to close this window.\n")
+    
+    def close_scanner_window(self):
+        """Properly close the scanner window."""
+        self.hide()
+        # Don't actually close, just hide so it can be reopened
+        self.output_text.append("\n[OK] Scanner window closed. You can reopen it from the main window.\n")
 
     def clear_all_images(self):
         """Clear all loaded images from the table and reset state."""
@@ -340,7 +383,7 @@ class MTGScannerApp(QMainWindow):
         self.current_folder_images = []
         self.current_image_index = 0
         self.progress_bar.setValue(0)
-        self.output_text.append("🗑️ Cleared all loaded images")
+        self.output_text.append("[X] Cleared all loaded images")
         self.status_label.setText("Ready - Load images to process")
 
     def update_image_preview(self, image_path):
@@ -374,9 +417,9 @@ class MTGScannerApp(QMainWindow):
                 size_str = f"{size_kb:.1f} KB"
             size_item = QTableWidgetItem(size_str)
             
-            ocr_status_item = QTableWidgetItem("⏳ Pending")
+            ocr_status_item = QTableWidgetItem("[...] Pending")
             card_name_item = QTableWidgetItem("-")
-            db_status_item = QTableWidgetItem("⏳ Pending")
+            db_status_item = QTableWidgetItem("[...] Pending")
             
             self.file_table.setItem(row_idx, 0, filename_item)
             self.file_table.setItem(row_idx, 1, size_item)
@@ -424,9 +467,9 @@ class MTGScannerApp(QMainWindow):
                         size_str = f"{size_kb:.1f} KB"
                     size_item = QTableWidgetItem(size_str)
                     
-                    ocr_status_item = QTableWidgetItem("⏳ Pending")
+                    ocr_status_item = QTableWidgetItem("[...] Pending")
                     card_name_item = QTableWidgetItem("-")
-                    db_status_item = QTableWidgetItem("⏳ Pending")
+                    db_status_item = QTableWidgetItem("[...] Pending")
                     
                     self.file_table.setItem(row_idx, 0, filename_item)
                     self.file_table.setItem(row_idx, 1, size_item)
@@ -434,7 +477,7 @@ class MTGScannerApp(QMainWindow):
                     self.file_table.setItem(row_idx, 3, card_name_item)
                     self.file_table.setItem(row_idx, 4, db_status_item)
                 
-                self.output_text.append(f"📁 Loaded {len(new_images)} images from folder")
+                self.output_text.append(f"[*] Loaded {len(new_images)} images from folder")
                 self.output_text.append("Ready to process. Click Smart OCR to begin batch processing.")
                 self.status_label.setText(f"{len(self.current_folder_images)} total image(s) - Click Smart OCR to start")
             else:
@@ -476,8 +519,8 @@ class MTGScannerApp(QMainWindow):
         # Batch mode - process all images
         total = len(self.current_folder_images)
         skipped_files = []  # Track files skipped due to size
-        self.output_text.append(f"\n🚀 Starting batch processing of {total} images...\n")
-        self.output_text.append("─" * 50)
+        self.output_text.append(f"\n[>] Starting batch processing of {total} images...\n")
+        self.output_text.append("-" * 50)
         
         for idx, img_path in enumerate(self.current_folder_images):
             self.current_image_index = idx
@@ -494,7 +537,7 @@ class MTGScannerApp(QMainWindow):
                 
                 ocr_item = self.file_table.item(idx, 2)
                 if ocr_item:
-                    ocr_item.setText("⚠️ Skipped")
+                    ocr_item.setText("[!] Skipped")
                 card_item = self.file_table.item(idx, 3)
                 if card_item:
                     card_item.setText("File too large")
@@ -502,7 +545,7 @@ class MTGScannerApp(QMainWindow):
                 if db_item:
                     db_item.setText("-")
                 
-                self.output_text.append(f"\n[{idx + 1}/{total}] ⚠️ Skipped (too large): {filename}")
+                self.output_text.append(f"\n[{idx + 1}/{total}] [!] Skipped (too large): {filename}")
                 
                 # Update progress
                 progress = int(((idx + 1) / total) * 100)
@@ -513,7 +556,7 @@ class MTGScannerApp(QMainWindow):
             # Update table status
             ocr_status_item = self.file_table.item(idx, 2)
             if ocr_status_item:
-                ocr_status_item.setText("⏳ Processing...")
+                ocr_status_item.setText("[...] Processing...")
             QApplication.processEvents()  # Update UI
             
             # Update progress
@@ -530,18 +573,18 @@ class MTGScannerApp(QMainWindow):
                 
                 ocr_item = self.file_table.item(idx, 2)
                 if ocr_item:
-                    ocr_item.setText("✅ Done")
+                    ocr_item.setText("[OK] Done")
                 name_item = self.file_table.item(idx, 3)
                 if name_item:
                     name_item.setText(card_name)
                 
-                self.output_text.append(f"   ✅ Identified: {card_name}")
+                self.output_text.append(f"   [OK] Identified: {card_name}")
                 
                 # Insert into database
                 try:
                     db_status_item = self.file_table.item(idx, 4)
                     if db_status_item:
-                        db_status_item.setText("💾 Saving...")
+                        db_status_item.setText("[~] Saving...")
                     QApplication.processEvents()  # Update UI
                     
                     card_item = {
@@ -549,7 +592,7 @@ class MTGScannerApp(QMainWindow):
                         'set': metadata.get('set', ''),
                         'number': metadata.get('collector_number', ''),
                         'colors': metadata.get('colors', []),
-                        'types': metadata.get('type_line', '').split(' — ')[0].split() if metadata.get('type_line') else [],
+                        'types': metadata.get('type_line', '').split(' - ')[0].split() if metadata.get('type_line') else [],
                         'cmc': metadata.get('cmc'),
                         'power': metadata.get('power'),
                         'toughness': metadata.get('toughness'),
@@ -562,19 +605,19 @@ class MTGScannerApp(QMainWindow):
                     
                     db_item = self.file_table.item(idx, 4)
                     if db_item:
-                        db_item.setText("✅ Saved")
-                    self.output_text.append(f"   💾 Saved to database")
+                        db_item.setText("[OK] Saved")
+                    self.output_text.append(f"   [+] Saved to database")
                 except Exception as db_error:
                     db_item = self.file_table.item(idx, 4)
                     if db_item:
-                        db_item.setText("❌ Error")
-                    self.output_text.append(f"   ⚠️ DB error: {db_error}")
+                        db_item.setText("[X] Error")
+                    self.output_text.append(f"   [!] DB error: {db_error}")
             else:
                 error_msg = metadata.get('message', 'Unknown error') if metadata else 'No response'
                 
                 ocr_item = self.file_table.item(idx, 2)
                 if ocr_item:
-                    ocr_item.setText("❌ Failed")
+                    ocr_item.setText("[X] Failed")
                 name_item = self.file_table.item(idx, 3)
                 if name_item:
                     name_item.setText(f"Error: {error_msg[:30]}")
@@ -582,27 +625,27 @@ class MTGScannerApp(QMainWindow):
                 if db_item:
                     db_item.setText("-")
                 
-                self.output_text.append(f"   ❌ Failed: {error_msg}")
+                self.output_text.append(f"   [X] Failed: {error_msg}")
             
             QApplication.processEvents()  # Update UI
         
         self.progress_bar.setValue(100)
-        self.output_text.append("\n" + "─" * 50)
-        self.output_text.append("🎉 Batch processing complete!")
+        self.output_text.append("\n" + "-" * 50)
+        self.output_text.append("[DONE] Batch processing complete!")
         
         # Report skipped files
         if skipped_files:
-            self.output_text.append(f"\n⚠️ {len(skipped_files)} file(s) skipped due to file size > 1MB:")
+            self.output_text.append(f"\n[!] {len(skipped_files)} file(s) skipped due to file size > 1MB:")
             for skipped in skipped_files:
-                self.output_text.append(f"   • {skipped}")
+                self.output_text.append(f"   - {skipped}")
             self.output_text.append("\nPlease reduce image file sizes and try again.")
-            self.status_label.setText(f"✅ Completed - {len(skipped_files)} skipped")
+            self.status_label.setText(f"[OK] Completed - {len(skipped_files)} skipped")
         else:
-            self.status_label.setText(f"✅ Completed all {total} images")
+            self.status_label.setText(f"[OK] Completed all {total} images")
 
     def display_metadata(self, metadata):
         """Display extracted metadata in output box."""
-        self.output_text.append("\n✅ OCR.space Extraction Results:")
+        self.output_text.append("\n[OK] OCR.space Extraction Results:")
         self.output_text.append(f"Card Name: {metadata.get('card_name', 'N/A')}")
         self.output_text.append(f"Mana Cost: {metadata.get('mana_cost', 'N/A')}")
         self.output_text.append(f"Type: {metadata.get('type_line', 'N/A')}")
@@ -618,7 +661,7 @@ class MTGScannerApp(QMainWindow):
         if metadata.get('rarity'):
             self.output_text.append(f"Rarity: {metadata.get('rarity', 'N/A')}")
         
-        self.output_text.append(f"\n📊 Data source: {metadata.get('source', 'OCR.space')}")
+        self.output_text.append(f"\n[i] Data source: {metadata.get('source', 'OCR.space')}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

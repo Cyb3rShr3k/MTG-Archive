@@ -1,947 +1,225 @@
-    <!-- web/index.html -->
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
 <head>
-  <title>MTG Card Archive</title>
-  <link rel="stylesheet" href="style.css">
+	<title>MTG Archive - Dashboard</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
+	<script src="api.js"></script>
+	<script src="shared-nav.js"></script>
+	<style>
+		.stat-card {
+			background: linear-gradient(135deg, rgba(245, 106, 106, 0.1) 0%, rgba(76, 132, 255, 0.1) 100%);
+			padding: 2em;
+			border-radius: 4px;
+			text-align: center;
+			border-left: 4px solid #f56a6a;
+			transition: all 0.3s ease;
+		}
+		.stat-card:hover {
+			transform: translateY(-5px);
+			box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+		}
+		.stat-card h3 {
+			margin: 0 0 0.5em 0;
+			color: #f56a6a;
+			font-size: 3em;
+			font-weight: bold;
+		}
+		.stat-card p {
+			margin: 0;
+			color: #999;
+			text-transform: uppercase;
+			font-size: 0.8em;
+			letter-spacing: 0.25em;
+		}
+		.quick-action-card {
+			transition: all 0.3s ease;
+			cursor: pointer;
+		}
+		.quick-action-card:hover {
+			transform: translateY(-3px);
+		}
+	</style>
 </head>
-<body class="bg-main" style="padding-top: 5vh;">
+<body class="is-preload">
 
-  <h1 class="main-header">MTG Archive</h1>
-  <div class="main-footer">by RB Labs</div>
+	<!-- Wrapper -->
+	<div id="wrapper">
 
-  <div id="backendBanner" class="banner-warn" style="display:none;">
-    Backend not connected. Ensure you run this app with Python 3.11 and have pywebview installed. Actions that contact the backend will not work.
-  </div>
+		<!-- Main -->
+		<div id="main">
+			<div class="inner">
 
-  <!-- Repair Progress Modal -->
-  <div id="repairModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1500; align-items:center; justify-content:center;">
-    <div style="background:#000; color:#fff; border-radius:10px; padding:16px; width:min(520px, 92vw); box-shadow:0 8px 28px rgba(0,0,0,.25);">
-      <h3 style="margin:0 0 8px 0;">Repairing Collection</h3>
-      <div class="muted" id="repairStatus" style="margin-bottom:10px;">Starting…</div>
-      <div style="height:14px; background:#eef1f7; border-radius:8px; overflow:hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.08);">
-        <div id="repairBar" style="height:100%; width:0%; background:linear-gradient(90deg,#4f8cff,#2b6bff); transition:width .25s ease;"></div>
-      </div>
-      <details id="repairErrors" style="margin-top:10px;">
-        <summary style="cursor:pointer; user-select:none;">Errors (last 50)</summary>
-        <pre id="repairErrorsList" style="white-space:pre-wrap; max-height:180px; overflow:auto; background:#fafafa; border:1px solid #eee; border-radius:6px; padding:8px; margin-top:6px;"></pre>
-      </details>
-      <div style="display:flex; justify-content:flex-end; margin-top:10px;">
-        <button id="repairClose" disabled>Close</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Import Mode Selection Modal -->
-  <div id="importModeModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:#000; color:#fff; border-radius:8px; padding:20px; width:min(420px, 92vw); box-shadow:0 6px 24px rgba(0,0,0,.25);">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px;">
-        <h3 style="margin:0;">Import Cards</h3>
-        <button id="impModeClose" title="Close">✕</button>
-      </div>
-      <div class="muted" style="margin-bottom:16px;">Choose your import method:</div>
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        <button id="impModeCSV" style="padding:14px; font-size:15px; text-align:left;">📄 Import CSV File<br><span class="muted" style="font-size:12px;">Import cards from Scryfall ID CSV</span></button>
-        <button id="impModeImages" style="padding:14px; font-size:15px; text-align:left;">📷 Import Images<br><span class="muted" style="font-size:12px;">Scan card images with OCR</span></button>
-      </div>
-      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
-        <button id="impModeCancel">Cancel</button>
-      </div>
-    </div>
-  </div>
-  <!-- Import CSV Modal -->
-  <div id="importModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:#000; color:#fff; border-radius:8px; padding:14px; width:min(700px, 94vw); max-height:92vh; overflow:auto; box-shadow:0 6px 24px rgba(0,0,0,.25);">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
-        <h3 style="margin:0;">Import from CSV</h3>
-        <button id="impClose" title="Close">✕</button>
-      </div>
-      <div class="muted" style="margin-bottom:6px;">Choose a CSV file containing Scryfall IDs (one per line). Then click Process to import.</div>
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <input id="impPath" type="text" placeholder="No file selected" style="flex:1; min-width:260px;" readonly />
-        <button id="impBrowse">Choose File</button>
-        <input id="impFile" type="file" accept=".csv,text/csv" style="display:none;" />
-      </div>
-      <div id="impErrors" style="margin-top:8px; font-size:13px; color:#b00020; white-space:pre-wrap;"></div>
-      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
-        <button id="impCancel">Cancel</button>
-        <button id="impProcess" disabled>Process</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- CSV Import Progress Modal -->
-  <div id="importProgressModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1200; align-items:center; justify-content:center;">
-    <div style="background:#f0f0f0; border-radius:8px; padding:24px; width:min(400px, 92vw); box-shadow:0 6px 24px rgba(0,0,0,.25); text-align:center;">
-      <h3 style="margin:0 0 16px 0;">Importing Cards</h3>
-      <div id="impProgressText" style="font-size:18px; font-weight:bold; margin-bottom:8px;">Importing 0/0</div>
-      <div class="muted">Please wait...</div>
-    </div>
-  </div>
-  
-  <!-- Create Deck Modal (asks for name and type) -->
-  <div id="deckCreateModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1100; align-items:center; justify-content:center;">
-    <div style="background:#000; color:#fff; border-radius:8px; padding:14px; width:min(480px, 92vw); max-height:85vh; overflow:auto; box-shadow:0 6px 24px rgba(0,0,0,.25);">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
-        <h3 style="margin:0;">Create Deck</h3>
-        <button id="deckCreateClose" title="Close">✕</button>
-      </div>
-      <div class="muted" style="margin-bottom:8px;">Enter a name and select a deck type.</div>
-      <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
-        <div>
-          <label class="muted">Deck name</label>
-          <input id="deckNameInput" type="text" placeholder="Deck name" style="width:100%;" />
-        </div>
-        <div>
-          <label class="muted">Deck type</label>
-          <select id="deckTypeSelect" style="width:100%;">
-            <option value="Commander">Commander</option>
-            <option value="Standard">Standard</option>
-            <option value="Modern">Modern</option>
-            <option value="Pauper">Pauper</option>
-            <option value="Legacy">Legacy</option>
-            <option value="Brawl">Brawl</option>
-          </select>
-        </div>
-      </div>
-      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
-        <button id="deckCreateCancel">Cancel</button>
-        <button id="deckCreateConfirm">Create</button>
-      </div>
-    </div>
-  </div>
-  
-  <div class="panel" style="margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
-    <div class="muted">Showing <span id="count">0</span> of <span id="total">0</span></div>
-    <div>
-      <button id="btnRefresh" class="icon-btn" title="Refresh collection display"><img src="assets/icons/Refresh.png" alt="Refresh"></button>
-      <button id="btnRepair" class="icon-btn" title="Repair collection from Scryfall"><img src="assets/icons/Repair.png" alt="Repair"></button>
-      <button id="btnAddPopup" class="icon-btn" title="Add card to collection"><img src="assets/icons/Add.png" alt="Add"></button>
-      <button id="btnImport" class="icon-btn" title="Import cards"><img src="assets/icons/Import.png" alt="Import"></button>
-      <button id="btnDelete" class="icon-btn" title="Delete selected cards" disabled><img src="assets/icons/Delete.png" alt="Delete"></button>
-      <button onclick="window.location.href='deckbuilding.html'" class="icon-btn" title="Go to Deckbuilding"><img src="assets/icons/Deckbuilding.png" alt="Deckbuilding"></button>
-      <button id="btnSearchDeck" class="icon-btn" title="Search and build decks"><img src="assets/icons/Search.png" alt="Search"></button>
-      <button id="btnSaveClose" class="icon-btn" title="Save & Close"><img src="assets/icons/Save-Close.png" alt="Save & Close"></button>
-    </div>
-  </div>
+				<!-- Header (injected by shared-nav.js) -->
+				<script>document.write(sharedNav.header('Dashboard'));</script>
 
-  <div id="summaryScroll" style="max-height: 60vh; overflow:auto; border-radius:8px; box-shadow: 0 1px 3px rgba(0,0,0,.08);">
-    <table style="width:100%; border-collapse: collapse; background: transparent;">
-      <thead>
-        <tr>
-          <th style="width:32px;"><input type="checkbox" id="chkAll"></th>
-          <th>Name</th>
-          <th>Quantity</th>
-          <th>Availible Cards</th>
-          <th>Decks In</th>
-          <th>Colors</th>
-          <th>CMC</th>
-          <th>P/T</th>
-          <th>Card Text</th>
-        </tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
-  </div>
+				<!-- Banner -->
+				<section id="banner">
+					<div class="content">
+						<header>
+							<h1>Welcome to<br />MTG Archive</h1>
+							<p>Your Personal Card Collection Manager</p>
+						</header>
+						<p>Organize your Magic: The Gathering collection with ease. Import cards via CSV or OCR, build custom decks, browse your collection with advanced filters, and track your collection's growth. Whether you're a casual player or serious collector, MTG Archive has the tools you need.</p>
+						<ul class="actions">
+							<li><a href="card_addition.html" class="button big primary icon solid fa-plus">Add Cards</a></li>
+							<li><a href="deckbuilding.html" class="button big icon solid fa-layer-group">Build Decks</a></li>
+						</ul>
+					</div>
+					<span class="image object">
+						<img src="assets/MTG-Archive.png" alt="MTG Archive" style="border-radius:8px;" />
+					</span>
+				</section>
 
-  <!-- Add Cards Modal -->
-  <div id="addModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:#000; color:#fff; border-radius:8px; padding:14px; width:min(900px, 94vw); max-height:92vh; overflow:auto; box-shadow:0 6px 24px rgba(0,0,0,.25);">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
-        <h3 style="margin:0;">Add Cards</h3>
-        <button id="addClose" title="Close">✕</button>
-      </div>
-      <div class="muted" style="margin-bottom:6px;">Search for a card by name, pick the correct printing, set a quantity, then Add.</div>
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <input id="addName" type="text" placeholder="Start typing a card name..." style="flex:1; min-width:260px;"/>
-        <button id="addSearch">Search</button>
-        <label class="muted">Qty</label>
-        <input id="addQty" type="number" min="1" value="1" style="width:80px;"/>
-      </div>
-      <div id="addErrors" style="margin-top:8px; font-size:13px; color:#b00020; white-space:pre-wrap;"></div>
-      <div id="addResults" style="margin-top:10px;"></div>
-      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
-        <button id="addCancel">Cancel</button>
-        <button id="addConfirm">Add</button>
-      </div>
-    </div>
-  </div>
-  <div id="addPreview" style="display:none; position:fixed; top:0; left:0; z-index:2000; pointer-events:none; padding:4px; background:rgba(255,255,255,.95); border:1px solid #ddd; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,.15);">
-    <img id="addPreviewImg" src="" alt="preview" style="max-width:260px; height:auto; display:block;"/>
-  </div>
+				<!-- Stats -->
+				<section>
+					<header class="major">
+						<h2>Collection Overview</h2>
+					</header>
+					<div class="row gtr-200">
+						<div class="col-4 col-12-medium">
+							<div class="stat-card">
+								<h3 id="totalCards">0</h3>
+								<p>Total Cards</p>
+							</div>
+						</div>
+						<div class="col-4 col-12-medium">
+							<div class="stat-card" style="border-left-color: #4c84ff;">
+								<h3 id="uniqueCards">0</h3>
+								<p>Unique Cards</p>
+							</div>
+						</div>
+						<div class="col-4 col-12-medium">
+							<div class="stat-card" style="border-left-color: #39c088;">
+								<h3 id="totalDecks">0</h3>
+								<p>Decks Built</p>
+							</div>
+						</div>
+					</div>
+				</section>
 
-  <!-- Generic hover preview for any card name -->
-  <div id="hoverPreview" style="display:none; position:fixed; top:0; left:0; z-index:1999; pointer-events:none; padding:4px; background:rgba(255,255,255,.95); border:1px solid #ddd; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,.15);">
-    <img id="hoverPreviewImg" src="" alt="preview" style="max-width:260px; height:auto; display:block;"/>
-  </div>
+				<!-- Quick Actions -->
+				<section>
+					<header class="major">
+						<h2>Quick Actions</h2>
+					</header>
+					<div class="features">
+						<article class="quick-action-card" onclick="window.location.href='card_addition.html'">
+							<span class="icon solid fa-plus"></span>
+							<div class="content">
+								<h3>Add Cards</h3>
+								<p>Manually add cards to your collection or import them via CSV.</p>
+							</div>
+						</article>
+						<article class="quick-action-card" onclick="window.location.href='card_addition.html#scan'">
+							<span class="icon solid fa-camera"></span>
+							<div class="content">
+								<h3>Scan Cards</h3>
+								<p>Use OCR technology to scan and identify cards from images.</p>
+							</div>
+						</article>
+						<article class="quick-action-card" onclick="window.location.href='deckbuilding.html'">
+							<span class="icon solid fa-layer-group"></span>
+							<div class="content">
+								<h3>Build Decks</h3>
+							<p>Create custom decks from your collection with drag-and-drop.</p>
+							</div>
+						</article>
+						<article class="quick-action-card" onclick="window.location.href='deckbuilding.html#precon'">
+							<span class="icon solid fa-download"></span>
+							<div class="content">
+								<h3>Import Precon</h3>
+								<p>Import complete preconstructed decks from our database.</p>
+							</div>
+						</article>
+						<article class="quick-action-card" onclick="window.location.href='deckbuilding.html#search'">
+							<span class="icon solid fa-search"></span>
+							<div class="content">
+								<h3>Browse Collection</h3>
+								<p>Search and filter your entire card collection.</p>
+							</div>
+						</article>
+						<article class="quick-action-card" onclick="window.location.href='card_addition.html#csv'">
+							<span class="icon solid fa-file-csv"></span>
+							<div class="content">
+								<h3>CSV Import</h3>
+								<p>Bulk import cards from a CSV file with Scryfall IDs.</p>
+							</div>
+						</article>
+					</div>
+				</section>
 
-  <!-- Search / Build Deck Modal -->
-  <div id="deckModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:#000; color:#fff; border-radius:8px; padding:14px; width:min(1000px, 96vw); max-height:92vh; overflow:auto; box-shadow:0 6px 24px rgba(0,0,0,.25);">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
-        <h3 style="margin:0;">Search / Build Deck</h3>
-        <button id="deckClose" title="Close">✕</button>
-      </div>
-      <div class="filters" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:10px; margin-bottom: 10px;">
-        <div>
-          <label class="muted">Colors</label><br>
-          <div style="display:grid; grid-template-columns: repeat(3, auto); gap:8px 12px; align-items:center;">
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" class="d-color" value="W">
-              <img class="chip-img" src="assets/icons/W.png?v=2" alt="W" />
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" class="d-color" value="U">
-              <img class="chip-img" src="assets/icons/U.png?v=2" alt="U" />
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" class="d-color" value="B">
-              <img class="chip-img" src="assets/icons/B.png?v=2" alt="B" />
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" class="d-color" value="R">
-              <img class="chip-img" src="assets/icons/R.png?v=2" alt="R" />
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" class="d-color" value="G">
-              <img class="chip-img" src="assets/icons/G.png?v=2" alt="G" />
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" class="d-color" value="C">
-              <img class="chip-img" src="assets/icons/C.png?v=2" alt="C" />
-            </label>
-          </div>
-        </div>
-        <div>
-          <label class="muted">Type</label>
-          <select id="dType" style="width:100%;">
-            <option value="">Any</option>
-            <option value="Creature">Creature</option>
-            <option value="Instant">Instant</option>
-            <option value="Sorcery">Sorcery</option>
-            <option value="Enchantment">Enchantment</option>
-            <option value="Artifact">Artifact</option>
-            <option value="Land">Land</option>
-            <option value="Planeswalker">Planeswalker</option>
-          </select>
-        </div>
-        <div>
-          <label class="muted">CMC</label>
-          <div>
-            <input id="dCmcMin" type="number" placeholder="min" style="width:70px;"> -
-            <input id="dCmcMax" type="number" placeholder="max" style="width:70px;">
-          </div>
-        </div>
-        <div>
-          <label class="muted">Power</label>
-          <div>
-            <input id="dPowMin" type="number" placeholder="min" style="width:70px;"> -
-            <input id="dPowMax" type="number" placeholder="max" style="width:70px;">
-          </div>
-        </div>
-        <div>
-          <label class="muted">Toughness</label>
-          <div>
-            <input id="dTghMin" type="number" placeholder="min" style="width:70px;"> -
-            <input id="dTghMax" type="number" placeholder="max" style="width:70px;">
-          </div>
-        </div>
-        <div>
-          <label class="muted">Card text contains</label>
-          <input id="dText" type="text" placeholder="keyword(s) in rules text" />
-        </div>
-        <div>
-          <label class="muted">Name contains</label>
-          <input id="dName" type="text" placeholder="card name" />
-        </div>
-      </div>
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-        <div class="muted">Set filters and click Search to show results. Then pick cards and Create Deck.</div>
-        <div>
-          <button id="deckSearch">Search</button>
-        </div>
-      </div>
-      <div id="deckResults" style="margin-top:10px; overflow:auto; max-height:50vh; background:#000; color:#fff; border:1px solid #333; border-radius:8px;">
-        <table style="width:100%; border-collapse:collapse; background: transparent;">
-          <thead>
-            <tr style="background:#f7f9ff;">
-              <th style="width:28px;"></th>
-              <th>Name</th>
-              <th>Colors</th>
-              <th>CMC</th>
-              <th>P/T</th>
-              <th>Text</th>
-              <th>Have</th>
-              <th style="width:80px;">Count</th>
-            </tr>
-          </thead>
-          <tbody id="deckRows"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-  <script>
-    (function(){
-      const banner = document.getElementById('backendBanner');
-      const links = document.querySelectorAll('nav a');
-      function disableNav(){ links.forEach(a => { a.style.pointerEvents = 'none'; a.style.opacity = '0.6'; }); }
-      function enableNav(){ links.forEach(a => { a.style.pointerEvents = ''; a.style.opacity = ''; }); }
-      if (!window.pywebview || !window.pywebview.api) {
-        banner.style.display = 'block';
-        disableNav();
-      }
+				<!-- Recent Decks -->
+				<section id="recentDecks" style="display:none;">
+					<header class="major">
+						<h2>Recent Decks</h2>
+					</header>
+					<div id="decksList" class="posts"></div>
+				</section>
 
-    
-      // Defer first call further and ensure it's invoked only once
-      let firstSummaryScheduled = false;
-      window.addEventListener('pywebviewready', function(){
-        if (window.pywebview && window.pywebview.api) {
-          banner.style.display = 'none';
-          enableNav();
-          if (!firstSummaryScheduled){
-            firstSummaryScheduled = true;
-            setTimeout(() => { try { loadSummary(); } catch(e){ console.error(e); } }, 500);
-          }
-          // Restore app state
-          (async function(){
-            try {
-              const res = await window.pywebview.api.load_app_state();
-              const st = (res && res.state) || {};
-              // If last page was deckbuilding, redirect
-              const last = String(st.last_page||'');
-              if (last && last.endsWith('deckbuilding.html')) {
-                window.location.href = 'deckbuilding.html';
-                return;
-              }
-              // Keep state to apply after summary load
-              window.__restoredState = st || {};
-            } catch(e) { /* ignore */ }
-          })();
-        }
-      });
-      // Poll only to enable nav/banner; do NOT call loadSummary here to avoid duplicate concurrent calls
-      let tries = 0;
-      const t = setInterval(() => {
-        tries += 1;
-        if (window.pywebview && window.pywebview.api) {
-          banner.style.display = 'none';
-          enableNav();
-          clearInterval(t);
-        }
-        if (tries > 20) clearInterval(t);
-      }, 500);
-      // As a fallback, after full window load, schedule a one-time summary load if not already done
-      window.addEventListener('load', function(){
-        if (!firstSummaryScheduled && window.pywebview && window.pywebview.api){
-          firstSummaryScheduled = true;
-          setTimeout(() => { try { loadSummary(); } catch(e){ console.error(e); } }, 600);
-        }
-      });
-    })();
+			</div>
+		</div>
 
-    // --- Generic hover preview helpers ---
-    const hoverPreview = document.getElementById('hoverPreview');
-    const hoverPreviewImg = document.getElementById('hoverPreviewImg');
-    let hoverCache = new Map(); // name -> image_url (disabled backend lookups on Home)
-    async function resolveImageUrlByName(name){
-      // To avoid pywebview callback errors interrupting initial load, disable hover lookups on Home.
-      return '';
-    }
-    function moveHoverPreview(evt){ const pad=14; let x=evt.clientX+pad, y=evt.clientY+pad; const vw=window.innerWidth, vh=window.innerHeight; const w=280, h=420; if (x+w>vw) x = evt.clientX - w - pad; if (y+h>vh) y = evt.clientY - h - pad; hoverPreview.style.left = x+'px'; hoverPreview.style.top = y+'px'; }
-    function hideHoverPreview(){ hoverPreview.style.display='none'; hoverPreviewImg.removeAttribute('src'); }
-    async function showHoverPreview(name, evt){
-      // Disabled on Home page; keep function to satisfy event handlers without backend calls
-      hideHoverPreview();
-    }
+		<!-- Sidebar (injected by shared-nav.js) -->
+		<script>document.write(sharedNav.sidebar);</script>
 
-    // Collection summary table
-    const rows = document.getElementById('rows');
-    const countEl = document.getElementById('count');
-    const totalEl = document.getElementById('total');
-    const btnDelete = document.getElementById('btnDelete');
-    const btnRefresh = document.getElementById('btnRefresh');
-    const chkAll = document.getElementById('chkAll');
-    const btnAddPopup = document.getElementById('btnAddPopup');
-    const btnSearchDeck = document.getElementById('btnSearchDeck');
-    const btnImport = document.getElementById('btnImport');
-    const btnSaveClose = document.getElementById('btnSaveClose');
-    const summaryScroll = document.getElementById('summaryScroll');
+	</div>
 
-    const selected = new Set(); // by name (lowercase)
-    let summary = [];
+	<!-- Scripts -->
+	<script src="HTML5up/assets/js/jquery.min.js"></script>
+	<script src="HTML5up/assets/js/browser.min.js"></script>
+	<script src="HTML5up/assets/js/breakpoints.min.js"></script>
+	<script src="HTML5up/assets/js/util.js"></script>
+	<script src="HTML5up/assets/js/main.js"></script>
 
-    function colorIcons(colors){
-      const v='?v=2';
-      const map={W:'assets/icons/W.png'+v,U:'assets/icons/U.png'+v,B:'assets/icons/B.png'+v,R:'assets/icons/R.png'+v,G:'assets/icons/G.png'+v,C:'assets/icons/C.png'+v};
-      const wrap = document.createElement('div');
-      const arr = (Array.isArray(colors) && colors.length>0) ? colors : ['C'];
-      arr.forEach(c=>{ const k=String(c||'').toUpperCase(); const img=document.createElement('img'); img.className='chip-img'; img.src=map[k]||map['C']; img.alt=k; wrap.appendChild(img); });
-      return wrap;
-    }
+	<script>
+		// Load dashboard data
+		async function loadDashboard() {
+			try {
+				// Load stats
+				const total = await window.pywebview.api.get_collection_count();
+				document.getElementById('totalCards').textContent = total || 0;
 
-    function keyOfName(n){ return String(n||'').trim().toLowerCase(); }
+				const decks = await window.pywebview.api.list_decks();
+				document.getElementById('totalDecks').textContent = Array.isArray(decks) ? decks.length : 0;
 
-    function renderSummary(items){
-      rows.innerHTML = '';
-      const list = Array.isArray(items) ? items.slice() : [];
-      list.sort((a,b)=> String(a.name).localeCompare(String(b.name)));
-      list.forEach(it=>{
-        const tr = document.createElement('tr');
-        const k = keyOfName(it.name);
-        const tdChk = document.createElement('td');
-        const chk = document.createElement('input'); chk.type='checkbox'; chk.checked = selected.has(k);
-        chk.addEventListener('change', ()=>{ if (chk.checked) selected.add(k); else selected.delete(k); btnDelete.disabled = selected.size===0; syncHeader(); });
-        tdChk.appendChild(chk);
-        const tdName = document.createElement('td');
-        // Check if this is a double-faced card
-        const hasBackFace = it.back_name && String(it.back_name||'').trim() !== '';
-        if (hasBackFace) {
-          tdName.innerHTML = `${it.name || ''} <span style="color:#999;font-size:0.85em;">// ${it.back_name}</span>`;
-          tdName.title = `Front: ${it.name}\nBack: ${it.back_name}`;
-        } else {
-          tdName.textContent = it.name || '';
-        }
-        // attach hover preview
-        tdName.addEventListener('mouseenter', (e)=> showHoverPreview(String(it.name||''), e));
-        tdName.addEventListener('mousemove', (e)=> moveHoverPreview(e));
-        tdName.addEventListener('mouseleave', hideHoverPreview);
-        const tdQty = document.createElement('td'); tdQty.textContent = String(it.qty||0);
-        const tdAvail = document.createElement('td'); tdAvail.textContent = String(it.available||0);
-        const tdDecks = document.createElement('td'); tdDecks.textContent = (it.decks||[]).join(', ');
-        const tdColors = document.createElement('td'); tdColors.appendChild(colorIcons(it.colors||[]));
-        const tdCmc = document.createElement('td'); tdCmc.textContent = (it.cmc==null?'':String(it.cmc));
-        const tdPT = document.createElement('td'); tdPT.textContent = `${it.power||''}/${it.toughness||''}`;
-        const tdText = document.createElement('td'); tdText.textContent = it.text || '';
-        tr.append(tdChk, tdName, tdQty, tdAvail, tdDecks, tdColors, tdCmc, tdPT, tdText);
-        rows.appendChild(tr);
-      });
-      countEl.textContent = list.length;
-      totalEl.textContent = list.length;
-      btnDelete.disabled = selected.size===0;
-      syncHeader();
-    }
+				const collection = await window.pywebview.api.search_collection({ query: '', filters: {} });
+				const uniqueNames = new Set();
+				if (Array.isArray(collection)) {
+					collection.forEach(card => uniqueNames.add(card.name));
+				}
+				document.getElementById('uniqueCards').textContent = uniqueNames.size;
 
-    function syncHeader(){
-      const names = new Set(summary.map(it=> keyOfName(it.name)));
-      const allSelected = names.size>0 && [...names].every(n=> selected.has(n));
-      chkAll.checked = allSelected;
-      chkAll.indeterminate = !allSelected && selected.size>0;
-    }
+				// Load recent decks
+				if (Array.isArray(decks) && decks.length > 0) {
+					const recentSection = document.getElementById('recentDecks');
+					const decksList = document.getElementById('decksList');
+					recentSection.style.display = 'block';
 
-    chkAll.addEventListener('change', ()=>{
-      if (chkAll.checked){
-        summary.forEach(it=> selected.add(keyOfName(it.name)));
-      } else {
-        selected.clear();
-      }
-      renderSummary(summary);
-    });
+					const html = decks.slice(0, 6).map(deck => `
+						<article>
+							<a href="deckbuilding.html#view-deck" class="image" style="background:#333; display:flex; align-items:center; justify-content:center; color:#999;">
+								<span class="icon solid fa-layer-group" style="font-size:3em;"></span>
+							</a>
+							<h3>${deck.name || 'Unnamed Deck'}</h3>
+							<p>${deck.deck_type || 'Standard'} • ${deck.card_count || 0} cards${deck.commander ? ` • ${deck.commander}` : ''}</p>
+							<ul class="actions">
+								<li><a href="deckbuilding.html#edit-${deck.name}" class="button small">View Deck</a></li>
+							</ul>
+						</article>
+					`).join('');
 
-    async function loadSummary(){
-      if (!window.pywebview || !window.pywebview.api) return;
-      try {
-        summary = await window.pywebview.api.get_collection_summary();
-        renderSummary(summary||[]);
-        // Apply restored state
-        const st = window.__restoredState || {};
-        if (st && Array.isArray(st.home_selected)){
-          selected.clear();
-          st.home_selected.forEach(n=> selected.add(String(n||'').toLowerCase()));
-          renderSummary(summary);
-        }
-        if (st && typeof st.home_scroll === 'number' && summaryScroll){ summaryScroll.scrollTop = st.home_scroll; }
-      } catch (e) { console.error(e); }
-    }
+					decksList.innerHTML = html;
+				}
+			} catch (error) {
+				console.error('Dashboard load error:', error);
+			}
+		}
 
-    // Repair modal logic and Refresh wiring
-    const repairModal = document.getElementById('repairModal');
-    const repairBar = document.getElementById('repairBar');
-    const repairStatus = document.getElementById('repairStatus');
-    const repairClose = document.getElementById('repairClose');
-    const repairErrors = document.getElementById('repairErrors');
-    const repairErrorsList = document.getElementById('repairErrorsList');
-    let repairTimer = null;
+		// Initialize on load
+		window.addEventListener('DOMContentLoaded', loadDashboard);
+	</script>
 
-    function showRepair(){ repairModal.style.display='flex'; repairClose.disabled = true; repairBar.style.width='0%'; repairStatus.textContent='Starting…'; }
-    function hideRepair(){ repairModal.style.display='none'; }
-    if (repairModal) repairModal.addEventListener('click', (e)=>{ if (e.target===repairModal && !repairClose.disabled) hideRepair(); });
-    if (repairClose) repairClose.addEventListener('click', ()=>{ if (!repairClose.disabled) hideRepair(); });
-
-    async function startRepairWithProgress(){
-      if (!window.pywebview || !window.pywebview.api) return;
-      showRepair();
-      try {
-        await window.pywebview.api.start_repair_collection(null);
-      } catch (e){ console.error(e); repairStatus.textContent='Failed to start repair.'; repairClose.disabled=false; return; }
-      // Poll progress
-      if (repairTimer) clearInterval(repairTimer);
-      repairTimer = setInterval(async ()=>{
-        try {
-          const p = await window.pywebview.api.get_repair_progress();
-          const total = Math.max(0, Number(p && p.total || 0));
-          const done = Math.max(0, Number(p && p.updated || 0));
-          const errs = Math.max(0, Number(p && p.errors || 0));
-          const pct = total>0 ? Math.min(100, Math.round(done*100/total)) : (done>0?100:0);
-          repairBar.style.width = pct + '%';
-          const errsList = (p && Array.isArray(p.errors_list)) ? p.errors_list : [];
-          if (repairErrorsList) repairErrorsList.textContent = errsList.join('\n');
-          repairStatus.textContent = p && p.running ? `Repairing… ${done} / ${total} (${pct}%)` : `Finalizing… ${done} / ${total}`;
-          if (!p || !p.running){
-            clearInterval(repairTimer); repairTimer = null;
-            await loadSummary();
-            repairClose.disabled = false;
-            repairStatus.textContent = `Completed. Repaired ${done} of ${total}. Errors: ${errs}.`;
-          }
-        } catch (e){ console.error(e); }
-      }, 500);
-    }
-
-    if (btnRefresh){
-      btnRefresh.addEventListener('click', async ()=> {
-        try {
-          await loadSummary();
-        } catch(e) {
-          console.error(e);
-          alert('Failed to refresh collection.');
-        }
-      });
-    }
-
-    const btnRepair = document.getElementById('btnRepair');
-    if (btnRepair){
-      btnRepair.addEventListener('click', startRepairWithProgress);
-    }
-
-    // Save & Close
-    async function doSaveClose(){
-      if (!window.pywebview || !window.pywebview.api) return;
-      try {
-        const state = {
-          last_page: 'index.html',
-          home_selected: Array.from(selected),
-          home_scroll: summaryScroll ? summaryScroll.scrollTop : 0,
-        };
-        await window.pywebview.api.save_app_state(state);
-        await new Promise(r=> setTimeout(r, 50));
-        await window.pywebview.api.close_app();
-      } catch(e){ console.error(e); }
-    }
-    if (btnSaveClose){ btnSaveClose.addEventListener('click', doSaveClose); }
-
-    // Import Mode Selection modal
-    const importModeModal = document.getElementById('importModeModal');
-    const impModeClose = document.getElementById('impModeClose');
-    const impModeCancel = document.getElementById('impModeCancel');
-    const impModeCSV = document.getElementById('impModeCSV');
-    const impModeImages = document.getElementById('impModeImages');
-
-    function showImportModeModal(){
-      importModeModal.style.display='flex';
-    }
-    function hideImportModeModal(){
-      importModeModal.style.display='none';
-    }
-    if (btnImport) btnImport.addEventListener('click', showImportModeModal);
-    if (impModeClose) impModeClose.addEventListener('click', hideImportModeModal);
-    if (impModeCancel) impModeCancel.addEventListener('click', hideImportModeModal);
-    if (importModeModal) importModeModal.addEventListener('click', (e)=>{ if (e.target===importModeModal) hideImportModeModal(); });
-
-    // CSV import option
-    if (impModeCSV){
-      impModeCSV.addEventListener('click', ()=>{
-        hideImportModeModal();
-        showImportModal();
-      });
-    }
-
-    // Image import option - launches scanner GUI
-    if (impModeImages){
-      impModeImages.addEventListener('click', async ()=>{
-        hideImportModeModal();
-        try {
-          if (!window.pywebview || !window.pywebview.api){ alert('Backend not available.'); return; }
-          const res = await window.pywebview.api.launch_scanner_gui();
-          if (res && !res.ok){
-            alert('Failed to launch scanner: ' + (res.error || 'Unknown error'));
-          }
-        } catch (e) {
-          console.error(e);
-          alert('Failed to launch scanner.');
-        }
-      });
-    }
-
-    // Import CSV (Scryfall IDs) modal flow
-    const importModal = document.getElementById('importModal');
-    const impClose = document.getElementById('impClose');
-    const impCancel = document.getElementById('impCancel');
-    const impBrowse = document.getElementById('impBrowse');
-    const impPath = document.getElementById('impPath');
-    const impProcess = document.getElementById('impProcess');
-    const impErrors = document.getElementById('impErrors');
-    const impFile = document.getElementById('impFile');
-    let impFileB64 = null;
-
-    function showImportModal(){
-      importModal.style.display='flex';
-      impErrors.textContent='';
-      impPath.value='';
-      impProcess.disabled = true;
-      impFileB64 = null;
-    }
-    function hideImportModal(){
-      importModal.style.display='none';
-      impErrors.textContent='';
-      impPath.value='';
-      impProcess.disabled = true;
-      impFileB64 = null;
-    }
-    if (impClose) impClose.addEventListener('click', hideImportModal);
-    if (impCancel) impCancel.addEventListener('click', hideImportModal);
-    if (importModal) importModal.addEventListener('click', (e)=>{ if (e.target===importModal) hideImportModal(); });
-
-    // Choose file using native file input within the webview
-    if (impBrowse){ impBrowse.addEventListener('click', ()=>{ if (impFile) { impFile.click(); } }); }
-    if (impFile){
-      impFile.addEventListener('change', ()=>{
-        impErrors.textContent=''; impFileB64 = null; impProcess.disabled = true; impPath.value='';
-        const f = impFile.files && impFile.files[0];
-        if (!f){ return; }
-        impPath.value = f.name;
-        const reader = new FileReader();
-        reader.onerror = ()=>{ impErrors.textContent='Failed to read file.'; };
-        reader.onload = ()=>{
-          try {
-            const buf = reader.result; // ArrayBuffer
-            const bytes = new Uint8Array(buf);
-            // base64 encode
-            let binary = '';
-            const chunk = 0x8000; // 32KB
-            for (let i=0; i<bytes.length; i+=chunk){
-              const sub = bytes.subarray(i, i+chunk);
-              binary += String.fromCharCode.apply(null, sub);
-            }
-            impFileB64 = btoa(binary);
-            impProcess.disabled = false;
-          } catch(e){ console.error(e); impErrors.textContent='Failed to process file.'; }
-          finally {
-            // no-op
-          }
-        };
-        reader.readAsArrayBuffer(f);
-      });
-    }
-
-    if (impProcess){
-      impProcess.addEventListener('click', async ()=>{
-        const path = String(impPath.value||'').trim();
-        if (!path || !impFileB64){ impErrors.textContent = 'Please choose a CSV file.'; return; }
-        impProcess.disabled = true;
-        
-        // Show progress modal
-        const progressModal = document.getElementById('importProgressModal');
-        const progressText = document.getElementById('impProgressText');
-        progressModal.style.display = 'flex';
-        
-        // Start polling for progress
-        const pollInterval = setInterval(async () => {
-          try {
-            const prog = await window.pywebview.api.get_import_progress();
-            if (prog && prog.running) {
-              progressText.textContent = `Importing ${prog.current}/${prog.total}`;
-            }
-          } catch (e) {
-            console.error('Progress poll error:', e);
-          }
-        }, 300);
-        
-        try {
-          if (!window.pywebview || !window.pywebview.api){ impErrors.textContent='Backend not available.'; return; }
-          const res = await window.pywebview.api.run_importscryfall_bytes(impFileB64);
-          
-          // Stop polling
-          clearInterval(pollInterval);
-          
-          // Hide progress modal
-          progressModal.style.display = 'none';
-          
-          await loadSummary();
-          const err = (res && (res.error || (Array.isArray(res.errors)&&res.errors[0]))) || '';
-          const ok = (res && (res.ok===true));
-          alert(ok ? 'Import completed.' : ('Import failed' + (err ? (': ' + err) : '.')));
-          hideImportModal();
-        } catch (e) {
-          clearInterval(pollInterval);
-          progressModal.style.display = 'none';
-          console.error(e);
-          impErrors.textContent = 'Import failed.';
-        } finally {
-          impProcess.disabled = false;
-        }
-      });
-    }
-
-    // Delete flow: prompt quantity per selected name
-    btnDelete.addEventListener('click', async ()=>{
-      if (selected.size===0) return;
-      try {
-        const items = [];
-        for (const nameL of selected){
-          const it = summary.find(x=> keyOfName(x.name)===nameL);
-          if (!it) continue;
-          const maxQty = Number(it.qty||0);
-          const input = prompt(`Delete quantity for ${it.name} (max ${maxQty}). Leave blank to delete all.`,'');
-          if (input===null) continue; // cancelled for this item
-          let count = null;
-          const v = input.trim();
-          if (v!=='' && !Number.isNaN(Number(v))){
-            const n = Math.max(0, Math.min(maxQty, parseInt(v,10)));
-            if (n>0) count = n; else continue;
-          }
-          items.push({ name: it.name, count: count });
-        }
-        if (!items.length) return;
-        const res = await window.pywebview.api.delete_collection_by_names_counts(items);
-        selected.clear();
-        await loadSummary();
-        alert(`Deleted ${res && res.deleted ? res.deleted : 0} item(s).`);
-      } catch (e) { console.error(e); alert('Failed to delete'); }
-    });
-
-    // --- Add modal logic (Scryfall search) ---
-    const addModal = document.getElementById('addModal');
-    const addName = document.getElementById('addName');
-    const addSearch = document.getElementById('addSearch');
-    const addQty = document.getElementById('addQty');
-    const addClose = document.getElementById('addClose');
-    const addCancel = document.getElementById('addCancel');
-    const addConfirm = document.getElementById('addConfirm');
-    const addErrors = document.getElementById('addErrors');
-    const addResults = document.getElementById('addResults');
-    const addPreview = document.getElementById('addPreview');
-    const addPreviewImg = document.getElementById('addPreviewImg');
-
-    function showAddModal(){ addModal.style.display='flex'; addName.focus(); addErrors.textContent=''; addResults.innerHTML=''; addQty.value='1'; }
-    function hideAddModal(){ addModal.style.display='none'; addErrors.textContent=''; addResults.innerHTML=''; addName.value=''; addQty.value='1'; hideAddPreview(); }
-    if (btnAddPopup) btnAddPopup.addEventListener('click', showAddModal);
-    if (addClose) addClose.addEventListener('click', hideAddModal);
-    if (addCancel) addCancel.addEventListener('click', hideAddModal);
-    if (addModal) addModal.addEventListener('click', (e)=>{ if (e.target===addModal) hideAddModal(); });
-
-    let addSelectedKey = null;
-    function keyOf(it){ return `${String(it.set||'').toLowerCase()}|${String(it.number||'').toLowerCase()}`; }
-    function cardImg(it){ return it.image_url || 'assets/public/mtg-color-wheel.png'; }
-    function renderAddResults(items){
-      addSelectedKey = null;
-      addResults.innerHTML='';
-      const list = Array.isArray(items)?items:[];
-      if (!list.length){ addErrors.textContent='No results found.'; return; }
-      const table = document.createElement('table');
-      table.style.width='100%'; table.style.borderCollapse='collapse'; table.style.background='transparent';
-      const thead = document.createElement('thead');
-      const hr = document.createElement('tr');
-      ['','Name','Set','No.'].forEach(h=>{ const th=document.createElement('th'); th.textContent=h; th.style.textAlign='left'; th.style.padding='6px 8px'; th.style.borderBottom='1px solid #eee'; hr.appendChild(th); });
-      thead.appendChild(hr); table.appendChild(thead);
-      const tbody = document.createElement('tbody');
-      list.forEach(it=>{
-        const k = keyOf(it);
-        const tr = document.createElement('tr');
-        const tdPick = document.createElement('td'); tdPick.style.padding='6px 8px';
-        const radio = document.createElement('input'); radio.type='radio'; radio.name='addPick'; radio.value=k; radio.addEventListener('change', ()=>{ addSelectedKey = k; });
-        tdPick.appendChild(radio);
-        const tdName = document.createElement('td'); tdName.style.padding='6px 8px'; tdName.style.fontWeight='600'; tdName.textContent = it.name || '';
-        tdName.addEventListener('mouseenter', (e)=> showAddPreview(it, e));
-        tdName.addEventListener('mousemove', (e)=> moveAddPreview(e));
-        tdName.addEventListener('mouseleave', hideAddPreview);
-        const tdSet = document.createElement('td'); tdSet.style.padding='6px 8px'; tdSet.textContent = String(it.set||'');
-        const tdNo = document.createElement('td'); tdNo.style.padding='6px 8px'; tdNo.textContent = String(it.number||'');
-        tr.append(tdPick, tdName, tdSet, tdNo);
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-      addResults.appendChild(table);
-    }
-
-    function showAddPreview(it, evt){ addPreviewImg.src = cardImg(it); addPreview.style.display='block'; moveAddPreview(evt); }
-    function moveAddPreview(evt){ const pad=14; let x=evt.clientX+pad, y=evt.clientY+pad; const vw=window.innerWidth, vh=window.innerHeight; const w=280, h=420; if (x+w>vw) x = evt.clientX - w - pad; if (y+h>vh) y = evt.clientY - h - pad; addPreview.style.left = x+'px'; addPreview.style.top = y+'px'; }
-    function hideAddPreview(){ addPreview.style.display='none'; addPreviewImg.removeAttribute('src'); }
-
-    async function doAddSearch(){
-      addErrors.textContent=''; addResults.innerHTML='';
-      const q = String(addName.value||'').trim();
-      if (!q){ addErrors.textContent='Please enter a card name.'; return; }
-      try {
-        const items = await window.pywebview.api.search_scryfall(q, 24);
-        renderAddResults(items||[]);
-      } catch (e) { console.error(e); addErrors.textContent='Search failed.'; }
-    }
-    if (addSearch) addSearch.addEventListener('click', doAddSearch);
-    if (addName) addName.addEventListener('keydown', (e)=>{ if (e.key==='Enter') { e.preventDefault(); doAddSearch(); }});
-
-    if (addConfirm){
-      addConfirm.addEventListener('click', async ()=>{
-        if (!addSelectedKey){ addErrors.textContent='Please select a printing to add.'; return; }
-        const qty = Math.max(1, parseInt(addQty.value||'1',10)||1);
-        addConfirm.disabled = true;
-        try {
-          const items = await window.pywebview.api.search_scryfall(String(addName.value||''), 24);
-          const list = Array.isArray(items)?items:[];
-          const chosen = list.find(x=> keyOf(x)===addSelectedKey);
-          if (!chosen){ addErrors.textContent='Could not resolve the selected item. Try searching again.'; return; }
-          let added = 0;
-          for (let i=0;i<qty;i++){
-            const res = await window.pywebview.api.add_card_with_metadata(chosen);
-            if (res && res.added) added += res.added;
-          }
-          await loadSummary();
-          alert(`Added ${added} item(s).`);
-          hideAddModal();
-        } catch (e) { console.error(e); addErrors.textContent='Add failed.'; }
-        finally { addConfirm.disabled = false; }
-      });
-    }
-
-    // --- Deck modal logic ---
-    const deckModal = document.getElementById('deckModal');
-    const deckClose = document.getElementById('deckClose');
-    const deckCreate = document.getElementById('deckCreate');
-    const dColors = ()=> [...document.querySelectorAll('.d-color')];
-    const dType = document.getElementById('dType');
-    const dCmcMin = document.getElementById('dCmcMin');
-    const dCmcMax = document.getElementById('dCmcMax');
-    const dPowMin = document.getElementById('dPowMin');
-    const dPowMax = document.getElementById('dPowMax');
-    const dTghMin = document.getElementById('dTghMin');
-    const dTghMax = document.getElementById('dTghMax');
-    const dText = document.getElementById('dText');
-    const dName = document.getElementById('dName');
-    const deckRows = document.getElementById('deckRows');
-
-    let allItems = [];
-    let groupedItems = [];
-
-    function groupByName(items){
-      const map = new Map();
-      (items||[]).forEach(it=>{
-        const key = String(it.name||'').trim().toLowerCase();
-        if (!key) return;
-        let g = map.get(key);
-        if (!g){
-          g = { name: it.name||'', colors: [], types: [], cmc: null, power: '', toughness: '', text: '', qty: 0 };
-          map.set(key, g);
-        }
-        g.qty += 1;
-        // Union colors/types across copies
-        (it.colors||[]).forEach(c=>{ const s=String(c); if (!g.colors.includes(s)) g.colors.push(s); });
-        (it.types||[]).forEach(t=>{ const s=String(t); if (!g.types.includes(s)) g.types.push(s); });
-        // Prefer first non-null cmc
-        if (g.cmc==null && it.cmc!=null) g.cmc = it.cmc;
-        // Prefer first non-empty PT/text
-        if (!g.power && it.power) g.power = it.power;
-        if (!g.toughness && it.toughness) g.toughness = it.toughness;
-        if (!g.text && it.text) g.text = it.text;
-      });
-      return Array.from(map.values());
-    }
-
-    function toNum(v){
-      if (v === undefined || v === null) return null;
-      const s = String(v).trim();
-      if (s === '') return null;
-      const n = Number(s);
-      return Number.isFinite(n) ? n : null;
-    }
-    function withinRange(value, minV, maxV){
-      const v = toNum(value); const minN = toNum(minV); const maxN = toNum(maxV);
-      if (minN!=null && (v==null || v<minN)) return false;
-      if (maxN!=null && (v==null || v>maxN)) return false;
-      return true;
-    }
-    function ptWithinRange(val, minV, maxV){
-      const v = Number(val); if (!Number.isFinite(v)) { if (minV||maxV) return false; return true; }
-      return withinRange(v, minV, maxV);
-    }
-    function typeMatches(types, q){ if (!q) return true; const s=String(q).toLowerCase(); const list=(types||[]).map(x=> String(x).toLowerCase()); return list.some(t=> t.includes(s)); }
-    function textMatches(text, q){ if (!q) return true; return String(text||'').toLowerCase().includes(String(q).toLowerCase()); }
-    function nameMatches(name, q){ if (!q) return true; return String(name||'').toLowerCase().includes(String(q).toLowerCase()); }
-    function hasAllColors(cardColors, selected){
-      if (!selected.length) return true;
-      const base = (Array.isArray(cardColors) && cardColors.length>0) ? cardColors : ['C'];
-      const set = new Set(base.map(String));
-      return selected.every(c=> set.has(c));
-    }
-
-    function renderDeckResults(items){
-      deckRows.innerHTML='';
-      const list = Array.isArray(items)?items.slice():[];
-      list.sort((a,b)=> String(a.name).localeCompare(String(b.name)));
-      list.forEach(it=>{
-        const tr = document.createElement('tr');
-        const tdPick = document.createElement('td');
-        const chk = document.createElement('input'); chk.type='checkbox';
-        const tdName = document.createElement('td'); tdName.textContent = it.name||'';
-        const tdColors = document.createElement('td'); tdColors.appendChild(colorIcons(it.colors||[]));
-        const tdCmc = document.createElement('td'); tdCmc.textContent = (it.cmc==null?'':String(it.cmc));
-        const tdPT = document.createElement('td'); tdPT.textContent = `${it.power||''}/${it.toughness||''}`;
-        const tdText = document.createElement('td'); tdText.textContent = it.text||'';
-        const tdHave = document.createElement('td'); tdHave.textContent = String(it.qty||0);
-        const tdCount = document.createElement('td');
-        const num = document.createElement('input'); num.type='number'; num.min='1'; num.value='1'; num.style.width='70px';
-        tdCount.appendChild(num);
-        tdPick.appendChild(chk);
-        tr.append(tdPick, tdName, tdColors, tdCmc, tdPT, tdText, tdHave, tdCount);
-        deckRows.appendChild(tr);
-      });
-    }
-
-    function applyDeckFilters(){
-      const selectedColors = dColors().filter(x=>x.checked).map(x=>x.value);
-      const filtered = groupedItems.filter(it=>
-        hasAllColors(it.colors, selectedColors) &&
-        typeMatches(it.types, dType.value.trim()) &&
-        nameMatches(it.name, dName.value.trim()) &&
-        textMatches(it.text, dText.value.trim()) &&
-        withinRange(it.cmc, dCmcMin.value, dCmcMax.value) &&
-        ptWithinRange(it.power, dPowMin.value, dPowMax.value) &&
-        ptWithinRange(it.toughness, dTghMin.value, dTghMax.value)
-      );
-      renderDeckResults(filtered);
-    }
-
-    // Remove live auto-filter; results will be shown only after clicking Search
-
-    async function showDeckModal(){
-      try {
-        const summary = await window.pywebview.api.get_collection_summary();
-        // Map summary to modal rows; colors are already aggregated, qty is total by name
-        groupedItems = (Array.isArray(summary)?summary:[]).map(it=>({
-          name: it.name || '',
-          colors: (it.colors||[]).map(String),
-          types: (it.types||[]).map(String),
-          cmc: it.cmc,
-          power: it.power || '',
-          toughness: it.toughness || '',
-          text: it.text || '',
-          qty: it.qty || 0,
-        }));
-      } catch (e) { groupedItems = []; }
-      // clear previous results until user clicks Search
-      renderDeckResults([]);
-      deckModal.style.display='flex';
-    }
-    function hideDeckModal(){ deckModal.style.display='none'; }
-    if (btnSearchDeck) btnSearchDeck.addEventListener('click', showDeckModal);
-    if (deckClose) deckClose.addEventListener('click', hideDeckModal);
-    if (deckModal) deckModal.addEventListener('click', (e)=>{ if (e.target===deckModal) hideDeckModal(); });
-
-    const deckSearch = document.getElementById('deckSearch');
-    if (deckSearch){
-      deckSearch.addEventListener('click', ()=>{
-        applyDeckFilters();
-      });
-    }
-
-
-  </script>
 </body>
 </html>
