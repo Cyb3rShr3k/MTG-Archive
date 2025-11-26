@@ -5,7 +5,12 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
-	<script src="api.js"></script>
+	<!-- Firebase Scripts -->
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+	<script src="firebase-config.js"></script>
+	<script src="firebase-db.js"></script>
 	<script src="shared-nav.js"></script>
 	<style>
 		.stat-card {
@@ -51,10 +56,8 @@
 		<div id="main">
 			<div class="inner">
 
-				<!-- Header (injected by shared-nav.js) -->
-				<script>document.write(sharedNav.header('Dashboard'));</script>
-
-				<!-- Banner -->
+			<!-- Header (injected by shared-nav.js) -->
+			<div id="headerContainer"></div>				<!-- Banner -->
 				<section id="banner">
 					<div class="content">
 						<header>
@@ -162,7 +165,7 @@
 		</div>
 
 		<!-- Sidebar (injected by shared-nav.js) -->
-		<script>document.write(sharedNav.sidebar);</script>
+		<div id="sidebarContainer"></div>
 
 	</div>
 
@@ -172,53 +175,17 @@
 	<script src="HTML5up/assets/js/breakpoints.min.js"></script>
 	<script src="HTML5up/assets/js/util.js"></script>
 	<script src="HTML5up/assets/js/main.js"></script>
-
+	<script src="api.js"></script>
 	<script>
-		// Load dashboard data
-		async function loadDashboard() {
-			try {
-				// Load stats
-				const total = await window.pywebview.api.get_collection_count();
-				document.getElementById('totalCards').textContent = total || 0;
-
-				const decks = await window.pywebview.api.list_decks();
-				document.getElementById('totalDecks').textContent = Array.isArray(decks) ? decks.length : 0;
-
-				const collection = await window.pywebview.api.search_collection({ query: '', filters: {} });
-				const uniqueNames = new Set();
-				if (Array.isArray(collection)) {
-					collection.forEach(card => uniqueNames.add(card.name));
-				}
-				document.getElementById('uniqueCards').textContent = uniqueNames.size;
-
-				// Load recent decks
-				if (Array.isArray(decks) && decks.length > 0) {
-					const recentSection = document.getElementById('recentDecks');
-					const decksList = document.getElementById('decksList');
-					recentSection.style.display = 'block';
-
-					const html = decks.slice(0, 6).map(deck => `
-						<article>
-							<a href="deckbuilding.html#view-deck" class="image" style="background:#333; display:flex; align-items:center; justify-content:center; color:#999;">
-								<span class="icon solid fa-layer-group" style="font-size:3em;"></span>
-							</a>
-							<h3>${deck.name || 'Unnamed Deck'}</h3>
-							<p>${deck.deck_type || 'Standard'} • ${deck.card_count || 0} cards${deck.commander ? ` • ${deck.commander}` : ''}</p>
-							<ul class="actions">
-								<li><a href="deckbuilding.html#edit-${deck.name}" class="button small">View Deck</a></li>
-							</ul>
-						</article>
-					`).join('');
-
-					decksList.innerHTML = html;
-				}
-			} catch (error) {
-				console.error('Dashboard load error:', error);
+		// Inject navigation components when DOM is ready
+		document.addEventListener('DOMContentLoaded', () => {
+			if (typeof sharedNav !== 'undefined') {
+				document.getElementById('headerContainer').innerHTML = sharedNav.header('Dashboard');
+				document.getElementById('sidebarContainer').innerHTML = sharedNav.sidebar;
+				// Re-initialize navigation after injection
+				initializeNav();
 			}
-		}
-
-		// Initialize on load
-		window.addEventListener('DOMContentLoaded', loadDashboard);
+		});
 	</script>
 
 </body>

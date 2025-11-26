@@ -5,7 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
     <link rel="stylesheet" href="HTML5up/assets/css/main.css" />
-    <script src="api.js"></script>
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="firebase-db.js"></script>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -110,15 +115,36 @@
     <script src="HTML5up/assets/js/main.js"></script>
 
     <script>
+        // Wait for Firebase and firebaseDB to load
+        async function initializeLogin() {
+            // Check if already logged in
+            try {
+                await firebaseDB.onAuthStateChanged(user => {
+                    if (user) {
+                        window.location.href = 'index.html';
+                    }
+                });
+            } catch (error) {
+                console.log('Auth check complete');
+            }
+        }
+
+        // Start initialization when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeLogin);
+        } else {
+            initializeLogin();
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const username = document.getElementById('username').value;
+            const email = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorMsg = document.getElementById('errorMsg');
             
             try {
-                const result = await window.pywebview.api.login({ username, password });
+                const result = await firebaseDB.login(email, password);
                 
                 if (result.success) {
                     window.location.href = 'index.html';

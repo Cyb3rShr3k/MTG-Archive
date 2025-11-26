@@ -1,194 +1,147 @@
-// shared-nav.js - Common navigation and sidebar for all pages
 const sharedNav = {
-    sidebar: `
-        <!-- Sidebar -->
-        <div id="sidebar">
-            <div class="inner">
+  header: (title) => `
+    <header id="header">
+      <a href="index.html" class="logo"><strong>MTG Archive</strong></a>
+      <ul class="icons">
+        <li><a href="#" onclick="event.preventDefault()" id="userMenuToggle" title="User Menu" style="color:#f56a6a;"><strong id="userDisplay">User</strong></a></li>
+      </ul>
+    </header>
+    <div id="userMenu" style="display:none; position:absolute; top:40px; right:20px; background:#242943; border:1px solid #f56a6a; border-radius:4px; padding:1em; min-width:150px; z-index:1000; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+      <p style="margin:0 0 0.5em 0; color:#f56a6a;"><strong id="userDisplayFull">User</strong></p>
+      <p style="margin:0.5em 0; font-size:0.85em; color:#999;" id="userEmailDisplay">email@example.com</p>
+      <hr style="border:none; border-top:1px solid #333; margin:0.5em 0;">
+      <a href="index.html" style="display:block; padding:0.5em 0; color:#fff; text-decoration:none;">Dashboard</a>
+      <a href="card_addition.html" style="display:block; padding:0.5em 0; color:#fff; text-decoration:none;">Add Cards</a>
+      <a href="deckbuilding.html" style="display:block; padding:0.5em 0; color:#fff; text-decoration:none;">Build Decks</a>
+      <hr style="border:none; border-top:1px solid #333; margin:0.5em 0;">
+      <a href="#" onclick="logoutUser(event)" style="display:block; padding:0.5em 0; color:#f56a6a; text-decoration:none;"><strong>Logout</strong></a>
+    </div>
+  `,
 
-                <!-- Search -->
-                <section id="search" class="alt">
-                    <form id="quickSearchForm">
-                        <input type="text" name="query" id="quickSearch" placeholder="Quick card search..." />
-                    </form>
-                    <div id="searchResults" style="margin-top:1em; display:none; max-height:300px; overflow-y:auto;"></div>
-                </section>
+  sidebar: `
+    <div id="sidebar">
+      <div class="inner">
+        <section id="search" class="alt">
+          <form onsubmit="searchCollection(event)">
+            <input type="text" id="collectionSearch" placeholder="Search collection..." />
+          </form>
+        </section>
 
-                <!-- Menu -->
-                <nav id="menu">
-                    <header class="major">
-                        <h2>Menu</h2>
-                    </header>
-                    <ul>
-                        <li><a href="index.html" class="nav-home">Dashboard</a></li>
-                        <li><a href="card_addition.html" class="nav-add">Add Cards</a></li>
-                        <li><a href="deckbuilding.html" class="nav-decks">Deck Building</a></li>
-                        <li>
-                            <span class="opener">Import</span>
-                            <ul>
-                                <li><a href="card_addition.html#csv">CSV Import</a></li>
-                                <li><a href="card_addition.html#scan">OCR Scanner</a></li>
-                                <li><a href="deckbuilding.html#precon">Precon Decks</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <span class="opener">Collection</span>
-                            <ul>
-                                <li><a href="deckbuilding.html#search">Browse Cards</a></li>
-                                <li><a href="deckbuilding.html#stats">Statistics</a></li>
-                                <li><a href="deckbuilding.html#export">Export Data</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <span class="opener">Account</span>
-                            <ul id="accountMenu">
-                                <li><a href="login.html" id="menuLogin">Login</a></li>
-                                <li><a href="register.html" id="menuRegister">Register</a></li>
-                                <li><a href="#" id="menuLogout" style="display:none;">Logout</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </nav>
+        <nav id="menu">
+          <header class="major">
+            <h2>Menu</h2>
+          </header>
+          <ul>
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="card_addition.html">Add Cards</a></li>
+            <li><a href="deckbuilding.html">Build Decks</a></li>
+            <li>
+              <span class="opener" onclick="toggleSubmenu(event)">Collection</span>
+              <ul id="collectionMenu" style="display:none;">
+                <li><span id="totalCardsMenu">0 Cards</span></li>
+                <li><span id="uniqueCardsMenu">0 Unique</span></li>
+              </ul>
+            </li>
+          </ul>
+        </nav>
 
-                <!-- Collection Summary -->
-                <section>
-                    <header class="major">
-                        <h2>Collection</h2>
-                    </header>
-                    <div id="collectionSummary">
-                        <p style="color:#999; font-size:0.9em;">Loading...</p>
-                    </div>
-                </section>
-
-                <!-- Footer -->
-                <footer id="footer">
-                    <p class="copyright">&copy; MTG Archive by RB Labs.<br>
-                    <a href="https://www.buymeacoffee.com/yourusername" target="_blank" style="color:#f56a6a;">☕ Support</a><br>
-                    Design: <a href="https://html5up.net">HTML5 UP</a></p>
-                </footer>
-
-            </div>
-        </div>`,
-
-    header: (pageTitle = 'MTG Archive') => `
-        <!-- Header -->
-        <header id="header">
-            <a href="index.html" class="logo"><strong>MTG Archive</strong> by RB Labs</a>
-            <ul class="icons">
-                <li><span id="userDisplay" style="margin-right: 1em; color: #999; font-size:0.9em;"></span></li>
-                <li><a href="#" id="btnLogout" class="button small" style="display:none;">Logout</a></li>
-            </ul>
-        </header>`,
-
-    // Initialize sidebar and shared functionality
-    init: async function() {
-        // Load collection summary in sidebar
-        try {
-            const total = await window.pywebview.api.get_collection_count();
-            const decks = await window.pywebview.api.list_decks();
-            const collection = await window.pywebview.api.search_collection({ query: '', filters: {} });
-            
-            const uniqueNames = new Set();
-            if (Array.isArray(collection)) {
-                collection.forEach(card => uniqueNames.add(card.name));
-            }
-
-            const summary = document.getElementById('collectionSummary');
-            if (summary) {
-                summary.innerHTML = `
-                    <ul class="alt" style="margin:0; padding:0; list-style:none;">
-                        <li style="padding:0.5em 0; border-bottom:1px solid rgba(210,215,217,0.15);">
-                            <strong style="color:#f56a6a;">${total || 0}</strong> <span style="color:#999;">total cards</span>
-                        </li>
-                        <li style="padding:0.5em 0; border-bottom:1px solid rgba(210,215,217,0.15);">
-                            <strong style="color:#4c84ff;">${uniqueNames.size}</strong> <span style="color:#999;">unique</span>
-                        </li>
-                        <li style="padding:0.5em 0;">
-                            <strong style="color:#39c088;">${Array.isArray(decks) ? decks.length : 0}</strong> <span style="color:#999;">decks</span>
-                        </li>
-                    </ul>
-                    <ul class="actions" style="margin-top:1em;">
-                        <li><a href="card_addition.html" class="button small primary fit">Add Cards</a></li>
-                    </ul>
-                `;
-            }
-        } catch (error) {
-            console.error('Failed to load collection summary:', error);
-        }
-
-        // Check user login status
-        try {
-            const userInfo = await window.pywebview.api.current_user();
-            if (userInfo.logged_in) {
-                const user = userInfo.user;
-                document.getElementById('userDisplay').textContent = `${user.username}`;
-                document.getElementById('btnLogout').style.display = 'inline-block';
-                document.getElementById('menuLogout').style.display = 'block';
-                document.getElementById('menuLogin').style.display = 'none';
-                document.getElementById('menuRegister').style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Failed to check user status:', error);
-        }
-
-        // Quick search functionality
-        const quickSearchForm = document.getElementById('quickSearchForm');
-        if (quickSearchForm) {
-            quickSearchForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const query = document.getElementById('quickSearch').value;
-                if (!query.trim()) return;
-
-                try {
-                    const results = await window.pywebview.api.search_cards({ query, limit: 10 });
-                    const resultsDiv = document.getElementById('searchResults');
-                    
-                    if (results && results.length > 0) {
-                        resultsDiv.innerHTML = results.map(card => 
-                            `<div style="padding:0.5em; background:rgba(0,0,0,0.2); margin-bottom:0.5em; border-radius:4px; font-size:0.85em;">
-                                ${card}
-                            </div>`
-                        ).join('');
-                        resultsDiv.style.display = 'block';
-                    } else {
-                        resultsDiv.innerHTML = '<p style="color:#999; font-size:0.85em;">No results</p>';
-                        resultsDiv.style.display = 'block';
-                    }
-                } catch (error) {
-                    console.error('Search error:', error);
-                }
-            });
-        }
-
-        // Logout handlers
-        async function logout() {
-            try {
-                await window.pywebview.api.logout();
-                window.location.href = 'login.html';
-            } catch (error) {
-                console.error('Logout error:', error);
-                window.location.href = 'login.html';
-            }
-        }
-
-        const btnLogout = document.getElementById('btnLogout');
-        const menuLogout = document.getElementById('menuLogout');
-        if (btnLogout) btnLogout.addEventListener('click', (e) => { e.preventDefault(); logout(); });
-        if (menuLogout) menuLogout.addEventListener('click', (e) => { e.preventDefault(); logout(); });
-
-        // Highlight current page in menu
-        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-        document.querySelectorAll('#menu a').forEach(link => {
-            if (link.getAttribute('href') === currentPage) {
-                link.style.color = '#f56a6a';
-                link.style.fontWeight = 'bold';
-            }
-        });
-    }
+        <section>
+          <header class="major">
+            <h2>About</h2>
+          </header>
+          <p>MTG Archive is your personal Magic: The Gathering collection manager. Keep track of your cards, build decks, and organize your collection with ease.</p>
+        </section>
+      </div>
+    </div>
+  `
 };
 
-// Auto-initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => sharedNav.init());
-} else {
-    sharedNav.init();
+// Initialize user menu and auth state
+function initializeNav() {
+  const userMenuToggle = document.getElementById('userMenuToggle');
+  const userMenu = document.getElementById('userMenu');
+
+  if (userMenuToggle) {
+    userMenuToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      userMenu.style.display = userMenu.style.display === 'none' ? 'block' : 'none';
+    });
+  }
+
+  // Close menu when clicking elsewhere
+  document.addEventListener('click', (e) => {
+    if (userMenu && !userMenu.contains(e.target) && e.target !== userMenuToggle) {
+      userMenu.style.display = 'none';
+    }
+  });
+
+  // Check authentication and update user display
+  if (typeof firebaseDB !== 'undefined') {
+    (async () => {
+      try {
+        await firebaseDB.onAuthStateChanged(async (user) => {
+          if (user) {
+            const userInfo = await firebaseDB.getCurrentUserInfo();
+            const username = userInfo?.username || user.email.split('@')[0];
+            const email = user.email;
+
+            document.getElementById('userDisplay').textContent = username;
+            document.getElementById('userDisplayFull').textContent = username;
+            document.getElementById('userEmailDisplay').textContent = email;
+
+            // Load collection stats
+            loadCollectionStats();
+          } else {
+            // Not logged in, redirect to login
+            if (!window.location.pathname.includes('login.html') && !window.location.pathname.includes('register.html')) {
+              window.location.href = 'login.html';
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      }
+    })();
+  }
 }
+
+async function loadCollectionStats() {
+  try {
+    const count = await firebaseDB.getCollectionCount();
+    const cards = await firebaseDB.getCollectionCards();
+    const uniqueCount = new Set(cards.map(c => c.name)).size;
+
+    document.getElementById('totalCardsMenu').textContent = count + ' Cards';
+    document.getElementById('uniqueCardsMenu').textContent = uniqueCount + ' Unique';
+  } catch (error) {
+    console.error('Error loading stats:', error);
+  }
+}
+
+async function searchCollection(event) {
+  event.preventDefault();
+  const query = document.getElementById('collectionSearch').value;
+  // Store in sessionStorage to pass to collection page
+  sessionStorage.setItem('searchQuery', query);
+  window.location.href = 'card_addition.html';
+}
+
+function toggleSubmenu(event) {
+  const menu = event.target.nextElementSibling;
+  if (menu) {
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+async function logoutUser(event) {
+  event.preventDefault();
+  try {
+    await firebaseDB.logout();
+    window.location.href = 'login.html';
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+}
+
+// Initialize navigation when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeNav);
