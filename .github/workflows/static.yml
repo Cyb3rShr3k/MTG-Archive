@@ -1,4 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
+# This workflow deploys the contents of the web/ directory to GitHub Pages
 name: Deploy static content to Pages
 
 on:
