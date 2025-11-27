@@ -1,0 +1,164 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Login - MTG Archive</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="HTML5up/assets/css/main.css" />
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="firebase-db.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-container {
+            background: #242943;
+            padding: 3em;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            width: 100%;
+            max-width: 500px;
+            color: #fff;
+        }
+        .auth-container h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 0.5em;
+        }
+        .auth-container p.subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 2em;
+        }
+        .error {
+            background: rgba(245, 106, 106, 0.2);
+            border: 1px solid #f56a6a;
+            color: #f56a6a;
+            padding: 1em;
+            border-radius: 4px;
+            margin-bottom: 1.5em;
+            display: none;
+        }
+        .auth-links {
+            text-align: center;
+            margin-top: 1.5em;
+            padding-top: 1.5em;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .auth-links a {
+            color: #4c84ff;
+            text-decoration: none;
+        }
+        .auth-links a:hover {
+            color: #f56a6a;
+        }
+        .skip-link {
+            text-align: center;
+            margin-top: 1em;
+            font-size: 0.85em;
+        }
+        .skip-link a {
+            color: #666;
+            text-decoration: none;
+        }
+        .skip-link a:hover {
+            color: #888;
+        }
+    </style>
+</head>
+<body class="is-preload">
+
+    <div class="auth-container">
+        <h1>MTG Archive</h1>
+        <p class="subtitle">Sign in to your collection</p>
+        
+        <div id="errorMsg" class="error"></div>
+        
+        <form id="loginForm">
+            <div class="row gtr-uniform">
+                <div class="col-12">
+                    <input type="text" id="username" name="username" placeholder="Username" required autofocus autocomplete="username" />
+                </div>
+                <div class="col-12">
+                    <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password" />
+                </div>
+                <div class="col-12">
+                    <ul class="actions fit">
+                        <li><button type="submit" class="button primary fit">Login</button></li>
+                    </ul>
+                </div>
+            </div>
+        </form>
+        
+        <div class="auth-links">
+            <p>Don't have an account? <a href="register.html">Register here</a></p>
+        </div>
+        
+        <div class="skip-link">
+            <p><a href="index.html">Continue as guest</a></p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="HTML5up/assets/js/jquery.min.js"></script>
+    <script src="HTML5up/assets/js/browser.min.js"></script>
+    <script src="HTML5up/assets/js/breakpoints.min.js"></script>
+    <script src="HTML5up/assets/js/util.js"></script>
+    <script src="HTML5up/assets/js/main.js"></script>
+
+    <script>
+        // Wait for Firebase and firebaseDB to load
+        async function initializeLogin() {
+            // Check if already logged in
+            try {
+                await firebaseDB.onAuthStateChanged(user => {
+                    if (user) {
+                        window.location.href = 'index.html';
+                    }
+                });
+            } catch (error) {
+                console.log('Auth check complete');
+            }
+        }
+
+        // Start initialization when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeLogin);
+        } else {
+            initializeLogin();
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            try {
+                const result = await firebaseDB.login(email, password);
+                
+                if (result.success) {
+                    window.location.href = 'index.html';
+                } else {
+                    errorMsg.textContent = result.error || 'Login failed. Please check your credentials.';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Connection error. Please try again.';
+                errorMsg.style.display = 'block';
+                console.error(error);
+            }
+        });
+    </script>
+
+</body>
+</html>

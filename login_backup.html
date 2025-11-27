@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login - MTG Archive</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="api.js"></script>
+  <style>
+    .login-container {
+      max-width: 400px;
+      margin: 100px auto;
+      padding: 30px;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .login-header h1 {
+      color: #FFD700;
+      font-family: 'Cinzel', serif;
+      margin: 0 0 10px 0;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      color: #ccc;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid #444;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #FFD700;
+    }
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+      border: none;
+      border-radius: 5px;
+      color: #000;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-login:hover {
+      background: linear-gradient(135deg, #FFA500 0%, #FFD700 100%);
+    }
+    .error-msg {
+      color: #ff4444;
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+    .register-link {
+      text-align: center;
+      margin-top: 20px;
+      color: #ccc;
+      font-size: 14px;
+    }
+    .register-link a {
+      color: #FFD700;
+      text-decoration: none;
+    }
+    .register-link a:hover {
+      text-decoration: underline;
+    }
+    .skip-link {
+      text-align: center;
+      margin-top: 15px;
+    }
+    .skip-link a {
+      color: #888;
+      font-size: 12px;
+      text-decoration: none;
+    }
+    .skip-link a:hover {
+      color: #aaa;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body class="bg-main">
+  <div class="login-container">
+    <div class="login-header">
+      <h1>MTG Archive</h1>
+      <p style="color: #888; margin: 0;">Login to Your Collection</p>
+    </div>
+    
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required autocomplete="username">
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+      </div>
+      
+      <button type="submit" class="btn-login">Login</button>
+      
+      <div id="errorMsg" class="error-msg" style="display: none;"></div>
+    </form>
+    
+    <div class="register-link">
+      Don't have an account? <a href="register.html">Register here</a>
+    </div>
+    
+    <div class="skip-link">
+      <a href="index.html">Continue as guest (single-user mode)</a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorMsg = document.getElementById('errorMsg');
+      
+      try {
+        const result = await window.pywebview.api.login({ username, password });
+        
+        if (result.success) {
+          // Redirect to main page
+          window.location.href = 'index.html';
+        } else {
+          errorMsg.textContent = result.error || 'Login failed';
+          errorMsg.style.display = 'block';
+        }
+      } catch (error) {
+        errorMsg.textContent = 'Connection error. Please try again.';
+        errorMsg.style.display = 'block';
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,744 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>MTG Archive - Deck Building</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
+	<!-- Firebase Scripts -->
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+	<script src="firebase-config.js"></script>
+	<script src="firebase-db.js"></script>
+	<script src="shared-nav.js"></script>
+	<style>
+		.deck-card {
+			cursor: pointer;
+			transition: all 0.3s ease;
+			border: 2px solid transparent;
+			padding: 1.5em;
+			border-radius: 4px;
+			background: linear-gradient(135deg, rgba(245, 106, 106, 0.05) 0%, rgba(76, 132, 255, 0.05) 100%);
+		}
+		.deck-card:hover {
+			transform: translateY(-3px);
+			border-color: #f56a6a;
+			box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+		}
+		.deck-card.selected {
+			border-color: #4c84ff;
+			background: rgba(76, 132, 255, 0.15);
+		}
+		.deck-card h3 {
+			margin: 0 0 0.5em 0;
+			color: #f56a6a;
+		}
+		.deck-card p {
+			margin: 0.25em 0;
+			color: #999;
+			font-size: 0.9em;
+		}
+		.deck-card .deck-stats {
+			display: flex;
+			gap: 1em;
+			margin-top: 1em;
+			padding-top: 1em;
+			border-top: 1px solid rgba(255,255,255,0.1);
+		}
+		.deck-card .deck-stats span {
+			font-size: 0.8em;
+			color: #666;
+		}
+		.modal {
+			display: none;
+			position: fixed;
+			z-index: 1000;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+			background-color: rgba(0,0,0,0.6);
+		}
+		.modal-content {
+			background-color: #242943;
+			margin: 3% auto;
+			padding: 2em;
+			border: 1px solid #888;
+			border-radius: 4px;
+			width: 90%;
+			max-width: 1200px;
+			max-height: 85vh;
+			overflow-y: auto;
+			color: #fff;
+		}
+		.modal-close {
+			color: #aaa;
+			float: right;
+			font-size: 28px;
+			font-weight: bold;
+			cursor: pointer;
+		}
+		.modal-close:hover {
+			color: #f56a6a;
+		}
+		.card-search-result {
+			padding: 0.5em;
+			border: 1px solid #333;
+			border-radius: 4px;
+			margin-bottom: 0.5em;
+			cursor: pointer;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			transition: all 0.2s ease;
+		}
+		.card-search-result:hover {
+			background: rgba(245, 106, 106, 0.1);
+			border-color: #f56a6a;
+		}
+		.deck-table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+		.deck-table th {
+			background: #242943;
+			color: #fff;
+			padding: 0.75em;
+			text-align: left;
+			border-bottom: 2px solid #f56a6a;
+		}
+		.deck-table td {
+			padding: 0.5em 0.75em;
+			border-bottom: 1px solid #ddd;
+		}
+		.deck-table tr:nth-child(even) {
+			background: #f9f9f9;
+		}
+		.deck-table tr:hover {
+			background: #f0f0f0;
+		}
+		.mana-curve {
+			display: flex;
+			align-items: flex-end;
+			gap: 0.25em;
+			height: 60px;
+		}
+		.mana-curve-bar {
+			flex: 1;
+			background: linear-gradient(to top, #f56a6a, #4c84ff);
+			border-radius: 2px 2px 0 0;
+			position: relative;
+			min-width: 20px;
+		}
+		.mana-curve-bar span {
+			position: absolute;
+			top: -20px;
+			left: 50%;
+			transform: translateX(-50%);
+			font-size: 0.7em;
+			color: #666;
+		}
+		.preview-card {
+			display: none;
+			position: fixed;
+			pointer-events: none;
+			z-index: 2000;
+			background: white;
+			border: 2px solid #242943;
+			border-radius: 8px;
+			padding: 4px;
+			box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+		}
+		.preview-card img {
+			max-width: 260px;
+			height: auto;
+			border-radius: 4px;
+		}
+	</style>
+</head>
+<body class="is-preload">
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<div id="main">
+			<div class="inner">
+
+			<!-- Header -->
+			<div id="headerContainer"></div>				<!-- Deck Actions -->
+				<section>
+					<ul class="actions">
+						<li><button class="button primary icon solid fa-plus" onclick="createNewDeck()">Create New Deck</button></li>
+						<li><button class="button icon solid fa-download" onclick="openPreconModal()">Import Precon</button></li>
+						<li><button class="button icon solid fa-edit" id="editDeckBtn" onclick="editSelectedDeck()" disabled>Edit Deck</button></li>
+						<li><button class="button icon solid fa-trash" id="deleteDeckBtn" onclick="deleteSelectedDeck()" disabled>Delete Deck</button></li>
+					</ul>
+				</section>
+
+				<!-- Deck List -->
+				<section>
+					<header class="major">
+						<h2>Your Decks</h2>
+					</header>
+					<div id="deckList" class="row gtr-200"></div>
+				</section>
+
+			</div>
+		</div>
+
+		<!-- Sidebar -->
+		<div id="sidebarContainer"></div>
+
+	</div>
+
+	<!-- Create Deck Modal -->
+	<div id="createDeckModal" class="modal">
+		<div class="modal-content">
+			<span class="modal-close" onclick="closeModal('createDeckModal')">&times;</span>
+			<h2>Create New Deck</h2>
+			<form id="createDeckForm">
+				<div class="row gtr-uniform">
+					<div class="col-6 col-12-xsmall">
+						<label for="deckName">Deck Name</label>
+						<input type="text" id="deckName" name="deckName" required />
+					</div>
+					<div class="col-6 col-12-xsmall">
+						<label for="deckType">Deck Type</label>
+						<select id="deckType" name="deckType">
+							<option value="Standard">Standard</option>
+							<option value="Commander">Commander</option>
+							<option value="Modern">Modern</option>
+							<option value="Legacy">Legacy</option>
+							<option value="Vintage">Vintage</option>
+							<option value="Pauper">Pauper</option>
+							<option value="Pioneer">Pioneer</option>
+						</select>
+					</div>
+					<div class="col-12" id="commanderField" style="display:none;">
+						<label for="commanderName">Commander</label>
+						<input type="text" id="commanderName" name="commanderName" placeholder="Search for commander..." />
+						<div id="commanderResults" style="margin-top:0.5em;"></div>
+					</div>
+					<div class="col-12">
+						<ul class="actions">
+							<li><button type="submit" class="button primary">Create</button></li>
+							<li><button type="button" class="button" onclick="closeModal('createDeckModal')">Cancel</button></li>
+						</ul>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- Edit Deck Modal -->
+	<div id="editDeckModal" class="modal">
+		<div class="modal-content">
+			<span class="modal-close" onclick="closeModal('editDeckModal')">&times;</span>
+			<h2 id="editDeckTitle">Edit Deck</h2>
+			
+			<div class="row gtr-uniform">
+				<div class="col-6 col-12-small">
+					<h3>Search Cards</h3>
+					<input type="text" id="cardSearch" placeholder="Search by name..." />
+					<div id="searchResults" style="max-height:400px; overflow-y:auto; margin-top:1em;"></div>
+				</div>
+				<div class="col-6 col-12-small">
+					<h3>Current Deck (<span id="deckCardCount">0</span> cards)</h3>
+					<div id="currentDeckCards" style="max-height:400px; overflow-y:auto;"></div>
+					
+					<h4 style="margin-top:2em;">Mana Curve</h4>
+					<div id="manaCurve" class="mana-curve"></div>
+				</div>
+			</div>
+			
+			<ul class="actions" style="margin-top:2em;">
+				<li><button class="button primary" onclick="saveDeckChanges()">Save Changes</button></li>
+				<li><button class="button" onclick="closeModal('editDeckModal')">Cancel</button></li>
+			</ul>
+		</div>
+	</div>
+
+	<!-- Precon Import Modal -->
+	<div id="preconModal" class="modal">
+		<div class="modal-content">
+			<span class="modal-close" onclick="closeModal('preconModal')">&times;</span>
+			<h2>Import Preconstructed Deck</h2>
+			
+			<div class="row gtr-uniform">
+				<div class="col-12">
+					<input type="text" id="preconSearch" placeholder="Search precons by name or set..." />
+				</div>
+				<div class="col-12">
+					<div id="preconResults" style="max-height:500px; overflow-y:auto; margin-top:1em;"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Card Preview -->
+	<div id="cardPreview" class="preview-card">
+		<img id="cardPreviewImg" src="" alt="Card Preview" />
+	</div>
+
+	<!-- Scripts -->
+	<script src="HTML5up/assets/js/jquery.min.js"></script>
+	<script src="HTML5up/assets/js/browser.min.js"></script>
+	<script src="HTML5up/assets/js/breakpoints.min.js"></script>
+	<script src="HTML5up/assets/js/util.js"></script>
+	<script src="HTML5up/assets/js/main.js"></script>
+
+	<script>
+		let allDecks = [];
+		let selectedDeck = null;
+		let editingDeck = null;
+		let currentDeckCards = [];
+		let searchTimeout = null;
+
+		// Wait for Firebase
+		function waitForFirebaseDB() {
+			return new Promise(resolve => {
+				const checkFirebase = setInterval(() => {
+					if (typeof firebaseDB !== 'undefined') {
+						clearInterval(checkFirebase);
+						resolve();
+					}
+				}, 100);
+				setTimeout(() => {
+					clearInterval(checkFirebase);
+					resolve();
+				}, 5000);
+			});
+		}
+
+		// Load all decks
+		async function loadDecks() {
+			try {
+				const decks = await firebaseDB.getDecks();
+				allDecks = decks || [];
+				renderDecks();
+			} catch (error) {
+				console.error('Failed to load decks:', error);
+			}
+		}
+
+		function renderDecks() {
+			const container = document.getElementById('deckList');
+			
+			if (allDecks.length === 0) {
+				container.innerHTML = '<div class="col-12"><p>No decks yet. Create your first deck!</p></div>';
+				return;
+			}
+
+			const html = allDecks.map(deck => `
+				<div class="col-4 col-12-medium">
+					<div class="deck-card" onclick="selectDeck('${deck.id}')">
+						<h3>${deck.name || 'Unnamed Deck'}</h3>
+						<p><strong>Type:</strong> ${deck.deckType || 'Standard'}</p>
+						${deck.commander ? `<p><strong>Commander:</strong> ${deck.commander}</p>` : ''}
+						${deck.colors ? `<p><strong>Colors:</strong> ${deck.colors}</p>` : ''}
+						<div class="deck-stats">
+							<span><strong>${(deck.cards && deck.cards.length) || 0}</strong> cards</span>
+						</div>
+					</div>
+				</div>
+			`).join('');
+
+			container.innerHTML = html;
+		}
+
+		function selectDeck(deckId) {
+			// Remove previous selection
+			document.querySelectorAll('.deck-card').forEach(el => el.classList.remove('selected'));
+			
+			// Find and select new deck
+			selectedDeck = allDecks.find(d => d.id === deckId);
+			
+			if (selectedDeck) {
+				event.currentTarget.classList.add('selected');
+				document.getElementById('editDeckBtn').disabled = false;
+				document.getElementById('deleteDeckBtn').disabled = false;
+			}
+		}
+
+		// Create new deck
+		function createNewDeck() {
+			document.getElementById('createDeckModal').style.display = 'block';
+		}
+
+		document.getElementById('deckType').addEventListener('change', function() {
+			const commanderField = document.getElementById('commanderField');
+			commanderField.style.display = this.value === 'Commander' ? 'block' : 'none';
+		});
+
+		document.getElementById('commanderName').addEventListener('input', async function() {
+			const query = this.value.trim();
+			const resultsDiv = document.getElementById('commanderResults');
+			
+			if (query.length < 3) {
+				resultsDiv.innerHTML = '';
+				return;
+			}
+
+			clearTimeout(searchTimeout);
+			searchTimeout = setTimeout(async () => {
+				try {
+					const response = await fetch(`https://api.scryfall.com/cards/search?q=type:Legendary type:Creature "${query}"`);
+					if (!response.ok) throw new Error('Search failed');
+					
+					const data = await response.json();
+					const commanders = data.data ? data.data.slice(0, 10) : [];
+
+					if (commanders.length > 0) {
+						resultsDiv.innerHTML = commanders.map(card => `
+							<div class="card-search-result" onclick="selectCommander('${card.name.replace(/'/g, "\\'")}')">
+								${card.name} (${card.set || 'Unknown'})
+							</div>
+						`).join('');
+					} else {
+						resultsDiv.innerHTML = '<p>No legendary creatures found.</p>';
+					}
+				} catch (error) {
+					console.error('Commander search error:', error);
+				}
+			}, 300);
+		});
+
+		function selectCommander(name) {
+			document.getElementById('commanderName').value = name;
+			document.getElementById('commanderResults').innerHTML = '';
+		}
+
+		document.getElementById('createDeckForm').addEventListener('submit', async function(e) {
+			e.preventDefault();
+			
+			const deckName = document.getElementById('deckName').value;
+			const deckType = document.getElementById('deckType').value;
+			const commanderName = deckType === 'Commander' ? document.getElementById('commanderName').value : null;
+
+			try {
+				await firebaseDB.createDeck({
+					name: deckName,
+					deckType: deckType,
+					commander: commanderName || null,
+					cards: [],
+					colors: [],
+					description: ''
+				});
+				alert('Deck created successfully!');
+				closeModal('createDeckModal');
+				document.getElementById('createDeckForm').reset();
+				await loadDecks();
+			} catch (error) {
+				console.error('Deck creation error:', error);
+				alert('Failed to create deck.');
+			}
+		});
+
+		// Edit deck
+		async function editSelectedDeck() {
+			if (!selectedDeck) return;
+			
+			editingDeck = selectedDeck;
+			document.getElementById('editDeckTitle').textContent = `Edit: ${selectedDeck.name}`;
+			document.getElementById('editDeckModal').style.display = 'block';
+			
+			await loadDeckCards();
+		}
+
+		async function loadDeckCards() {
+			try {
+				const deck = await firebaseDB.getDeck(editingDeck.id);
+				currentDeckCards = deck.cards || [];
+				renderDeckCards();
+				updateManaCurve();
+			} catch (error) {
+				console.error('Failed to load deck cards:', error);
+			}
+		}
+
+		function renderDeckCards() {
+			const container = document.getElementById('currentDeckCards');
+			document.getElementById('deckCardCount').textContent = currentDeckCards.length;
+
+			if (currentDeckCards.length === 0) {
+				container.innerHTML = '<p>No cards in deck yet.</p>';
+				return;
+			}
+
+			const html = currentDeckCards.map((card, idx) => `
+				<div class="card-search-result">
+					<span>${card.name} (${card.quantity || 1}x)</span>
+					<button class="button small" onclick="removeCardFromDeck(${idx})">Remove</button>
+				</div>
+			`).join('');
+
+			container.innerHTML = html;
+		}
+
+		function removeCardFromDeck(index) {
+			currentDeckCards.splice(index, 1);
+			renderDeckCards();
+			updateManaCurve();
+		}
+
+		document.getElementById('cardSearch').addEventListener('input', async function() {
+			const query = this.value.trim();
+			const resultsDiv = document.getElementById('searchResults');
+			
+			if (query.length < 3) {
+				resultsDiv.innerHTML = '';
+				return;
+			}
+
+			clearTimeout(searchTimeout);
+			searchTimeout = setTimeout(async () => {
+				try {
+					const results = await firebaseDB.searchCollection(query);
+					
+					if (results && results.length > 0) {
+						resultsDiv.innerHTML = results.map(card => `
+							<div class="card-search-result" onclick="addCardToDeck('${card.name.replace(/'/g, "\\'")}')">
+								<span>${card.name} (${card.set || 'N/A'})</span>
+								<span class="icon solid fa-plus" style="color:#39c088;"></span>
+							</div>
+						`).join('');
+					} else {
+						resultsDiv.innerHTML = '<p>No cards found in collection.</p>';
+					}
+				} catch (error) {
+					console.error('Card search error:', error);
+				}
+			}, 300);
+		});
+
+		async function addCardToDeck(cardName) {
+			try {
+				const results = await firebaseDB.searchCollection(cardName);
+				const card = results && results[0];
+				
+				if (card) {
+					// Add to current deck
+					currentDeckCards.push({
+						name: card.name,
+						set: card.set,
+						cmc: card.cmc || 0,
+						quantity: 1
+					});
+					renderDeckCards();
+					updateManaCurve();
+					document.getElementById('cardSearch').value = '';
+					document.getElementById('searchResults').innerHTML = '';
+				}
+			} catch (error) {
+				console.error('Add card error:', error);
+			}
+		}
+
+		function updateManaCurve() {
+			const curve = {};
+			currentDeckCards.forEach(card => {
+				const cmc = Math.min(card.cmc || 0, 7);
+				curve[cmc] = (curve[cmc] || 0) + 1;
+			});
+
+			const maxCount = Math.max(...Object.values(curve), 1);
+			const html = [0, 1, 2, 3, 4, 5, 6, 7].map(cmc => {
+				const count = curve[cmc] || 0;
+				const height = (count / maxCount) * 100;
+				return `<div class="mana-curve-bar" style="height:${height}%"><span>${count}</span></div>`;
+			}).join('');
+
+			document.getElementById('manaCurve').innerHTML = html;
+		}
+
+		async function saveDeckChanges() {
+			try {
+				await firebaseDB.updateDeck(editingDeck.id, {
+					...editingDeck,
+					cards: currentDeckCards
+				});
+				alert('Deck saved successfully!');
+				closeModal('editDeckModal');
+				await loadDecks();
+			} catch (error) {
+				console.error('Save deck error:', error);
+				alert('Failed to save deck.');
+			}
+		}
+
+		// Delete deck
+		async function deleteSelectedDeck() {
+			if (!selectedDeck) return;
+			
+			if (confirm(`Are you sure you want to delete "${selectedDeck.name}"?`)) {
+				try {
+					await firebaseDB.deleteDeck(selectedDeck.id);
+					alert('Deck deleted successfully!');
+					selectedDeck = null;
+					document.getElementById('editDeckBtn').disabled = true;
+					document.getElementById('deleteDeckBtn').disabled = true;
+					await loadDecks();
+				} catch (error) {
+					console.error('Delete deck error:', error);
+					alert('Failed to delete deck.');
+				}
+			}
+		}
+
+		// Precon modal management
+		function openPreconModal() {
+			document.getElementById('preconModal').style.display = 'block';
+			document.getElementById('preconResults').innerHTML = '<p>Enter a deck name or set to search precons...</p>';
+		}
+
+		// Sample precons database (can be replaced with API call later)
+		const preconDatabase = [
+			{ name: 'Planeswalker Fire Mastery', set: '2024', colors: 'RW', cards: [{ name: 'Lightning Bolt', quantity: 3 }, { name: 'Mountain', quantity: 10 }] },
+			{ name: 'Mystic Reflection', set: '2024', colors: 'UG', cards: [{ name: 'Counterspell', quantity: 2 }, { name: 'Island', quantity: 10 }] },
+			{ name: 'Eldritch Evocation', set: '2024', colors: 'UBR', cards: [{ name: 'Dark Ritual', quantity: 3 }, { name: 'Swamp', quantity: 8 }] }
+		];
+
+		function searchPrecons() {
+			const searchQuery = document.getElementById('preconSearch').value.toLowerCase();
+			const resultsDiv = document.getElementById('preconResults');
+
+			if (!searchQuery) {
+				resultsDiv.innerHTML = '<p>Enter a deck name or set to search...</p>';
+				return;
+			}
+
+			const filteredPrecons = preconDatabase.filter(p =>
+				p.name.toLowerCase().includes(searchQuery) ||
+				p.set.toLowerCase().includes(searchQuery)
+			);
+
+			if (filteredPrecons.length === 0) {
+				resultsDiv.innerHTML = '<p>No precons found. Try another search.</p>';
+				return;
+			}
+
+			let html = '';
+			filteredPrecons.forEach((precon, index) => {
+				html += `
+					<div style="border:1px solid #ddd; padding:1em; margin-bottom:1em; border-radius:4px; background:#f9f9f9;">
+						<h4 style="margin:0 0 0.5em 0;">${escapeHtml(precon.name)}</h4>
+						<p style="margin:0 0 0.5em 0; font-size:0.9em; color:#666;">
+							<strong>Set:</strong> ${escapeHtml(precon.set)} | <strong>Colors:</strong> ${escapeHtml(precon.colors)}
+						</p>
+						<button class="button small primary" data-deck-index="${index}" onclick="importPreconByIndex(this.dataset.deckIndex)">
+							Import Deck
+						</button>
+					</div>
+				`;
+			});
+
+			resultsDiv.innerHTML = html;
+		}
+
+		function escapeHtml(text) {
+			const div = document.createElement('div');
+			div.textContent = text;
+			return div.innerHTML;
+		}
+
+		async function importPreconByIndex(index) {
+			const precon = preconDatabase[parseInt(index)];
+			if (!precon) return;
+
+			try {
+				const deckData = {
+					name: `${precon.name} (Imported)`,
+					deckType: 'Constructed',
+					colors: precon.colors,
+					description: `Imported preconstructed deck: ${precon.name}`,
+					cards: precon.cards.map(c => ({ name: c.name, quantity: c.quantity }))
+				};
+
+				const result = await firebaseDB.createDeck(deckData);
+				if (result.success) {
+					closeModal('preconModal');
+					alert(`Deck "${precon.name}" imported successfully!`);
+					loadDecks();
+				} else {
+					alert('Failed to import deck: ' + result.error);
+				}
+			} catch (error) {
+				console.error('Import error:', error);
+				alert('Error importing precon: ' + error.message);
+			}
+		}
+
+		async function importPrecon(deckName, colors) {
+			const precon = preconDatabase.find(p => p.name === deckName);
+			if (!precon) return;
+
+			try {
+				const deckData = {
+					name: `${deckName} (Imported)`,
+					deckType: 'Constructed',
+					colors: colors,
+					description: `Imported preconstructed deck: ${deckName}`,
+					cards: precon.cards.map(c => ({ name: c.name, quantity: c.quantity }))
+				};
+
+				const result = await firebaseDB.createDeck(deckData);
+				if (result.success) {
+					closeModal('preconModal');
+					alert(`Deck "${deckName}" imported successfully!`);
+					loadDecks();
+				} else {
+					alert('Failed to import deck: ' + result.error);
+				}
+			} catch (error) {
+				console.error('Import error:', error);
+				alert('Error importing precon: ' + error.message);
+			}
+		}
+
+		// Add event listener for precon search
+		document.addEventListener('DOMContentLoaded', () => {
+			const preconSearch = document.getElementById('preconSearch');
+			if (preconSearch) {
+				preconSearch.addEventListener('input', searchPrecons);
+			}
+		});
+
+		// Modal management
+		function closeModal(modalId) {
+			document.getElementById(modalId).style.display = 'none';
+		}
+
+		window.onclick = function(event) {
+			if (event.target.classList.contains('modal')) {
+				event.target.style.display = 'none';
+			}
+		}
+
+		// Initialize
+		window.addEventListener('DOMContentLoaded', async () => {
+			// Inject navigation
+			if (typeof sharedNav !== 'undefined') {
+				document.getElementById('headerContainer').innerHTML = sharedNav.header('Deck Building');
+				document.getElementById('sidebarContainer').innerHTML = sharedNav.sidebar;
+				initializeNav();
+			}
+
+			await waitForFirebaseDB();
+
+			// Check authentication
+			firebaseDB.onAuthStateChanged(user => {
+				if (!user) {
+					window.location.href = 'login.html';
+					return;
+				}
+
+				loadDecks();
+			});
+		});
+	</script>
+
+</body>
+</html>

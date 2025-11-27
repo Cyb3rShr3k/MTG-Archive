@@ -1,0 +1,393 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>MTG Archive - Your Card Collection</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
+	<script src="api.js"></script>
+	<style>
+		/* Custom styles for MTG Archive */
+		.stat-card {
+			background: rgba(0,0,0,0.2);
+			padding: 1.5em;
+			border-radius: 4px;
+			text-align: center;
+			border-left: 4px solid #f56a6a;
+		}
+		.stat-card h3 {
+			margin: 0 0 0.5em 0;
+			color: #f56a6a;
+			font-size: 2em;
+		}
+		.stat-card p {
+			margin: 0;
+			color: #999;
+			text-transform: uppercase;
+			font-size: 0.8em;
+			letter-spacing: 0.25em;
+		}
+		.card-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+			gap: 1em;
+			margin-top: 2em;
+		}
+		.card-item {
+			background: rgba(0,0,0,0.1);
+			padding: 1em;
+			border-radius: 4px;
+			border: 1px solid rgba(255,255,255,0.1);
+		}
+		.user-info {
+			background: rgba(76, 132, 255, 0.1);
+			padding: 1em;
+			border-radius: 4px;
+			margin-bottom: 2em;
+			border-left: 4px solid #4c84ff;
+		}
+		#loadingOverlay {
+			display: none;
+			position: fixed;
+			inset: 0;
+			background: rgba(0,0,0,0.8);
+			z-index: 10000;
+			align-items: center;
+			justify-content: center;
+		}
+		.loader {
+			border: 5px solid #f3f3f3;
+			border-top: 5px solid #f56a6a;
+			border-radius: 50%;
+			width: 50px;
+			height: 50px;
+			animation: spin 1s linear infinite;
+		}
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
+	</style>
+</head>
+<body class="is-preload">
+
+	<!-- Loading Overlay -->
+	<div id="loadingOverlay">
+		<div class="loader"></div>
+	</div>
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<div id="main">
+			<div class="inner">
+
+				<!-- Header -->
+				<header id="header">
+					<a href="index.html" class="logo"><strong>MTG Archive</strong> by RB Labs</a>
+					<ul class="icons">
+						<li><span id="userDisplay" style="margin-right: 1em; color: #999;"></span></li>
+						<li><a href="#" id="btnLogout" class="button small" style="display:none;">Logout</a></li>
+					</ul>
+				</header>
+
+				<!-- User Info Banner -->
+				<div id="userBanner" style="display:none;" class="user-info">
+					<p style="margin:0;"><strong>Welcome back, <span id="userName"></span>!</strong> | Last login: <span id="lastLogin"></span></p>
+				</div>
+
+				<!-- Banner -->
+				<section id="banner">
+					<div class="content">
+						<header>
+							<h1>Welcome to<br />MTG Archive</h1>
+							<p>Manage your Magic: The Gathering card collection</p>
+						</header>
+						<p>Build decks, track your collection, and explore your cards with our comprehensive collection management tool. Import cards from CSV, scan with OCR, or manually add cards to your growing collection.</p>
+						<ul class="actions">
+							<li><a href="card_addition.html" class="button big">Add Cards</a></li>
+							<li><a href="deckbuilding.html" class="button big">Build Decks</a></li>
+						</ul>
+					</div>
+					<span class="image object">
+						<img src="assets/icons/MTG Icon.ico" alt="MTG" style="width:100%; max-width:300px;" />
+					</span>
+				</section>
+
+				<!-- Collection Stats -->
+				<section>
+					<header class="major">
+						<h2>Collection Overview</h2>
+					</header>
+					<div class="row gtr-200">
+						<div class="col-4 col-12-medium">
+							<div class="stat-card">
+								<h3 id="totalCards">0</h3>
+								<p>Total Cards</p>
+							</div>
+						</div>
+						<div class="col-4 col-12-medium">
+							<div class="stat-card" style="border-left-color: #4c84ff;">
+								<h3 id="totalDecks">0</h3>
+								<p>Decks Built</p>
+							</div>
+						</div>
+						<div class="col-4 col-12-medium">
+							<div class="stat-card" style="border-left-color: #39c088;">
+								<h3 id="uniqueCards">0</h3>
+								<p>Unique Cards</p>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Quick Actions -->
+				<section>
+					<header class="major">
+						<h2>Quick Actions</h2>
+					</header>
+					<div class="features">
+						<article>
+							<span class="icon solid fa-plus"></span>
+							<div class="content">
+								<h3><a href="card_addition.html">Add Cards</a></h3>
+								<p>Add cards to your collection via CSV import, OCR scanning, or manual entry.</p>
+							</div>
+						</article>
+						<article>
+							<span class="icon solid fa-layer-group"></span>
+							<div class="content">
+								<h3><a href="deckbuilding.html">Build Decks</a></h3>
+								<p>Create and manage decks from your collection with advanced filtering.</p>
+							</div>
+						</article>
+						<article>
+							<span class="icon solid fa-search"></span>
+							<div class="content">
+								<h3><a href="deckbuilding.html#search">Search Collection</a></h3>
+								<p>Find cards quickly with powerful search and filter options.</p>
+							</div>
+						</article>
+						<article>
+							<span class="icon solid fa-download"></span>
+							<div class="content">
+								<h3><a href="deckbuilding.html#precon">Import Precon Decks</a></h3>
+								<p>Import complete preconstructed decks from our database.</p>
+							</div>
+						</article>
+					</div>
+				</section>
+
+				<!-- Recent Activity -->
+				<section id="recentActivity" style="display:none;">
+					<header class="major">
+						<h2>Recent Decks</h2>
+					</header>
+					<div id="recentDecks" class="posts">
+						<!-- Populated by JavaScript -->
+					</div>
+				</section>
+
+			</div>
+		</div>
+
+		<!-- Sidebar -->
+		<div id="sidebar">
+			<div class="inner">
+
+				<!-- Search -->
+				<section id="search" class="alt">
+					<form id="quickSearchForm">
+						<input type="text" name="query" id="quickSearch" placeholder="Quick card search..." />
+					</form>
+					<div id="searchResults" style="margin-top:1em; display:none;"></div>
+				</section>
+
+				<!-- Menu -->
+				<nav id="menu">
+					<header class="major">
+						<h2>Menu</h2>
+					</header>
+					<ul>
+						<li><a href="index.html">Dashboard</a></li>
+						<li><a href="card_addition.html">Add Cards</a></li>
+						<li><a href="deckbuilding.html">Deck Building</a></li>
+						<li>
+							<span class="opener">Import Options</span>
+							<ul>
+								<li><a href="card_addition.html#csv">Import from CSV</a></li>
+								<li><a href="card_addition.html#scan">Scan Cards (OCR)</a></li>
+								<li><a href="deckbuilding.html#precon">Import Precon Deck</a></li>
+							</ul>
+						</li>
+						<li>
+							<span class="opener">Account</span>
+							<ul>
+								<li><a href="login.html">Login</a></li>
+								<li><a href="register.html">Register</a></li>
+								<li><a href="#" id="menuLogout">Logout</a></li>
+							</ul>
+						</li>
+					</ul>
+				</nav>
+
+				<!-- Collection Summary -->
+				<section>
+					<header class="major">
+						<h2>Collection Summary</h2>
+					</header>
+					<div id="collectionSummary">
+						<p style="color:#999;">Loading collection data...</p>
+					</div>
+				</section>
+
+				<!-- Footer -->
+				<footer id="footer">
+					<p class="copyright">&copy; MTG Archive by RB Labs. All rights reserved.<br>
+					<a href="https://www.buymeacoffee.com/yourusername" target="_blank">☕ Support Development</a><br>
+					Design: <a href="https://html5up.net">HTML5 UP</a></p>
+				</footer>
+
+			</div>
+		</div>
+
+	</div>
+
+	<!-- Scripts -->
+	<script src="HTML5up/assets/js/jquery.min.js"></script>
+	<script src="HTML5up/assets/js/browser.min.js"></script>
+	<script src="HTML5up/assets/js/breakpoints.min.js"></script>
+	<script src="HTML5up/assets/js/util.js"></script>
+	<script src="HTML5up/assets/js/main.js"></script>
+	
+	<script>
+		let currentUser = null;
+
+		async function init() {
+			try {
+				// Check if user is logged in
+				const userInfo = await window.pywebview.api.current_user();
+				if (userInfo.logged_in) {
+					currentUser = userInfo.user;
+					displayUserInfo();
+				}
+
+				// Load collection stats
+				await loadStats();
+				await loadRecentDecks();
+			} catch (error) {
+				console.error('Init error:', error);
+			}
+		}
+
+		function displayUserInfo() {
+			if (currentUser) {
+				document.getElementById('userDisplay').textContent = `Logged in as ${currentUser.username}`;
+				document.getElementById('btnLogout').style.display = 'inline-block';
+				document.getElementById('userBanner').style.display = 'block';
+				document.getElementById('userName').textContent = currentUser.username;
+				if (currentUser.last_login) {
+					document.getElementById('lastLogin').textContent = new Date(currentUser.last_login).toLocaleDateString();
+				}
+			}
+		}
+
+		async function loadStats() {
+			try {
+				const total = await window.pywebview.api.get_collection_count();
+				document.getElementById('totalCards').textContent = total || 0;
+
+				const decks = await window.pywebview.api.list_decks();
+				document.getElementById('totalDecks').textContent = Array.isArray(decks) ? decks.length : 0;
+
+				// Get unique cards count
+				const collection = await window.pywebview.api.search_collection({ query: '', filters: {} });
+				const uniqueNames = new Set();
+				if (Array.isArray(collection)) {
+					collection.forEach(card => uniqueNames.add(card.name));
+				}
+				document.getElementById('uniqueCards').textContent = uniqueNames.size;
+
+				// Update sidebar summary
+				const summary = document.getElementById('collectionSummary');
+				summary.innerHTML = `
+					<p><strong>${total}</strong> total cards</p>
+					<p><strong>${uniqueNames.size}</strong> unique cards</p>
+					<p><strong>${Array.isArray(decks) ? decks.length : 0}</strong> decks built</p>
+				`;
+			} catch (error) {
+				console.error('Stats loading error:', error);
+			}
+		}
+
+		async function loadRecentDecks() {
+			try {
+				const decks = await window.pywebview.api.list_decks();
+				if (!Array.isArray(decks) || decks.length === 0) return;
+
+				const recentSection = document.getElementById('recentActivity');
+				const recentDecks = document.getElementById('recentDecks');
+				recentSection.style.display = 'block';
+
+				const html = decks.slice(0, 3).map(deck => `
+					<article>
+						<h3><a href="deckbuilding.html#deck-${deck.name}">${deck.name}</a></h3>
+						<p>${deck.deck_type || 'Standard'} | ${deck.card_count || 0} cards</p>
+						<ul class="actions">
+							<li><a href="deckbuilding.html#deck-${deck.name}" class="button">View Deck</a></li>
+						</ul>
+					</article>
+				`).join('');
+
+				recentDecks.innerHTML = html;
+			} catch (error) {
+				console.error('Recent decks error:', error);
+			}
+		}
+
+		// Quick search
+		document.getElementById('quickSearchForm').addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const query = document.getElementById('quickSearch').value;
+			if (!query.trim()) return;
+
+			try {
+				const results = await window.pywebview.api.search_cards({ query, limit: 5 });
+				const resultsDiv = document.getElementById('searchResults');
+				
+				if (results && results.length > 0) {
+					resultsDiv.innerHTML = results.slice(0, 5).map(card => 
+						`<p style="padding:0.5em; background:rgba(0,0,0,0.2); margin-bottom:0.5em; border-radius:4px;">
+							${card}
+						</p>`
+					).join('');
+					resultsDiv.style.display = 'block';
+				} else {
+					resultsDiv.innerHTML = '<p style="color:#999;">No results found</p>';
+					resultsDiv.style.display = 'block';
+				}
+			} catch (error) {
+				console.error('Search error:', error);
+			}
+		});
+
+		// Logout handlers
+		async function logout() {
+			try {
+				await window.pywebview.api.logout();
+				window.location.href = 'login.html';
+			} catch (error) {
+				console.error('Logout error:', error);
+			}
+		}
+
+		document.getElementById('btnLogout')?.addEventListener('click', logout);
+		document.getElementById('menuLogout')?.addEventListener('click', logout);
+
+		// Initialize on page load
+		window.addEventListener('DOMContentLoaded', init);
+	</script>
+
+</body>
+</html>

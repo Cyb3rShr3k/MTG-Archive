@@ -1,0 +1,1285 @@
+<!-- web/deckbuilding.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Deckbuilding</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="api.js"></script>
+  <style>
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1000; align-items:center; justify-content:center; }
+    .modal.dragging { z-index:2000; }
+    .modal .content { background:#000; color:#fff; border-radius:8px; padding:14px; width:min(900px, 94vw); max-height:92vh; overflow:auto; box-shadow:0 6px 24px rgba(0,0,0,.25); position:relative; min-width:300px; min-height:200px; resize:both; }
+    .modal .content.draggable { cursor:move; }
+    .modal .drag-handle { position:absolute; top:0; left:0; right:0; height:40px; cursor:move; z-index:10; border-radius:8px 8px 0 0; }
+    .modal .content:hover .drag-handle { background:rgba(255,255,255,0.05); }
+    .modal.dragging .content { box-shadow:0 12px 48px rgba(0,0,0,.5); transform:scale(1.02); }
+    .modal .resize-info { position:absolute; bottom:4px; right:4px; color:#666; font-size:10px; pointer-events:none; }
+    .tbl { width:100%; border-collapse: collapse; background: transparent !important; font-weight: 600; color:#000000; text-shadow:1px 1px 2px rgba(255,255,255,0.8); }
+    .tbl th, .tbl td { padding:6px 8px; border-bottom:1px solid #333; text-align:left; color:#000000; text-shadow:1px 1px 2px rgba(255,255,255,0.8); background: transparent !important; }
+    .tbl th { font-weight: 700; position:sticky; top:0; background: transparent !important; }
+    .tbl td { font-weight: 600; background: transparent !important; }
+    /* Style all tables on deckbuilding page */
+    table { width:100%; border-collapse: collapse; background: transparent !important; font-weight: 600; color:#000000; text-shadow:1px 1px 2px rgba(255,255,255,0.8); }
+    table th, table td { padding:6px 8px; border-bottom:1px solid #333; text-align:left; color:#000000; text-shadow:1px 1px 2px rgba(255,255,255,0.8); background: transparent !important; }
+    table th { font-weight: 700; position:sticky; top:0; background: transparent !important; }
+    table td { font-weight: 600; background: transparent !important; }
+    table thead { background: transparent !important; }
+    table tbody { background: transparent !important; }
+    #preconPreview { display:none; position:fixed; top:0; left:0; z-index:2000; pointer-events:none; padding:4px; background:rgba(0,0,0,.95); border:1px solid #333; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+    #preconPreview img { max-width:280px; height:auto; display:block; }
+    /* Typing spinner */
+    .spinner { display:inline-block; width:16px; height:16px; border:2px solid #c8d3ff; border-top-color:#4c6fff; border-radius:50%; animation:spin 0.8s linear infinite; vertical-align:middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .muted { color:#666; }
+  </style>
+</head>
+<body class="decks-bg" style="padding-top: 5vh;">
+  <div class="row" style="max-width: 1200px; margin: 0 auto; align-items:flex-start;">
+  <!-- Deck View Modal (shows current deck contents, remove/edit) -->
+  <div id="deckViewModal" class="modal">
+    <div class="content">
+      <div class="drag-handle"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+        <h3 id="dvTitle" style="margin:0;">Deck</h3>
+        <button id="dvClose" title="Close">✕</button>
+      </div>
+      <div class="muted" style="margin-bottom:6px;">Select cards to remove from this deck or click Edit to add cards.</div>
+      <div style="overflow:auto; max-height:60vh; border:1px solid #333; border-radius:8px; background:transparent;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:28px;"></th>
+              <th>Name</th>
+              <th style="width:80px;">Count</th>
+            </tr>
+          </thead>
+          <tbody id="dvRows"><tr><td colspan="3" class="muted" style="padding:8px;">No cards.</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex; justify-content:space-between; gap:8px; margin-top:10px;">
+        <div>
+          <button id="dvRemove" disabled>Remove Selected</button>
+        </div>
+        <div>
+          <button id="dvEdit">Edit...</button>
+          <button id="dvDone">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+        <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+          Decks
+        </h3>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button id="btnBackHome" class="icon-btn" title="Back to Home"><img src="assets/icons/Back.png" alt="Back"></button>
+          <button id="btnSaveClose" class="icon-btn" title="Save & Close"><img src="assets/icons/Save-Close.png" alt="Save & Close"></button>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
+        <button id="btnCreateDeck" class="icon-btn" title="Create new deck"><img src="assets/icons/Create Deck.png" alt="Create Deck"></button>
+        <button id="openPrecon" class="icon-btn" title="Add a PreCon deck"><img src="assets/icons/Add.png" alt="Add PreCon"></button>
+        <button id="btnDeleteDeck" class="icon-btn" title="Delete selected deck" disabled><img src="assets/icons/Delete.png" alt="Delete"></button>
+        <button id="btnRefreshDecks" class="icon-btn" title="Refresh deck list"><img src="assets/icons/Refresh.png" alt="Refresh"></button>
+        <button id="btnModifyDeck" class="icon-btn" title="Modify selected deck" disabled><img src="assets/icons/ModifyDeck.png" alt="Modify Deck"></button>
+      </div>
+      <div id="deckListScroll" style="max-height: 40vh; overflow:auto; border:1px solid #333; border-radius:8px; background:transparent;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:28px;"></th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Commander</th>
+              <th>Colors</th>
+              <th style="width:80px;">Cards</th>
+              <th style="width:180px;">Curve</th>
+            </tr>
+          </thead>
+          <tbody id="deckListRows"><tr><td colspan="5" class="muted" style="padding:8px;">No decks found.</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:6px;">
+        <div class="muted">Page <span id="deckPageNow">1</span></div>
+        <div style="display:flex; gap:6px;">
+          <button id="deckPrev" class="icon-btn" title="Previous page"><img src="assets/icons/Previous Page.png" alt="Previous"></button>
+          <button id="deckNext" class="icon-btn" title="Next page"><img src="assets/icons/Next Page.png" alt="Next"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <!-- PreCon Deck Modal -->
+  <div id="preconModal" class="modal">
+    <div class="content">
+      <div class="drag-handle"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+        <h3 style="margin:0;">Add a PreCon Deck</h3>
+        <button id="preconClose" title="Close">✕</button>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+        <input id="preconFilter" type="text" placeholder="Type to search decks by name..." style="flex:1; min-width:260px;" />
+        <button id="preconSearch">Search</button>
+      </div>
+      <div style="overflow:auto; max-height:60vh; border:1px solid #333; border-radius:8px; background:transparent;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:28px;"></th>
+              <th>Deck Name</th>
+              <th>Type</th>
+              <th style="width:120px;">Cards</th>
+            </tr>
+          </thead>
+          <tbody id="preconRows"><tr><td colspan="4" class="muted" style="padding:8px;">No decks loaded.</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+        <button id="preconAdd">Add</button>
+      </div>
+    </div>
+  </div>
+  <div id="preconPreview"><img id="preconPreviewImg" alt="preview"/></div>
+  <!-- Generic hover preview for any card name on this page -->
+  <div id="hoverPreview" style="display:none; position:fixed; top:0; left:0; z-index:1999; pointer-events:none; padding:4px; background:rgba(0,0,0,.95); border:1px solid #333; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,.15);">
+    <img id="hoverPreviewImg" src="" alt="preview" style="max-width:260px; height:auto; display:block;"/>
+  </div>
+
+  <!-- PreCon Confirm Modal -->
+  <div id="preconConfirm" class="modal" style="z-index: 1300;">
+    <div class="content">
+      <div class="drag-handle"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+        <h3 id="pcTitle" style="margin:0;">Confirm Deck Import</h3>
+        <button id="pcClose" title="Close">✕</button>
+      </div>
+      <div class="muted" style="margin-bottom:6px;">Review the cards in the selected deck. Click Add to import into your collection and create the deck.</div>
+      <div style="overflow:auto; max-height:60vh; border:1px solid #333; border-radius:8px; background:transparent;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Set</th>
+              <th>No.</th>
+            </tr>
+          </thead>
+          <tbody id="pcRows"><tr><td colspan="3" class="muted" style="padding:8px;">No cards.</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+        <button id="pcCancel">Cancel</button>
+        <button id="pcConfirmAdd">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PreCon Import Progress Modal -->
+  <div id="preconProgressModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1400; align-items:center; justify-content:center;">
+    <div style="background:#000; color:#fff; border-radius:8px; padding:24px; width:min(400px, 92vw); box-shadow:0 6px 24px rgba(0,0,0,.25); text-align:center;">
+      <h3 style="margin:0 0 16px 0;">Importing Deck</h3>
+      <div id="preconProgressText" style="font-size:18px; font-weight:bold; margin-bottom:8px;">Importing 0/0 cards</div>
+      <div class="muted">Please wait...</div>
+    </div>
+  </div>
+
+  <!-- Commander Selection Modal -->
+  <div id="commanderModal" class="modal">
+    <div class="content">
+      <div class="drag-handle"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+        <h3 id="cmdTitle" style="margin:0;">Select Commander</h3>
+        <button id="cmdClose" title="Close">✕</button>
+      </div>
+      <div class="muted" style="margin-bottom:6px;"><strong>Choose a commander from the deck cards below:</strong> Select a legendary creature to be this deck's commander, or click "Skip" if you don't want a commander.</div>
+      <div style="overflow:auto; max-height:60vh; border:1px solid #333; border-radius:8px; background:transparent;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:28px;"></th>
+              <th>Name</th>
+              <th>Type</th>
+            </tr>
+          </thead>
+          <tbody id="cmdRows"><tr><td colspan="3" class="muted" style="padding:8px;">No cards.</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+        <button id="cmdSkip">Skip (Import without Commander)</button>
+        <button id="cmdConfirm">Confirm Commander Selection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modify Deck Modal -->
+  <div id="modifyModal" class="modal">
+    <div class="content">
+      <div class="drag-handle"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+        <div>
+          <h3 id="mdTitle" style="margin:0;">Modify Deck</h3>
+          <div id="mdDeckInfo" class="muted" style="font-size:0.9em; margin-top:2px;"></div>
+        </div>
+        <button id="mdClose" title="Close">✕</button>
+      </div>
+      <!-- Filters: mirror main search, auto-filtered to deck colors + colorless -->
+      <div class="filters" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:10px; margin-bottom: 10px;">
+        <div>
+          <label class="muted">Colors (auto)</label><br>
+          <div style="display:grid; grid-template-columns: repeat(3, auto); gap:8px 12px; align-items:center; opacity:0.75;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:not-allowed;">
+              <input type="checkbox" class="md-color" value="W" disabled>
+              <img class="chip-img" src="assets/icons/W.png" alt="W" />
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:not-allowed;">
+              <input type="checkbox" class="md-color" value="U" disabled>
+              <img class="chip-img" src="assets/icons/U.png" alt="U" />
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:not-allowed;">
+              <input type="checkbox" class="md-color" value="B" disabled>
+              <img class="chip-img" src="assets/icons/B.png" alt="B" />
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:not-allowed;">
+              <input type="checkbox" class="md-color" value="R" disabled>
+              <img class="chip-img" src="assets/icons/R.png" alt="R" />
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:not-allowed;">
+              <input type="checkbox" class="md-color" value="G" disabled>
+              <img class="chip-img" src="assets/icons/G.png" alt="G" />
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:not-allowed;">
+              <input type="checkbox" class="md-color" value="C" disabled>
+              <img class="chip-img" src="assets/icons/C.png" alt="C" />
+            </label>
+          </div>
+        </div>
+        <div>
+          <label class="muted">Type</label>
+          <select id="mdType" style="width:100%;">
+            <option value="">Any</option>
+            <option value="Creature">Creature</option>
+            <option value="Instant">Instant</option>
+            <option value="Sorcery">Sorcery</option>
+            <option value="Enchantment">Enchantment</option>
+            <option value="Artifact">Artifact</option>
+            <option value="Land">Land</option>
+            <option value="Planeswalker">Planeswalker</option>
+          </select>
+        </div>
+        <div>
+          <label class="muted">CMC</label>
+          <div>
+            <input id="mdCmcMin" type="number" placeholder="min" style="width:70px;"> -
+            <input id="mdCmcMax" type="number" placeholder="max" style="width:70px;">
+          </div>
+        </div>
+        <div>
+          <label class="muted">Power</label>
+          <div>
+            <input id="mdPowMin" type="number" placeholder="min" style="width:70px;"> -
+            <input id="mdPowMax" type="number" placeholder="max" style="width:70px;">
+          </div>
+        </div>
+        <div>
+          <label class="muted">Toughness</label>
+          <div>
+            <input id="mdTghMin" type="number" placeholder="min" style="width:70px;"> -
+            <input id="mdTghMax" type="number" placeholder="max" style="width:70px;">
+          </div>
+        </div>
+        <div>
+          <label class="muted">Card text contains</label>
+          <input id="mdText" type="text" placeholder="keyword(s) in rules text" />
+        </div>
+        <div>
+          <label class="muted">Name contains</label>
+          <input id="mdName" type="text" placeholder="card name" />
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">
+        <div class="muted">Search is limited to this deck's colors plus colorless.</div>
+        <div>
+          <button id="mdRemoveBtn">Remove Cards</button>
+          <button id="mdSearchBtn">Search</button>
+          <button id="mdAddBtn">Add</button>
+        </div>
+      </div>
+      <div class="muted" style="margin-bottom:6px;">Select cards to add and set quantities. "Add" will merge with existing deck contents.</div>
+      <div style="overflow:auto; max-height:60vh; border:1px solid #333; border-radius:8px; background:transparent;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:28px;"></th>
+              <th>Name</th>
+              <th>Colors</th>
+              <th>CMC</th>
+              <th style="width:80px;">Qty</th>
+              <th>Text</th>
+            </tr>
+          </thead>
+          <tbody id="mdRows"><tr><td colspan="6" class="muted" style="padding:8px;">No results.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Deck Modal -->
+  <div id="createDeckModal" class="modal">
+    <div class="content" style="width:min(520px, 92vw);">
+      <div class="drag-handle"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+        <h3 style="margin:0;">Create New Deck</h3>
+        <button id="cdClose" title="Close">✕</button>
+      </div>
+      <div class="muted" style="margin-bottom:8px;">Enter a deck name and select a deck type.</div>
+      <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
+        <div>
+          <label class="muted">Deck name</label>
+          <input id="cdName" type="text" placeholder="Deck name" style="width:100%;" />
+        </div>
+        <div>
+          <label class="muted">Deck type</label>
+          <select id="cdType" style="width:100%;">
+            <option value="Commander">Commander</option>
+            <option value="Standard">Standard</option>
+            <option value="Modern">Modern</option>
+            <option value="Pauper">Pauper</option>
+            <option value="Legacy">Legacy</option>
+            <option value="Brawl">Brawl</option>
+          </select>
+        </div>
+        <div>
+          <label class="muted">Commander</label>
+          <input id="cdCmdr1" type="text" placeholder="Primary commander (required for Commander)" style="width:100%;" list="cdCmdrOptions" disabled />
+        </div>
+        <div>
+          <label class="muted" style="display:flex; align-items:center; gap:8px;">
+            <span>Partner Commander (optional)</span>
+            <span style="display:inline-flex; align-items:center; gap:6px; font-weight:600;">
+              <input id="cdPartnerChk" type="checkbox" /> Partner
+            </span>
+          </label>
+          <input id="cdCmdr2" type="text" placeholder="Partner commander (if any)" style="width:100%;" list="cdCmdrOptions" disabled />
+        </div>
+      </div>
+      <datalist id="cdCmdrOptions"></datalist>
+      <div style="margin-top:8px;">
+        <div class="muted" style="margin-bottom:6px;">Colors</div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <label title="White" style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input id="cdColorW" type="checkbox" />
+            <img src="assets/icons/W.png" alt="W" style="width:22px; height:22px;" />
+          </label>
+          <label title="Blue" style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input id="cdColorU" type="checkbox" />
+            <img src="assets/icons/U.png" alt="U" style="width:22px; height:22px;" />
+          </label>
+          <label title="Black" style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input id="cdColorB" type="checkbox" />
+            <img src="assets/icons/B.png" alt="B" style="width:22px; height:22px;" />
+          </label>
+          <label title="Red" style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input id="cdColorR" type="checkbox" />
+            <img src="assets/icons/R.png" alt="R" style="width:22px; height:22px;" />
+          </label>
+          <label title="Green" style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input id="cdColorG" type="checkbox" />
+            <img src="assets/icons/G.png" alt="G" style="width:22px; height:22px;" />
+          </label>
+          <label title="Colorless" style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input id="cdColorC" type="checkbox" />
+            <img src="assets/icons/C.png" alt="C" style="width:22px; height:22px;" />
+          </label>
+        </div>
+      </div>
+      <div id="cdErr" class="muted" style="color:#b00020; margin-top:6px; white-space:pre-wrap;"></div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+        <button id="cdCancel">Cancel</button>
+        <button id="cdCreate">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Decks table with pagination
+    const deckListRows = document.getElementById('deckListRows');
+    const btnModifyDeck = document.getElementById('btnModifyDeck');
+    const btnDeleteDeck = document.getElementById('btnDeleteDeck');
+    const btnCreateDeck = document.getElementById('btnCreateDeck');
+    const btnRefreshDecks = document.getElementById('btnRefreshDecks');
+    const btnSaveClose = document.getElementById('btnSaveClose');
+    const btnBackHome = document.getElementById('btnBackHome');
+    const deckListScroll = document.getElementById('deckListScroll');
+    let decks = [];
+    let selectedDeckName = '';
+    let deckPage = 1;
+    const deckPageSize = 10;
+    const deckPageNow = document.getElementById('deckPageNow');
+    const deckPrev = document.getElementById('deckPrev');
+    const deckNext = document.getElementById('deckNext');
+    // Collection summary cache for CMC lookup
+    let collSummary = [];
+    let cmcByName = {};
+    async function doSaveClose(){
+      if (!window.pywebview || !window.pywebview.api) return;
+      try {
+        const state = {
+          last_page: 'deckbuilding.html',
+          selected_deck: selectedDeckName,
+          deck_page: deckPage,
+          deck_scroll: deckListScroll ? deckListScroll.scrollTop : 0,
+        };
+        // Try to save, but don't block close if save is slow
+        try { await window.pywebview.api.save_app_state(state); } catch(_) {}
+        // Give a brief tick for IO
+        await new Promise(r=> setTimeout(r, 80));
+        let closed = false;
+        try {
+          const res = await Promise.race([
+            window.pywebview.api.close_app(),
+            new Promise(r=> setTimeout(()=> r({ ok:false, error:'timeout' }), 1500))
+          ]);
+          closed = !!(res && res.ok === true);
+        } catch(_) { closed = false; }
+        // Fallback: navigate to splash (or blank) if close didn't happen
+        if (!closed) {
+          try { window.location.href = 'index.html'; } catch(_) {}
+        }
+      } catch(e){ /* ignore */ }
+    }
+    if (btnSaveClose){ btnSaveClose.addEventListener('click', doSaveClose); }
+    async function goBackHome(){
+      try {
+        const state = {
+          last_page: 'index.html',
+          selected_deck: selectedDeckName,
+          deck_page: deckPage,
+          deck_scroll: deckListScroll ? deckListScroll.scrollTop : 0,
+        };
+        try { await window.pywebview.api.save_app_state(state); } catch(_) {}
+      } finally {
+        try { window.location.href = 'index.html'; } catch(_) {}
+      }
+    }
+    if (btnBackHome){ btnBackHome.addEventListener('click', goBackHome); }
+    async function ensureSummary(){
+      if (collSummary && collSummary.length) return;
+      try {
+        collSummary = await window.pywebview.api.get_collection_summary();
+        cmcByName = {};
+        (collSummary||[]).forEach(it=>{ const nm=(it&&it.name)||''; if (!nm) return; cmcByName[nm.toLowerCase()] = (it&&it.cmc)!=null? Number(it.cmc): null; });
+      } catch(e){ collSummary=[]; cmcByName={}; }
+    }
+    function computeCurve(deck){
+      const counts = { '0':0,'1':0,'2':0,'3':0,'4':0,'5+':0 };
+      const cards = Array.isArray(deck.cards)? deck.cards: [];
+      cards.forEach(c=>{
+        const name = String((c&&c.name)||'').toLowerCase();
+        const qty = Number((c&&c.count)||0) || 0;
+        const cmc = cmcByName[name];
+        if (cmc==null) { counts['3'] += qty; return; }
+        if (cmc<=0) counts['0'] += qty; else if (cmc<=1) counts['1'] += qty; else if (cmc<=2) counts['2'] += qty; else if (cmc<=3) counts['3'] += qty; else if (cmc<=4) counts['4'] += qty; else counts['5+'] += qty;
+      });
+      return counts;
+    }
+    function formatCurve(curve){
+      return `0:${curve['0']} 1:${curve['1']} 2:${curve['2']} 3:${curve['3']} 4:${curve['4']} 5+:${curve['5+']}`;
+    }
+    function renderDecks(){
+      deckListRows.innerHTML = '';
+      if (!decks.length){ const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=7; td.className='muted'; td.style.padding='8px'; td.textContent='No decks found.'; tr.appendChild(td); deckListRows.appendChild(tr); btnModifyDeck.disabled=true; return; }
+      const totalPages = Math.max(1, Math.ceil(decks.length / deckPageSize));
+      if (deckPage > totalPages) deckPage = totalPages;
+      if (deckPage < 1) deckPage = 1;
+      if (deckPageNow) deckPageNow.textContent = String(deckPage);
+      const start = (deckPage - 1) * deckPageSize;
+      const pageDecks = decks.slice(start, start + deckPageSize);
+      pageDecks.forEach(d=>{
+        const tr=document.createElement('tr');
+        const tdPick=document.createElement('td'); const radio=document.createElement('input'); radio.type='radio'; radio.name='deckPick'; radio.value=d.name; radio.addEventListener('change', ()=>{ selectedDeckName=d.name; btnModifyDeck.disabled=false; btnDeleteDeck.disabled=false; }); tdPick.appendChild(radio);
+        const tdName=document.createElement('td'); tdName.textContent=d.name||'';
+        tdName.addEventListener('mouseenter', (e)=> showHoverPreview(String(d.name||''), e));
+        tdName.addEventListener('mousemove', (e)=> moveHoverPreview(e));
+        tdName.addEventListener('mouseleave', hideHoverPreview);
+        const tdType=document.createElement('td'); tdType.textContent=d.type||'';
+        const tdCommander=document.createElement('td'); tdCommander.textContent=d.commander||'';
+        const tdCols=document.createElement('td');
+        const icons = Array.isArray(d.colors)? d.colors: [];
+        const order = ['W','U','B','R','G','C'];
+        order.forEach(k=>{
+          if (icons.includes(k)){
+            const img=document.createElement('img'); img.src=`assets/icons/${k}.png`; img.alt=k; img.style.width='18px'; img.style.height='18px'; img.style.marginRight='4px'; tdCols.appendChild(img);
+          }
+        });
+        const tdCnt=document.createElement('td'); const cnt=(d.cards||[]).reduce((a,c)=>a+Number(c.count||0),0); tdCnt.textContent=String(cnt);
+        const tdCurve=document.createElement('td');
+        const curve = computeCurve(d);
+        tdCurve.textContent = formatCurve(curve);
+        tr.append(tdPick, tdName, tdType, tdCommander, tdCols, tdCnt, tdCurve); deckListRows.appendChild(tr);
+      });
+      btnModifyDeck.disabled = !selectedDeckName;
+      btnDeleteDeck.disabled = !selectedDeckName;
+    }
+    async function loadDecks(){
+      if (!window.pywebview || !window.pywebview.api) return;
+      try { await ensureSummary(); decks = await window.pywebview.api.list_decks(); } catch(e){ decks=[]; }
+      renderDecks();
+    }
+    if (btnRefreshDecks) btnRefreshDecks.addEventListener('click', loadDecks);
+    if (deckPrev) deckPrev.addEventListener('click', ()=>{ deckPage = Math.max(1, deckPage-1); renderDecks(); });
+    if (deckNext) deckNext.addEventListener('click', ()=>{ const totalPages = Math.max(1, Math.ceil(decks.length / deckPageSize)); deckPage = Math.min(totalPages, deckPage+1); renderDecks(); });
+    if (btnDeleteDeck) btnDeleteDeck.addEventListener('click', async ()=>{
+      if (!selectedDeckName){ alert('Select a deck first.'); return; }
+      if (!confirm(`Delete deck "${selectedDeckName}"? This cannot be undone.`)) return;
+      try {
+        const res = await window.pywebview.api.delete_deck(selectedDeckName);
+        if (res && res.ok){ selectedDeckName=''; await loadDecks(); }
+        else { alert('Failed to delete deck' + (res && res.error? (': '+res.error):'')); }
+      } catch(e){ alert('Failed to delete deck.'); }
+    });
+    // Defer initial load until backend is ready
+    (function(){
+      let scheduled = false;
+      function schedule(){ if (scheduled) return; scheduled = true; setTimeout(loadDecks, 300); }
+      if (window.pywebview && window.pywebview.api) schedule();
+      window.addEventListener('pywebviewready', schedule);
+      let tries = 0; const t = setInterval(()=>{ tries++; if (window.pywebview && window.pywebview.api){ schedule(); clearInterval(t); } if (tries>20) clearInterval(t); }, 500);
+      // Restore app state
+      window.addEventListener('pywebviewready', async ()=>{
+        try {
+          const res = await window.pywebview.api.load_app_state();
+          const st = (res && res.state) || {};
+          if (st && st.last_page && st.last_page.endsWith('deckbuilding.html')){
+            if (typeof st.deck_page === 'number') deckPage = Math.max(1, parseInt(st.deck_page,10)||1);
+            selectedDeckName = String(st.selected_deck||'');
+            await new Promise(r=> setTimeout(r, 200));
+            if (deckListScroll && typeof st.deck_scroll === 'number') deckListScroll.scrollTop = st.deck_scroll;
+          }
+        } catch(e) { /* ignore */ }
+      });
+    })();
+
+    // Styled Create Deck flow (modal)
+    const cdModal = document.getElementById('createDeckModal');
+    const cdClose = document.getElementById('cdClose');
+    const cdCancel = document.getElementById('cdCancel');
+    const cdCreate = document.getElementById('cdCreate');
+    const cdName = document.getElementById('cdName');
+    const cdType = document.getElementById('cdType');
+    const cdCmdr1 = document.getElementById('cdCmdr1');
+    const cdCmdr2 = document.getElementById('cdCmdr2');
+    const cdErr = document.getElementById('cdErr');
+    const cdPartnerChk = document.getElementById('cdPartnerChk');
+    const cdCmdrOptions = document.getElementById('cdCmdrOptions');
+    const cdColorW = document.getElementById('cdColorW');
+    const cdColorU = document.getElementById('cdColorU');
+    const cdColorB = document.getElementById('cdColorB');
+    const cdColorR = document.getElementById('cdColorR');
+    const cdColorG = document.getElementById('cdColorG');
+    const cdColorC = document.getElementById('cdColorC');
+    let commanderNameSet = new Set();
+
+    function showCreateDeck(){ cdErr.textContent=''; cdName.value=''; cdType.value='Commander'; cdModal.style.display='flex'; setTimeout(()=> cdName.focus(), 0); }
+    function hideCreateDeck(){ cdModal.style.display='none'; }
+    if (btnCreateDeck) btnCreateDeck.addEventListener('click', showCreateDeck);
+    if (cdClose) cdClose.addEventListener('click', hideCreateDeck);
+    if (cdCancel) cdCancel.addEventListener('click', hideCreateDeck);
+    if (cdModal) cdModal.addEventListener('click', (e)=>{ if (e.target===cdModal) hideCreateDeck(); });
+
+    function syncCommanderFields(){
+      const isCmdr = String(cdType.value||'') === 'Commander';
+      cdCmdr1.disabled = !isCmdr;
+      const enablePartner = isCmdr && !!(cdPartnerChk && cdPartnerChk.checked);
+      cdCmdr2.disabled = !enablePartner;
+      if (!isCmdr){
+        if (cdPartnerChk) cdPartnerChk.checked = false;
+        cdCmdr1.value=''; cdCmdr2.value='';
+      }
+      if (!enablePartner){ cdCmdr2.value=''; }
+    }
+    if (cdType) cdType.addEventListener('change', syncCommanderFields);
+    if (cdPartnerChk) cdPartnerChk.addEventListener('change', syncCommanderFields);
+    // Initialize state on open
+    const _origShowCreateDeck = showCreateDeck;
+    async function loadCommanderList(){
+      commanderNameSet = new Set();
+      if (!window.pywebview || !window.pywebview.api) { cdCmdrOptions.innerHTML=''; return; }
+      try {
+        // Lightweight: use collection summary for names
+        const summary = await window.pywebview.api.get_collection_summary();
+        const names = (Array.isArray(summary)?summary:[])
+          .map(it => String(it && it.name || '').trim())
+          .filter(Boolean)
+          .filter((v,i,a)=> a.indexOf(v)===i)
+          .sort((a,b)=> a.localeCompare(b));
+        cdCmdrOptions.innerHTML = names.map(n=> `<option value="${n.replace(/\"/g,'&quot;')}"></option>`).join('');
+        commanderNameSet = new Set(names.map(n=> n.toLowerCase()));
+      } catch(e){ cdCmdrOptions.innerHTML=''; commanderNameSet = new Set(); }
+    }
+    async function _wrappedShow(){ _origShowCreateDeck(); syncCommanderFields(); await loadCommanderList(); }
+    if (btnCreateDeck){ btnCreateDeck.removeEventListener('click', showCreateDeck); btnCreateDeck.addEventListener('click', _wrappedShow); }
+
+    async function doCreateDeck(){
+      cdErr.textContent='';
+      const name = String(cdName.value||'').trim();
+      const dtype = String(cdType.value||'').trim();
+      const cmdr1 = String(cdCmdr1.value||'').trim();
+      const cmdr2 = String(cdCmdr2.value||'').trim();
+      if (!name){ cdErr.textContent='Please enter a deck name.'; cdName.focus(); return; }
+      if (dtype === 'Commander' && !cmdr1){ cdErr.textContent='Please enter a commander for Commander decks.'; cdCmdr1.focus(); return; }
+      if (dtype === 'Commander'){
+        const ok1 = commanderNameSet.has(cmdr1.toLowerCase());
+        const ok2 = !cmdr2 || commanderNameSet.has(cmdr2.toLowerCase());
+        if (!ok1 || !ok2){ cdErr.textContent='Commander name(s) must match a card in your collection.'; return; }
+      }
+      if (!window.pywebview || !window.pywebview.api){ cdErr.textContent='Backend not available.'; return; }
+      cdCreate.disabled = true;
+      try {
+        cdErr.textContent = 'Saving...';
+        let res = null;
+        const colors = [];
+        if (cdColorW && cdColorW.checked) colors.push('W');
+        if (cdColorU && cdColorU.checked) colors.push('U');
+        if (cdColorB && cdColorB.checked) colors.push('B');
+        if (cdColorR && cdColorR.checked) colors.push('R');
+        if (cdColorG && cdColorG.checked) colors.push('G');
+        if (cdColorC && cdColorC.checked) colors.push('C');
+        // Determine commander for Commander decks
+        let commander = '';
+        if (dtype === 'Commander' && cmdr1) {
+          commander = cmdr2 ? `${cmdr1}, ${cmdr2}` : cmdr1;
+        }
+        if (typeof window.pywebview.api.create_deck === 'function'){
+          res = await Promise.race([
+            window.pywebview.api.create_deck(name, dtype, colors, commander),
+            new Promise(r=> setTimeout(()=> r({ ok:false, error:'timeout' }), 15000))
+          ]);
+        } else if (typeof window.pywebview.api.save_deck === 'function'){
+          res = await Promise.race([
+            window.pywebview.api.save_deck(name, []),
+            new Promise(r=> setTimeout(()=> r({ ok:false, error:'timeout' }), 15000))
+          ]);
+        }
+        if (res && res.ok===true){
+          hideCreateDeck();
+          // Slight delay to ensure DB transaction visibility before listing
+          await new Promise(r=> setTimeout(r, 150));
+          await loadDecks();
+          let exists = (decks||[]).some(d=> String(d.name).toLowerCase() === name.toLowerCase());
+          if (!exists){
+            // Attempt a secondary refresh shortly after
+            await new Promise(r=> setTimeout(r, 250));
+            await loadDecks();
+            exists = (decks||[]).some(d=> String(d.name).toLowerCase() === name.toLowerCase());
+          }
+          // Fallback: attempt legacy save if still not visible
+          if (!exists && typeof window.pywebview.api.save_deck === 'function'){
+            try {
+              await window.pywebview.api.save_deck(name, []);
+              await new Promise(r=> setTimeout(r, 250));
+              await loadDecks();
+              exists = (decks||[]).some(d=> String(d.name).toLowerCase() === name.toLowerCase());
+            } catch(_) { /* ignore */ }
+          }
+          const names = (decks||[]).map(d=> d.name).slice(0,10).join(', ');
+          alert((exists ? 'Deck created.' : 'Deck created, but not visible yet.') + ' Decks now: ' + (decks? decks.length:0) + (names? (' ['+names+']'):'') );
+        } else {
+          const msg = res && (res.error||res.reason) ? String(res.error||res.reason) : 'unknown error';
+          cdErr.textContent = 'Failed to create deck: ' + msg;
+          if (msg === 'timeout') cdErr.textContent += ' (request timed out)';
+        }
+      } catch(e){ cdErr.textContent = 'Failed to create deck: ' + (e && e.message ? e.message : 'error'); }
+      finally { cdCreate.disabled = false; }
+    }
+    if (cdCreate) cdCreate.addEventListener('click', doCreateDeck);
+
+    // --- Deck View (Modify) wiring ---
+    const deckViewModal = document.getElementById('deckViewModal');
+    const dvTitle = document.getElementById('dvTitle');
+    const dvRows = document.getElementById('dvRows');
+    const dvClose = document.getElementById('dvClose');
+    const dvRemove = document.getElementById('dvRemove');
+    const dvEdit = document.getElementById('dvEdit');
+    const dvDone = document.getElementById('dvDone');
+
+    function showDeckView(){ deckViewModal.style.display='flex'; dvRemove.disabled = true; }
+    function hideDeckView(){ deckViewModal.style.display='none'; dvRows.innerHTML=''; }
+    if (dvClose) dvClose.addEventListener('click', hideDeckView);
+    if (dvDone) dvDone.addEventListener('click', ()=>{ hideDeckView(); loadDecks(); });
+
+    async function renderSelectedDeck(){
+      dvRows.innerHTML = '';
+      const list = Array.isArray(decks)?decks:[];
+      const sel = list.find(d=> String(d.name).toLowerCase() === String(selectedDeckName||'').toLowerCase());
+      dvTitle.textContent = 'Deck' + (sel && sel.name ? (': ' + sel.name) : '');
+      const cards = (sel && Array.isArray(sel.cards)) ? sel.cards : [];
+      if (!cards.length){ const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=3; td.className='muted'; td.style.padding='8px'; td.textContent='No cards.'; tr.appendChild(td); dvRows.appendChild(tr); dvRemove.disabled=true; return; }
+      cards.forEach(c=>{
+        const tr=document.createElement('tr');
+        const tdPick=document.createElement('td'); const chk=document.createElement('input'); chk.type='checkbox'; chk.addEventListener('change', ()=>{ dvRemove.disabled = dvRows.querySelectorAll('input[type="checkbox"]:checked').length===0; }); tdPick.appendChild(chk);
+        const tdN=document.createElement('td'); tdN.textContent = c.name||'';
+        tdN.addEventListener('mouseenter', (e)=> showHoverPreview(String(c.name||''), e));
+        tdN.addEventListener('mousemove', (e)=> moveHoverPreview(e));
+        tdN.addEventListener('mouseleave', hideHoverPreview);
+        const tdCnt=document.createElement('td'); tdCnt.textContent = String(c.count||0);
+        tr.append(tdPick, tdN, tdCnt); dvRows.appendChild(tr);
+      });
+      dvRemove.disabled = true;
+    }
+
+    if (btnModifyDeck) btnModifyDeck.addEventListener('click', async ()=>{
+      if (!selectedDeckName){ alert('Select a deck first.'); return; }
+      await loadDecks();
+      await openModifyDeck();
+    });
+
+    if (dvRemove) dvRemove.addEventListener('click', async ()=>{
+      const picks = [];
+      dvRows.querySelectorAll('tr').forEach(tr=>{
+        const chk = tr.querySelector('input[type="checkbox"]');
+        const name = tr.children[1] && tr.children[1].textContent || '';
+        if (chk && chk.checked && name){ picks.push({ name, count: 1 }); }
+      });
+      if (!picks.length){ return; }
+      try {
+        const res = await window.pywebview.api.remove_cards_from_deck(selectedDeckName, picks);
+        if (res && res.ok){ await loadDecks(); await renderSelectedDeck(); }
+        else { alert('Failed to remove cards' + (res && res.error? (': '+res.error):'')); }
+      } catch(e){ alert('Failed to remove cards.'); }
+    });
+
+    // Modify (Add) modal handlers
+    const modifyModal = document.getElementById('modifyModal');
+    const mdTitle = document.getElementById('mdTitle');
+    const mdDeckInfo = document.getElementById('mdDeckInfo');
+    const mdClose = document.getElementById('mdClose');
+    const mdType = document.getElementById('mdType');
+    const mdCmcMin = document.getElementById('mdCmcMin');
+    const mdCmcMax = document.getElementById('mdCmcMax');
+    const mdPowMin = document.getElementById('mdPowMin');
+    const mdPowMax = document.getElementById('mdPowMax');
+    const mdTghMin = document.getElementById('mdTghMin');
+    const mdTghMax = document.getElementById('mdTghMax');
+    const mdText = document.getElementById('mdText');
+    const mdName = document.getElementById('mdName');
+    const mdSearchBtn = document.getElementById('mdSearchBtn');
+    const mdAddBtn = document.getElementById('mdAddBtn');
+    const mdRemoveBtn = document.getElementById('mdRemoveBtn');
+    const mdRows = document.getElementById('mdRows');
+    const mdColorInputs = ()=> [...document.querySelectorAll('.md-color')];
+
+    function showModify(){
+      modifyModal.style.display='flex';
+      mdTitle.textContent = 'Modify Deck' + (selectedDeckName? (': ' + selectedDeckName):'');
+      
+      // Update deck info with commander and card count
+      const deck = (decks||[]).find(d=> String(d.name||'').toLowerCase()===String(selectedDeckName||'').toLowerCase());
+      let deckInfo = '';
+      if (deck) {
+        const cardCount = (deck.cards || []).reduce((sum, card) => sum + (parseInt(card.count) || 0), 0);
+        const isCommander = String(deck.type||'').toLowerCase().includes('commander');
+        
+        if (isCommander) {
+          deckInfo = `${cardCount}/100 cards | Commander deck (1 copy limit for non-basic lands)`;
+        } else {
+          deckInfo = `${cardCount} cards`;
+        }
+        
+        if (deck.commander) {
+          deckInfo += ` | Commander: ${deck.commander}`;
+        }
+      }
+      if (mdDeckInfo) mdDeckInfo.textContent = deckInfo;
+      
+      mdRows.innerHTML='';
+      // preset colors to deck colors + colorless and disable
+      const colors = (deck && Array.isArray(deck.colors)) ? deck.colors.slice() : [];
+      if (!colors.includes('C')) colors.push('C');
+      mdColorInputs().forEach(inp=>{ inp.checked = colors.includes(String(inp.value||'')); });
+      // clear other filters
+      if (mdType) mdType.value=''; if (mdCmcMin) mdCmcMin.value=''; if (mdCmcMax) mdCmcMax.value='';
+      if (mdPowMin) mdPowMin.value=''; if (mdPowMax) mdPowMax.value=''; if (mdTghMin) mdTghMin.value=''; if (mdTghMax) mdTghMax.value='';
+      if (mdText) mdText.value=''; if (mdName) mdName.value='';
+    }
+    function hideModify(){ modifyModal.style.display='none'; }
+    if (mdClose) mdClose.addEventListener('click', hideModify);
+    if (modifyModal) modifyModal.addEventListener('click', (e)=>{ if (e.target===modifyModal) hideModify(); });
+
+    if (dvEdit) dvEdit.addEventListener('click', ()=>{ showModify(); });
+    
+    // Define openModifyDeck function for direct access
+    async function openModifyDeck() {
+      showModify();
+    }
+    
+    // Remove button opens deck view for card removal
+    if (mdRemoveBtn) mdRemoveBtn.addEventListener('click', async ()=>{
+      await renderSelectedDeck();
+      showDeckView();
+    });
+
+    function toNum(v){ if (v===undefined||v===null) return null; const s=String(v).trim(); if (s==='') return null; const n=Number(s); return Number.isFinite(n)? n: null; }
+    function withinRange(value, minV, maxV){ const v=toNum(value); const minN=toNum(minV); const maxN=toNum(maxV); if (minN!=null && (v==null || v<minN)) return false; if (maxN!=null && (v==null || v>maxN)) return false; return true; }
+    function ptWithinRange(val, minV, maxV){ const v = Number(val); if (!Number.isFinite(v)) { if (minV||maxV) return false; return true; } return withinRange(v, minV, maxV); }
+    function typeMatches(types, q){ if (!q) return true; const s=String(q).toLowerCase(); const list=(types||[]).map(x=> String(x).toLowerCase()); return list.some(t=> t.includes(s)); }
+    function textMatches(text, q){ if (!q) return true; return String(text||'').toLowerCase().includes(String(q).toLowerCase()); }
+    function nameMatches(name, q){ if (!q) return true; return String(name||'').toLowerCase().includes(String(q).toLowerCase()); }
+    function cardColorsWithinAllowed(cardColors, allowed){ const cc = (Array.isArray(cardColors)&&cardColors.length)? cardColors: ['C']; return cc.every(c=> allowed.has(String(c))); }
+    async function searchCollection(){
+      mdRows.innerHTML = '<tr><td colspan="6" class="muted" style="padding:8px;">Searching...</td></tr>';
+      try {
+        await ensureSummary();
+        // Allowed colors = deck colors + C
+        const deck = (decks||[]).find(d=> String(d.name||'').toLowerCase()===String(selectedDeckName||'').toLowerCase());
+        const allowedSet = new Set([...(deck&&Array.isArray(deck.colors)?deck.colors:[]), 'C']);
+        const list = (Array.isArray(collSummary)?collSummary:[]).filter(it=> cardColorsWithinAllowed(it.colors||[], allowedSet))
+          .filter(it=> typeMatches(it.types||[], mdType&&mdType.value))
+          .filter(it=> withinRange(it.cmc, mdCmcMin&&mdCmcMin.value, mdCmcMax&&mdCmcMax.value))
+          .filter(it=> ptWithinRange(it.power, mdPowMin&&mdPowMin.value, mdPowMax&&mdPowMax.value))
+          .filter(it=> ptWithinRange(it.toughness, mdTghMin&&mdTghMin.value, mdTghMax&&mdTghMax.value))
+          .filter(it=> textMatches(it.text, mdText&&mdText.value))
+          .filter(it=> nameMatches(it.name, mdName&&mdName.value));
+        mdRows.innerHTML='';
+        if (!list.length){ const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=6; td.className='muted'; td.style.padding='8px'; td.textContent='No results.'; tr.appendChild(td); mdRows.appendChild(tr); return; }
+        list.sort((a,b)=> String(a.name).localeCompare(String(b.name)));
+        
+        // Check if this is a commander deck
+        const currentDeck = (decks||[]).find(d=> String(d.name||'').toLowerCase()===String(selectedDeckName||'').toLowerCase());
+        const isCommander = currentDeck && String(currentDeck.type||'').toLowerCase().includes('commander');
+        const basicLands = new Set(['plains', 'island', 'swamp', 'mountain', 'forest', 'wastes', 'snow-covered plains', 'snow-covered island', 'snow-covered swamp', 'snow-covered mountain', 'snow-covered forest']);
+        
+        list.forEach(it=>{
+          const tr=document.createElement('tr');
+          const tdPick=document.createElement('td'); const chk=document.createElement('input'); chk.type='checkbox'; tdPick.appendChild(chk);
+          const tdN=document.createElement('td'); tdN.textContent = it.name||'';
+          tdN.addEventListener('mouseenter', (e)=> showHoverPreview(String(it.name||''), e));
+          tdN.addEventListener('mousemove', (e)=> moveHoverPreview(e));
+          tdN.addEventListener('mouseleave', hideHoverPreview);
+          const tdColors=document.createElement('td');
+          const colorsWrap=document.createElement('div'); colorsWrap.style.display='flex'; colorsWrap.style.gap='4px';
+          const cc = (Array.isArray(it.colors)&&it.colors.length)? it.colors : ['C'];
+          cc.forEach(c=>{ const img=document.createElement('img'); img.className='chip-img'; img.src=`assets/icons/${c}.png`; img.alt=String(c); colorsWrap.appendChild(img); });
+          tdColors.appendChild(colorsWrap);
+          const tdCmc=document.createElement('td'); tdCmc.textContent = (it.cmc!=null && it.cmc!==undefined)? String(it.cmc): '';
+          const tdQty=document.createElement('td'); 
+          const qty=document.createElement('input'); 
+          qty.type='number'; 
+          qty.min='1'; 
+          qty.value='1'; 
+          qty.style.width='70px';
+          
+          // Apply commander deck rules for quantity limits
+          if (isCommander && !basicLands.has((it.name||'').toLowerCase())) {
+            qty.max = '1';
+            qty.title = 'Commander deck: max 1 copy (except basic lands)';
+          }
+          
+          tdQty.appendChild(qty);
+          const tdText=document.createElement('td'); tdText.textContent = (it.text||'');
+          tr.append(tdPick, tdN, tdColors, tdCmc, tdQty, tdText); mdRows.appendChild(tr);
+        });
+      } catch(e){ mdRows.innerHTML = '<tr><td colspan="6" class="muted" style="padding:8px;">Search failed.</td></tr>'; }
+    }
+    if (mdSearchBtn) mdSearchBtn.addEventListener('click', searchCollection);
+
+    if (mdAddBtn) mdAddBtn.addEventListener('click', async ()=>{
+      if (!selectedDeckName){ alert('Select a deck first.'); return; }
+      const picks = [];
+      mdRows.querySelectorAll('tr').forEach(tr=>{
+        const chk = tr.querySelector('input[type="checkbox"]');
+        const qty = tr.querySelector('input[type="number"]');
+        const name = tr.children[1] && tr.children[1].textContent || '';
+        if (chk && chk.checked && name){
+          const c = Math.max(1, parseInt(qty && qty.value || '1', 10) || 1);
+          picks.push({ name, count: c });
+        }
+      });
+      if (!picks.length){ alert('Pick at least one card.'); return; }
+      try {
+        const res = await window.pywebview.api.add_cards_to_deck(selectedDeckName, picks);
+        if (res && res.ok){ 
+          await loadDecks(); 
+          await renderSelectedDeck(); 
+        } else if (res && res.error === 'commander_rules_violation') {
+          // Handle commander deck rule violations
+          let msg = 'Commander deck rule violations:\\n\\n';
+          (res.violations || []).forEach(violation => {
+            msg += '• ' + violation + '\\n';
+          });
+          msg += '\\nBasic lands (Plains, Island, Swamp, Mountain, Forest, Wastes, Snow-covered) have no limits.';
+          alert(msg);
+        } else { 
+          alert('Failed to add cards' + (res && res.error? (': '+res.error):'')); 
+        }
+      } catch(e){ alert('Failed to add cards.'); }
+    });
+
+    
+
+    // --- PreCon modal wiring ---
+    const modal = document.getElementById('preconModal');
+    const openPrecon = document.getElementById('openPrecon');
+    const preconClose = document.getElementById('preconClose');
+    const preconFilter = document.getElementById('preconFilter');
+    const preconRows = document.getElementById('preconRows');
+    const preconSearch = document.getElementById('preconSearch');
+    const preconAdd = document.getElementById('preconAdd');
+    const preconPreview = document.getElementById('preconPreview');
+    const preconPreviewImg = document.getElementById('preconPreviewImg');
+
+    let precons = [];
+    let selectedDeckId = null;
+
+    function showModal(){ modal.style.display='flex'; preconFilter.value=''; renderPrecons(precons); preconFilter.focus(); }
+    function hideModal(){ modal.style.display='none'; selectedDeckId=null; preconRows.innerHTML=''; }
+    function showPreview(uri, evt){ if (!uri) return; preconPreviewImg.src = uri; preconPreview.style.display='block'; movePreview(evt); }
+    function movePreview(evt){ const pad=14; let x=evt.clientX+pad, y=evt.clientY+pad; const vw=window.innerWidth, vh=window.innerHeight; const w=300, h=420; if (x+w>vw) x = evt.clientX - w - pad; if (y+h>vh) y = evt.clientY - h - pad; preconPreview.style.left=x+'px'; preconPreview.style.top=y+'px'; }
+    function hidePreview(){ preconPreview.style.display='none'; preconPreviewImg.removeAttribute('src'); }
+
+    function renderPrecons(items){
+      const q = preconFilter.value.trim().toLowerCase();
+      const words = q.split(/\s+/).filter(Boolean);
+      const list = (items||[]).filter(it => words.every(w => (it.deck_name||'').toLowerCase().includes(w)));
+      preconRows.innerHTML = '';
+      list.forEach(it => {
+        const tr = document.createElement('tr');
+        const tdPick = document.createElement('td');
+        const radio = document.createElement('input'); radio.type='radio'; radio.name='preconPick'; radio.value=it.deck_id;
+        radio.addEventListener('change', ()=>{ selectedDeckId = it.deck_id; });
+        tdPick.appendChild(radio);
+        const tdName = document.createElement('td');
+        const a = document.createElement('span'); a.textContent = it.deck_name; a.style.fontWeight='600';
+        tdName.appendChild(a);
+        tdName.addEventListener('mouseenter', (e)=> showHoverPreview(String(it.deck_name||''), e));
+        tdName.addEventListener('mousemove', (e)=> moveHoverPreview(e));
+        tdName.addEventListener('mouseleave', hideHoverPreview);
+        const tdFmt = document.createElement('td'); tdFmt.textContent = it.deck_type || '';
+        const tdCount = document.createElement('td'); tdCount.textContent = String(it.card_count||0);
+        tr.append(tdPick, tdName, tdFmt, tdCount);
+        preconRows.appendChild(tr);
+      });
+      if (!list.length){
+        const tr = document.createElement('tr');
+        const td = document.createElement('td'); td.colSpan = 4; td.className = 'muted'; td.style.padding = '8px'; td.textContent = 'No matching decks.';
+        tr.appendChild(td); preconRows.appendChild(tr);
+      }
+    }
+
+    async function fetchPrecons(){
+      if (!window.pywebview || !window.pywebview.api){ precons = []; renderPrecons(precons); return; }
+      const q = preconFilter.value || '';
+      try { precons = await window.pywebview.api.search_decklist_db(q); }
+      catch (e) { precons = []; }
+      renderPrecons(precons);
+    }
+
+    openPrecon.addEventListener('click', async ()=>{
+      showModal();
+      await fetchPrecons();
+    });
+    preconClose.addEventListener('click', hideModal);
+    modal.addEventListener('click', (e)=>{ if (e.target===modal) hideModal(); });
+    preconFilter.addEventListener('input', ()=> { renderPrecons(precons); fetchPrecons(); });
+    preconSearch.addEventListener('click', async ()=>{
+      // If a deck is selected, import it now; otherwise perform search
+      if (selectedDeckId){
+        try {
+          const res = await window.pywebview.api.import_deck_from_db(selectedDeckId);
+          alert(`Imported ${res.added||0} cards from deck${res.deck_name? ' '+res.deck_name:''}.`);
+          await loadDecks();
+        } catch(e){ console.error(e); alert('Failed to import deck.'); }
+      } else {
+        await fetchPrecons();
+      }
+    });
+    // PreCon confirmation modal handlers
+    const pcModal = document.getElementById('preconConfirm');
+    const pcTitle = document.getElementById('pcTitle');
+    const pcRows = document.getElementById('pcRows');
+    const pcClose = document.getElementById('pcClose');
+    const pcCancel = document.getElementById('pcCancel');
+    const pcConfirmAdd = document.getElementById('pcConfirmAdd');
+
+    function showPc(){ pcModal.style.display='flex'; }
+    function hidePc(){ pcModal.style.display='none'; pcRows.innerHTML=''; }
+    if (pcClose) pcClose.addEventListener('click', hidePc);
+    if (pcCancel) pcCancel.addEventListener('click', hidePc);
+    if (pcModal) pcModal.addEventListener('click', (e)=>{ if (e.target===pcModal) hidePc(); });
+
+    preconAdd.addEventListener('click', async ()=>{
+      if (!selectedDeckId){ alert('Please select a deck to add.'); return; }
+      try {
+        // populate confirmation list
+        pcRows.innerHTML = '<tr><td colspan="3" class="muted" style="padding:8px;">Loading...</td></tr>';
+        const cards = await window.pywebview.api.get_decklist_deck_cards(selectedDeckId);
+        const sel = precons.find(x=> String(x.deck_id)===String(selectedDeckId));
+        pcTitle.textContent = 'Confirm Deck Import' + (sel && sel.deck_name ? (': ' + sel.deck_name) : '');
+        pcRows.innerHTML = '';
+        const list = Array.isArray(cards)?cards:[];
+        if (!list.length){ const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=3; td.className='muted'; td.style.padding='8px'; td.textContent='No cards found for deck.'; tr.appendChild(td); pcRows.appendChild(tr); }
+        list.forEach(c=>{
+          const tr=document.createElement('tr');
+          const tdN=document.createElement('td'); tdN.textContent = c.name||'';
+          tdN.addEventListener('mouseenter', (e)=> showHoverPreview(String(c.name||''), e));
+          tdN.addEventListener('mousemove', (e)=> moveHoverPreview(e));
+          tdN.addEventListener('mouseleave', hideHoverPreview);
+          const tdS=document.createElement('td'); tdS.textContent = c.set_code||'';
+          const tdNo=document.createElement('td'); tdNo.textContent = c.collector_number||'';
+          tr.append(tdN, tdS, tdNo); pcRows.appendChild(tr);
+        });
+        showPc();
+      } catch(e){ console.error(e); alert('Failed to load deck cards.'); }
+    });
+
+    if (pcConfirmAdd){
+      pcConfirmAdd.addEventListener('click', async ()=>{
+        if (!selectedDeckId){ hidePc(); return; }
+        
+        // Save the deck ID before hiding modals (in case modal backdrop click clears it)
+        const deckIdToImport = selectedDeckId;
+        
+        // Hide both the main precon modal and confirmation modal
+        hideModal();
+        hidePc();
+        
+        // Restore the deck ID after hiding modals
+        selectedDeckId = deckIdToImport;
+        
+        // Show commander selection
+        await showCommanderSelection();
+      });
+    }
+    
+    // --- Commander Selection Modal ---
+    const commanderModal = document.getElementById('commanderModal');
+    const cmdTitle = document.getElementById('cmdTitle');
+    const cmdRows = document.getElementById('cmdRows');
+    const cmdClose = document.getElementById('cmdClose');
+    const cmdSkip = document.getElementById('cmdSkip');
+    const cmdConfirm = document.getElementById('cmdConfirm');
+    let selectedCommander = '';
+    let currentDeckCards = [];
+    
+    function showCommanderModal(){ commanderModal.style.display='flex'; }
+    function hideCommanderModal(){ commanderModal.style.display='none'; cmdRows.innerHTML=''; selectedCommander=''; }
+    if (cmdClose) cmdClose.addEventListener('click', hideCommanderModal);
+    if (commanderModal) commanderModal.addEventListener('click', (e)=>{ if (e.target===commanderModal) hideCommanderModal(); });
+    
+    async function showCommanderSelection(){
+      try {
+        // Get deck cards first  
+        const cards = await window.pywebview.api.get_decklist_deck_cards(selectedDeckId);
+        currentDeckCards = Array.isArray(cards) ? cards : [];
+        const sel = precons.find(x=> String(x.deck_id)===String(selectedDeckId));
+        cmdTitle.textContent = 'Select Commander' + (sel && sel.deck_name ? (' - ' + sel.deck_name) : '');
+        
+        // Filter for potential commanders (Legendary creatures)
+        const potentialCommanders = currentDeckCards.filter(c => {
+          const typeLine = String(c.type_line || '').toLowerCase();
+          return typeLine.includes('legendary') && typeLine.includes('creature');
+        });
+        
+        // Also find any legendary cards for debugging
+        const allLegendary = currentDeckCards.filter(c => {
+          const typeLine = String(c.type_line || '').toLowerCase();
+          return typeLine.includes('legendary');
+        });
+        
+        cmdRows.innerHTML = '';
+        if (!potentialCommanders.length){ 
+          const tr=document.createElement('tr'); 
+          const td=document.createElement('td'); 
+          td.colSpan=3; td.className='muted'; td.style.padding='8px'; 
+          
+          if (allLegendary.length > 0) {
+            td.innerHTML = `No legendary creatures found in deck.<br><small>Found ${allLegendary.length} other legendary cards: ${allLegendary.slice(0,3).map(c => c.name).join(', ')}${allLegendary.length > 3 ? '...' : ''}</small>`;
+          } else {
+            td.textContent = `No legendary creatures found in deck. (${currentDeckCards.length} total cards loaded)`;
+          } 
+          tr.appendChild(td); 
+          cmdRows.appendChild(tr); 
+        } else {
+          potentialCommanders.forEach(c=>{
+            const tr=document.createElement('tr');
+            const tdPick=document.createElement('td'); 
+            const radio=document.createElement('input'); 
+            radio.type='radio'; radio.name='cmdPick'; radio.value=c.name; 
+            radio.addEventListener('change', ()=>{ selectedCommander = c.name; });
+            tdPick.appendChild(radio);
+            
+            const tdN=document.createElement('td'); tdN.textContent = c.name||'';
+            tdN.addEventListener('mouseenter', (e)=> showHoverPreview(String(c.name||''), e));
+            tdN.addEventListener('mousemove', (e)=> moveHoverPreview(e));
+            tdN.addEventListener('mouseleave', hideHoverPreview);
+            
+            const tdType=document.createElement('td'); tdType.textContent = c.type_line||'';
+            tr.append(tdPick, tdN, tdType); cmdRows.appendChild(tr);
+          });
+        }
+        
+        showCommanderModal();
+      } catch(e){ 
+        console.error(e); 
+        alert('Failed to load deck cards for commander selection.'); 
+      }
+    }
+    
+    if (cmdSkip) {
+      cmdSkip.addEventListener('click', async ()=>{
+        selectedCommander = '';
+        await performDeckImport();
+      });
+    }
+    
+    if (cmdConfirm) {
+      cmdConfirm.addEventListener('click', async ()=>{
+        if (!selectedCommander) {
+          alert('Please select a commander or click Skip.');
+          return;
+        }
+        await performDeckImport();
+      });
+    }
+    
+    async function performDeckImport() {
+      hideCommanderModal();
+      
+      console.log('performDeckImport called with deck_id:', selectedDeckId, 'commander:', selectedCommander);
+      
+      // Show progress modal but don't hide other modals
+      const progressModal = document.getElementById('preconProgressModal');
+      const progressText = document.getElementById('preconProgressText');
+      progressModal.style.display = 'flex';
+      
+      // Start polling for progress
+      const pollInterval = setInterval(async () => {
+        try {
+          const prog = await window.pywebview.api.get_precon_import_progress();
+          if (prog && prog.running) {
+            progressText.textContent = `Importing ${prog.current}/${prog.total} cards`;
+          }
+        } catch (e) {
+          console.error('Progress poll error:', e);
+        }
+      }, 300);
+      
+      try {
+        console.log('Calling import_deck_from_db_with_commander...');
+        const res = await window.pywebview.api.import_deck_from_db_with_commander(selectedDeckId, selectedCommander);
+        console.log('Import result:', res);
+        
+        // Stop polling
+        clearInterval(pollInterval);
+        
+        // Hide progress modal
+        progressModal.style.display = 'none';
+        
+        // Hide the original precon import modal
+        hideModal();
+        
+        const commanderMsg = selectedCommander ? ` with commander: ${selectedCommander}` : '';
+        alert(`Imported ${res.added||0} cards from deck${res.deck_name? ' '+res.deck_name:''}${commanderMsg}.`);
+        await loadDecks();
+      } catch(e){ 
+        clearInterval(pollInterval);
+        progressModal.style.display = 'none';
+        console.error(e); 
+        alert('Failed to import deck.'); 
+      }
+    }
+    // --- Generic hover preview helpers for this page ---
+    const hoverPreview = document.getElementById('hoverPreview');
+    const hoverPreviewImg = document.getElementById('hoverPreviewImg');
+    let hoverCache = new Map();
+    async function resolveImageUrlByName(name){
+      // Disabled to prevent backend API contention; keep function signature
+      return '';
+    }
+    function moveHoverPreview(evt){ const pad=14; let x=evt.clientX+pad, y=evt.clientY+pad; const vw=window.innerWidth, vh=window.innerHeight; const w=280, h=420; if (x+w>vw) x = evt.clientX - w - pad; if (y+h>vh) y = evt.clientY - h - pad; hoverPreview.style.left = x+'px'; hoverPreview.style.top = y+'px'; }
+    function hideHoverPreview(){ hoverPreview.style.display='none'; hoverPreviewImg.removeAttribute('src'); }
+    async function showHoverPreview(name, evt){
+      const url = await resolveImageUrlByName(name);
+      if (!url) { hideHoverPreview(); return; }
+      hoverPreviewImg.src = url; hoverPreview.style.display='block'; moveHoverPreview(evt);
+    }
+    
+    // Modal drag and layer management functionality
+    let draggedModal = null;
+    let dragOffset = { x: 0, y: 0 };
+    let currentZIndex = 1000;
+    
+    function makeModalDraggable(modal) {
+      const content = modal.querySelector('.content');
+      const dragHandle = modal.querySelector('.drag-handle');
+      
+      if (!content || !dragHandle) return;
+      
+      dragHandle.addEventListener('mousedown', startDrag);
+      content.addEventListener('mousedown', bringToFront);
+      
+      function startDrag(e) {
+        draggedModal = modal;
+        const rect = content.getBoundingClientRect();
+        dragOffset.x = e.clientX - rect.left;
+        dragOffset.y = e.clientY - rect.top;
+        
+        // Switch to absolute positioning
+        content.style.position = 'absolute';
+        content.style.left = rect.left + 'px';
+        content.style.top = rect.top + 'px';
+        content.style.margin = '0';
+        
+        modal.style.alignItems = 'flex-start';
+        modal.style.justifyContent = 'flex-start';
+        modal.classList.add('dragging');
+        
+        bringToFront();
+        e.preventDefault();
+      }
+      
+      function bringToFront() {
+        currentZIndex += 10;
+        modal.style.zIndex = currentZIndex;
+      }
+    }
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!draggedModal) return;
+      
+      const content = draggedModal.querySelector('.content');
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+      
+      // Keep modal within viewport
+      const maxX = window.innerWidth - content.offsetWidth;
+      const maxY = window.innerHeight - content.offsetHeight;
+      
+      content.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
+      content.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (draggedModal) {
+        draggedModal.classList.remove('dragging');
+        draggedModal = null;
+      }
+    });
+    
+    // Initialize draggable functionality for all modals
+    document.querySelectorAll('.modal').forEach(makeModalDraggable);
+    
+    // Prevent modal content clicks from bubbling to background
+    document.querySelectorAll('.modal .content').forEach(content => {
+      content.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    });
+  </script>
+</body>
+</html>

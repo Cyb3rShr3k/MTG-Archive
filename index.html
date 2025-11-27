@@ -1,0 +1,192 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>MTG Archive - Dashboard</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
+	<!-- Firebase Scripts -->
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+	<script src="firebase-config.js"></script>
+	<script src="firebase-db.js"></script>
+	<script src="shared-nav.js"></script>
+	<style>
+		.stat-card {
+			background: linear-gradient(135deg, rgba(245, 106, 106, 0.1) 0%, rgba(76, 132, 255, 0.1) 100%);
+			padding: 2em;
+			border-radius: 4px;
+			text-align: center;
+			border-left: 4px solid #f56a6a;
+			transition: all 0.3s ease;
+		}
+		.stat-card:hover {
+			transform: translateY(-5px);
+			box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+		}
+		.stat-card h3 {
+			margin: 0 0 0.5em 0;
+			color: #f56a6a;
+			font-size: 3em;
+			font-weight: bold;
+		}
+		.stat-card p {
+			margin: 0;
+			color: #999;
+			text-transform: uppercase;
+			font-size: 0.8em;
+			letter-spacing: 0.25em;
+		}
+		.quick-action-card {
+			transition: all 0.3s ease;
+			cursor: pointer;
+		}
+		.quick-action-card:hover {
+			transform: translateY(-3px);
+		}
+	</style>
+</head>
+<body class="is-preload">
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<div id="main">
+			<div class="inner">
+
+			<!-- Header (injected by shared-nav.js) -->
+			<div id="headerContainer"></div>				<!-- Banner -->
+				<section id="banner">
+					<div class="content">
+						<header>
+							<h1>Welcome to<br />MTG Archive</h1>
+							<p>Your Personal Card Collection Manager</p>
+						</header>
+						<p>Organize your Magic: The Gathering collection with ease. Import cards via CSV or OCR, build custom decks, browse your collection with advanced filters, and track your collection's growth. Whether you're a casual player or serious collector, MTG Archive has the tools you need.</p>
+						<ul class="actions">
+							<li><a href="card_addition.html" class="button big primary icon solid fa-plus">Add Cards</a></li>
+							<li><a href="deckbuilding.html" class="button big icon solid fa-layer-group">Build Decks</a></li>
+						</ul>
+					</div>
+					<span class="image object">
+						<img src="assets/MTG-Archive.png" alt="MTG Archive" style="border-radius:8px;" />
+					</span>
+				</section>
+
+				<!-- Stats -->
+				<section>
+					<header class="major">
+						<h2>Collection Overview</h2>
+					</header>
+					<div class="row gtr-200">
+						<div class="col-4 col-12-medium">
+							<div class="stat-card">
+								<h3 id="totalCards">0</h3>
+								<p>Total Cards</p>
+							</div>
+						</div>
+						<div class="col-4 col-12-medium">
+							<div class="stat-card" style="border-left-color: #4c84ff;">
+								<h3 id="uniqueCards">0</h3>
+								<p>Unique Cards</p>
+							</div>
+						</div>
+						<div class="col-4 col-12-medium">
+							<div class="stat-card" style="border-left-color: #39c088;">
+								<h3 id="totalDecks">0</h3>
+								<p>Decks Built</p>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Quick Actions -->
+				<section>
+					<header class="major">
+						<h2>Quick Actions</h2>
+					</header>
+					<div class="features">
+						<article class="quick-action-card" onclick="window.location.href='card_addition.html'">
+							<span class="icon solid fa-plus"></span>
+							<div class="content">
+								<h3>Add Cards</h3>
+								<p>Manually add cards to your collection or import them via CSV.</p>
+							</div>
+						</article>
+						<article class="quick-action-card" onclick="window.location.href='card_addition.html#scan'">
+							<span class="icon solid fa-camera"></span>
+							<div class="content">
+								<h3>Scan Cards</h3>
+								<p>Use OCR technology to scan and identify cards from images.</p>
+							</div>
+						</article>
+						<article class="quick-action-card" onclick="window.location.href='deckbuilding.html'">
+							<span class="icon solid fa-layer-group"></span>
+							<div class="content">
+								<h3>Build Decks</h3>
+							<p>Create custom decks from your collection with drag-and-drop.</p>
+							</div>
+						</article>
+						<article class="quick-action-card" onclick="window.location.href='deckbuilding.html#precon'">
+							<span class="icon solid fa-download"></span>
+							<div class="content">
+								<h3>Import Precon</h3>
+								<p>Import complete preconstructed decks from our database.</p>
+							</div>
+						</article>
+						<article class="quick-action-card" onclick="window.location.href='deckbuilding.html#search'">
+							<span class="icon solid fa-search"></span>
+							<div class="content">
+								<h3>Browse Collection</h3>
+								<p>Search and filter your entire card collection.</p>
+							</div>
+						</article>
+						<article class="quick-action-card" onclick="window.location.href='card_addition.html#csv'">
+							<span class="icon solid fa-file-csv"></span>
+							<div class="content">
+								<h3>CSV Import</h3>
+								<p>Bulk import cards from a CSV file with Scryfall IDs.</p>
+							</div>
+						</article>
+					</div>
+				</section>
+
+				<!-- Recent Decks -->
+				<section id="recentDecks" style="display:none;">
+					<header class="major">
+						<h2>Recent Decks</h2>
+					</header>
+					<div id="decksList" class="posts"></div>
+				</section>
+
+			</div>
+		</div>
+
+		<!-- Sidebar (injected by shared-nav.js) -->
+		<div id="sidebarContainer"></div>
+
+	</div>
+
+	<!-- Scripts -->
+	<script src="HTML5up/assets/js/jquery.min.js"></script>
+	<script src="HTML5up/assets/js/browser.min.js"></script>
+	<script src="HTML5up/assets/js/breakpoints.min.js"></script>
+	<script src="HTML5up/assets/js/util.js"></script>
+	<script src="HTML5up/assets/js/main.js"></script>
+	<script src="api.js"></script>
+	<script>
+		// Inject navigation components when DOM is ready
+		document.addEventListener('DOMContentLoaded', () => {
+			if (typeof sharedNav !== 'undefined') {
+				document.getElementById('headerContainer').innerHTML = sharedNav.header('Dashboard');
+				document.getElementById('sidebarContainer').innerHTML = sharedNav.sidebar;
+				// Re-initialize navigation after injection
+				initializeNav();
+			}
+		});
+	</script>
+
+</body>
+</html>

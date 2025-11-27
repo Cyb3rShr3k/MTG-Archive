@@ -1,0 +1,554 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>MTG Archive - Add Cards</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
+	<!-- Firebase Scripts -->
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+	<script src="firebase-config.js"></script>
+	<script src="firebase-db.js"></script>
+	<script src="shared-nav.js"></script>
+	<style>
+		.import-method {
+			cursor: pointer;
+			transition: all 0.3s ease;
+			border: 2px solid transparent;
+		}
+		.import-method:hover {
+			transform: translateY(-3px);
+			border-color: #f56a6a;
+		}
+		.import-method.active {
+			border-color: #4c84ff;
+			background: rgba(76, 132, 255, 0.1);
+		}
+		.modal {
+			display: none;
+			position: fixed;
+			z-index: 1000;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+			background-color: rgba(0,0,0,0.6);
+		}
+		.modal-content {
+			background-color: #242943;
+			margin: 5% auto;
+			padding: 2em;
+			border: 1px solid #888;
+			border-radius: 4px;
+			width: 80%;
+			max-width: 800px;
+			color: #fff;
+		}
+		.close {
+			color: #aaa;
+			float: right;
+			font-size: 28px;
+			font-weight: bold;
+			cursor: pointer;
+		}
+		.close:hover,
+		.close:focus {
+			color: #f56a6a;
+		}
+		.session-stats {
+			background: rgba(245, 106, 106, 0.1);
+			padding: 1em;
+			border-radius: 4px;
+			border-left: 4px solid #f56a6a;
+			margin-bottom: 1em;
+		}
+		.collection-table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+		.collection-table th {
+			background: #242943;
+			color: #fff;
+			padding: 0.75em;
+			text-align: left;
+			border-bottom: 2px solid #f56a6a;
+		}
+		.collection-table td {
+			padding: 0.5em 0.75em;
+			border-bottom: 1px solid #ddd;
+		}
+		.collection-table tr:nth-child(even) {
+			background: #f9f9f9;
+		}
+		.collection-table tr:hover {
+			background: #f0f0f0;
+		}
+		.preview-card {
+			display: none;
+			position: fixed;
+			pointer-events: none;
+			z-index: 2000;
+			background: white;
+			border: 2px solid #242943;
+			border-radius: 8px;
+			padding: 4px;
+			box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+		}
+		.preview-card img {
+			max-width: 260px;
+			height: auto;
+			border-radius: 4px;
+		}
+		#manualEntry {
+			min-height: 150px;
+			font-family: monospace;
+		}
+	</style>
+</head>
+<body class="is-preload">
+
+	<!-- Wrapper -->
+	<div id="wrapper">
+
+		<!-- Main -->
+		<div id="main">
+			<div class="inner">
+
+			<!-- Header -->
+			<div id="headerContainer"></div>				<!-- Session Stats -->
+				<div class="session-stats">
+					<strong>Session Added:</strong> <span id="sessionCount">0</span> cards
+					&nbsp; • &nbsp;
+					<strong>Total Collection:</strong> <span id="totalCount">0</span> cards
+				</div>
+
+				<!-- Import Methods -->
+				<section>
+					<header class="major">
+						<h2>Choose Import Method</h2>
+					</header>
+					<div class="row gtr-200">
+						<div class="col-4 col-12-medium">
+							<div class="import-method" onclick="selectMethod('manual')">
+								<span class="icon solid fa-keyboard" style="font-size:3em; color:#f56a6a;"></span>
+								<h3>Manual Entry</h3>
+								<p>Type card names with quantities</p>
+							</div>
+						</div>
+						<div class="col-4 col-12-medium">
+							<div class="import-method" onclick="selectMethod('csv')">
+								<span class="icon solid fa-file-csv" style="font-size:3em; color:#4c84ff;"></span>
+								<h3>CSV Import</h3>
+								<p>Import from CSV file with Scryfall IDs</p>
+							</div>
+						</div>
+						<div class="col-4 col-12-medium">
+							<div class="import-method" onclick="selectMethod('scan')">
+								<span class="icon solid fa-camera" style="font-size:3em; color:#39c088;"></span>
+								<h3>OCR Scanner</h3>
+								<p>Scan cards from images</p>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Manual Entry Panel -->
+				<section id="manualPanel" style="display:none;">
+					<header class="major">
+						<h2>Manual Entry</h2>
+					</header>
+					<p>Enter card names with optional quantities. Examples: <code>3 Sol Ring</code>, <code>Command Tower</code>, or multiple per line separated by commas.</p>
+					<textarea id="manualEntry" class="form-control" rows="10" placeholder="Example:&#10;3 Sol Ring&#10;2 Command Tower&#10;Lightning Bolt"></textarea>
+					<ul class="actions" style="margin-top:1em;">
+						<li><button class="button primary icon solid fa-plus" onclick="addManualCards()">Add Cards</button></li>
+						<li><button class="button" onclick="clearManual()">Clear</button></li>
+					</ul>
+				</section>
+
+				<!-- CSV Import Panel -->
+				<section id="csvPanel" style="display:none;">
+					<header class="major">
+						<h2>CSV Import</h2>
+					</header>
+					<p>Upload a CSV file with Scryfall IDs or card names. The file should have columns like: <code>name</code>, <code>scryfall_id</code>, <code>quantity</code>.</p>
+					<div class="row gtr-uniform">
+						<div class="col-12">
+							<input type="file" id="csvFile" accept=".csv" />
+						</div>
+						<div class="col-12">
+							<ul class="actions">
+								<li><button class="button primary icon solid fa-upload" onclick="importCSV()">Import CSV</button></li>
+							</ul>
+						</div>
+					</div>
+				</section>
+
+				<!-- Scanner Panel -->
+				<section id="scanPanel" style="display:none;">
+					<header class="major">
+						<h2>OCR Card Scanner</h2>
+					</header>
+					<p>Upload images of your cards and use OCR to identify them automatically.</p>
+					<div class="row gtr-uniform">
+						<div class="col-12">
+							<input type="file" id="scanImages" accept="image/*" multiple />
+						</div>
+						<div class="col-12">
+							<ul class="actions">
+								<li><button class="button primary icon solid fa-camera" onclick="scanCards()">Scan Cards</button></li>
+							</ul>
+						</div>
+					</div>
+					<div id="scanResults" style="margin-top:2em; display:none;">
+						<h3>Scan Results</h3>
+						<div id="scanResultsList"></div>
+						<ul class="actions" style="margin-top:1em;">
+							<li><button class="button primary" onclick="addScannedCards()">Add Selected Cards</button></li>
+						</ul>
+					</div>
+				</section>
+
+				<!-- Collection View -->
+				<section id="collectionView">
+					<header class="major">
+						<h2>Your Collection</h2>
+					</header>
+					<div style="overflow-x:auto;">
+						<table class="collection-table" id="collectionTable">
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>Set</th>
+									<th>Colors</th>
+									<th>CMC</th>
+									<th>Type</th>
+									<th>Rarity</th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+					</div>
+				</section>
+
+			</div>
+		</div>
+
+		<!-- Sidebar -->
+		<div id="sidebarContainer"></div>
+
+	</div>
+
+	<!-- Card Preview -->
+	<div id="cardPreview" class="preview-card">
+		<img id="cardPreviewImg" src="" alt="Card Preview" />
+	</div>
+
+	<!-- Scripts -->
+	<script src="HTML5up/assets/js/jquery.min.js"></script>
+	<script src="HTML5up/assets/js/browser.min.js"></script>
+	<script src="HTML5up/assets/js/breakpoints.min.js"></script>
+	<script src="HTML5up/assets/js/util.js"></script>
+	<script src="HTML5up/assets/js/main.js"></script>
+
+	<script>
+		let sessionAdded = 0;
+		let scannedCards = [];
+
+		// Wait for Firebase to initialize
+		function waitForFirebaseDB() {
+			return new Promise(resolve => {
+				const checkFirebase = setInterval(() => {
+					if (typeof firebaseDB !== 'undefined') {
+						clearInterval(checkFirebase);
+						resolve();
+					}
+				}, 100);
+				setTimeout(() => {
+					clearInterval(checkFirebase);
+					resolve();
+				}, 5000);
+			});
+		}
+
+		function selectMethod(method) {
+			document.querySelectorAll('.import-method').forEach(m => {
+				m.classList.remove('active');
+			});
+			document.querySelectorAll('[id^="manualPanel"], [id^="csvPanel"], [id^="scanPanel"]').forEach(t => {
+				t.style.display = 'none';
+			});
+			
+			// Show correct panel
+			if (method === 'manual') {
+				document.getElementById('manualPanel').style.display = 'block';
+				document.querySelectorAll('.import-method')[0]?.classList.add('active');
+			} else if (method === 'csv') {
+				document.getElementById('csvPanel').style.display = 'block';
+				document.querySelectorAll('.import-method')[1]?.classList.add('active');
+			} else if (method === 'scan') {
+				document.getElementById('scanPanel').style.display = 'block';
+				document.querySelectorAll('.import-method')[2]?.classList.add('active');
+			}
+		}
+
+		// Manual entry
+		async function addManualCards() {
+			const text = document.getElementById('manualEntry').value.trim();
+			if (!text) {
+				alert('Please enter at least one card name.');
+				return;
+			}
+
+			const entries = [];
+			for (const line of text.split('\n')) {
+				for (const part of line.split(',')) {
+					const s = part.trim();
+					if (!s) continue;
+					
+					// Parse quantity (e.g., "3 Sol Ring")
+					const match = s.match(/^(\d+)\s+(.+)$/);
+					if (match) {
+						const qty = parseInt(match[1], 10);
+						const name = match[2].trim();
+						if (name && qty > 0) {
+							entries.push({ name, count: qty });
+						}
+					} else {
+						entries.push({ name: s, count: 1 });
+					}
+				}
+			}
+
+			if (entries.length === 0) return;
+
+			let added = 0;
+			for (const entry of entries) {
+				try {
+					// Search Scryfall for card
+					const cardData = await searchScryfallAPI(entry.name);
+					
+					if (cardData) {
+						// Add card multiple times for quantity
+						for (let i = 0; i < entry.count; i++) {
+							await firebaseDB.addCard({
+								name: cardData.name,
+								set: cardData.set.toUpperCase(),
+								quantity: 1,
+								scryfall_id: cardData.id,
+								colors: cardData.colors || [],
+								cmc: cardData.cmc || 0,
+								type: cardData.type_line || 'Unknown',
+								rarity: cardData.rarity || 'common',
+								image_url: cardData.image_uris?.normal || ''
+							});
+							added++;
+						}
+					}
+				} catch (error) {
+					console.error('Error adding card:', entry.name, error);
+				}
+			}
+
+			sessionAdded += added;
+			document.getElementById('sessionCount').textContent = sessionAdded;
+			await refreshCollection();
+			alert(`Added ${added} card(s) to your collection!`);
+			document.getElementById('manualEntry').value = '';
+		}
+
+		function clearManual() {
+			document.getElementById('manualEntry').value = '';
+		}
+
+		// Search Scryfall API
+		async function searchScryfallAPI(name, set = '') {
+			try {
+				let query = `exact:"${name}"`;
+				if (set) {
+					query += ` s:${set}`;
+				}
+				
+				const response = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}`);
+				if (!response.ok) return null;
+
+				const data = await response.json();
+				if (data.data && data.data.length > 0) {
+					return data.data[0];
+				}
+				return null;
+			} catch (error) {
+				console.error('Scryfall API error:', error);
+				return null;
+			}
+		}
+
+		// CSV Import
+		async function importCSV() {
+			const fileInput = document.getElementById('csvFile');
+			const file = fileInput.files[0];
+			
+			if (!file) {
+				alert('Please select a CSV file.');
+				return;
+			}
+
+			try {
+				const text = await file.text();
+				const lines = text.split('\n');
+				let imported = 0;
+
+				for (const line of lines) {
+					if (!line.trim()) continue;
+
+					const parts = line.split(',');
+					const name = parts[0]?.trim();
+					const quantity = parseInt(parts[1]) || 1;
+
+					if (name) {
+						const cardData = await searchScryfallAPI(name);
+						if (cardData) {
+							await firebaseDB.addCard({
+								name: cardData.name,
+								set: cardData.set.toUpperCase(),
+								quantity: quantity,
+								scryfall_id: cardData.id,
+								colors: cardData.colors || [],
+								cmc: cardData.cmc || 0,
+								type: cardData.type_line || 'Unknown',
+								rarity: cardData.rarity || 'common',
+								image_url: cardData.image_uris?.normal || ''
+							});
+							imported++;
+						}
+					}
+				}
+
+				sessionAdded += imported;
+				document.getElementById('sessionCount').textContent = sessionAdded;
+				await refreshCollection();
+				alert(`Imported ${imported} card(s) from CSV!`);
+				fileInput.value = '';
+			} catch (error) {
+				console.error('CSV import error:', error);
+				alert('Failed to import CSV. Check the file format.');
+			}
+		}
+
+		// OCR Scanner
+		async function scanCards() {
+			alert('Note: OCR scanning requires a backend service. For now, please use manual entry or CSV import.\n\nTo add OCR support, you would need to:\n1. Use Tesseract.js (browser-based) or\n2. Set up a backend API endpoint');
+		}
+
+		async function addScannedCards() {
+			alert('Scanned cards feature requires OCR backend service. Please use manual entry or CSV import.');
+		}
+
+		// Collection management
+		async function refreshCollection() {
+			try {
+				const cards = await firebaseDB.getCollectionCards();
+				const total = cards.reduce((sum, card) => sum + (card.quantity || 1), 0);
+				
+				document.getElementById('totalCount').textContent = total || 0;
+				renderCollection(cards || []);
+			} catch (error) {
+				console.error('Failed to refresh collection:', error);
+			}
+		}
+
+		function renderCollection(cards) {
+			const tbody = document.querySelector('#collectionTable tbody');
+			if (!tbody) return;
+
+			tbody.innerHTML = '';
+
+			cards.forEach(card => {
+				const tr = document.createElement('tr');
+				tr.innerHTML = `
+					<td>${card.name || 'Unknown'}</td>
+					<td>${card.set ? card.set.toUpperCase() : 'N/A'}</td>
+					<td>${(card.colors || []).join(', ') || 'Colorless'}</td>
+					<td>${card.cmc ?? 'N/A'}</td>
+					<td>${card.type || 'N/A'}</td>
+					<td>${card.rarity || 'N/A'}</td>
+					<td>${card.quantity || 1}</td>
+				`;
+				
+				// Add hover preview
+				tr.addEventListener('mouseenter', (e) => showCardPreview(card, e));
+				tr.addEventListener('mousemove', (e) => moveCardPreview(e));
+				tr.addEventListener('mouseleave', hideCardPreview);
+				
+				tbody.appendChild(tr);
+			});
+		}
+
+		// Card preview
+		function showCardPreview(card, event) {
+			const preview = document.getElementById('cardPreview');
+			const img = document.getElementById('cardPreviewImg');
+			
+			const imageUrl = card.image_url || `https://api.scryfall.com/cards/${card.set}/${card.number}?format=image`;
+			
+			img.src = imageUrl;
+			img.onerror = () => {
+				img.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22360%22%3E%3Crect fill=%22%23ddd%22 width=%22260%22 height=%22360%22/%3E%3C/svg%3E';
+			};
+			preview.style.display = 'block';
+			moveCardPreview(event);
+		}
+
+		function moveCardPreview(event) {
+			const preview = document.getElementById('cardPreview');
+			const offset = 20;
+			let x = event.clientX + offset;
+			let y = event.clientY + offset;
+
+			// Keep preview in viewport
+			if (x + 280 > window.innerWidth) {
+				x = event.clientX - 280 - offset;
+			}
+			if (y + 400 > window.innerHeight) {
+				y = event.clientY - 400 - offset;
+			}
+
+			preview.style.left = x + 'px';
+			preview.style.top = y + 'px';
+		}
+
+		function hideCardPreview() {
+			const preview = document.getElementById('cardPreview');
+			preview.style.display = 'none';
+		}
+
+		// Initialize
+		window.addEventListener('DOMContentLoaded', async () => {
+			// Inject navigation
+			if (typeof sharedNav !== 'undefined') {
+				document.getElementById('headerContainer').innerHTML = sharedNav.header('Add Cards');
+				document.getElementById('sidebarContainer').innerHTML = sharedNav.sidebar;
+				initializeNav();
+			}
+
+			await waitForFirebaseDB();
+
+			// Check authentication
+			firebaseDB.onAuthStateChanged(user => {
+				if (!user) {
+					window.location.href = 'login.html';
+					return;
+				}
+
+				refreshCollection();
+				
+				// Auto-select manual entry by default
+				selectMethod('manual');
+			});
+		});
+	</script>
+
+</body>
+</html>
