@@ -588,6 +588,91 @@
 			}
 		}
 
+		// Precon modal management
+		function openPreconModal() {
+			document.getElementById('preconModal').style.display = 'block';
+			document.getElementById('preconResults').innerHTML = '<p>Enter a deck name or set to search precons...</p>';
+		}
+
+		// Sample precons database (can be replaced with API call later)
+		const preconDatabase = [
+			{ name: 'Planeswalker Fire Mastery', set: '2024', colors: 'RW', cards: [{ name: 'Lightning Bolt', quantity: 3 }, { name: 'Mountain', quantity: 10 }] },
+			{ name: 'Mystic Reflection', set: '2024', colors: 'UG', cards: [{ name: 'Counterspell', quantity: 2 }, { name: 'Island', quantity: 10 }] },
+			{ name: 'Eldritch Evocation', set: '2024', colors: 'UBR', cards: [{ name: 'Dark Ritual', quantity: 3 }, { name: 'Swamp', quantity: 8 }] }
+		];
+
+		function searchPrecons() {
+			const searchQuery = document.getElementById('preconSearch').value.toLowerCase();
+			const resultsDiv = document.getElementById('preconResults');
+
+			if (!searchQuery) {
+				resultsDiv.innerHTML = '<p>Enter a deck name or set to search...</p>';
+				return;
+			}
+
+			const filteredPrecons = preconDatabase.filter(p =>
+				p.name.toLowerCase().includes(searchQuery) ||
+				p.set.toLowerCase().includes(searchQuery)
+			);
+
+			if (filteredPrecons.length === 0) {
+				resultsDiv.innerHTML = '<p>No precons found. Try another search.</p>';
+				return;
+			}
+
+			let html = '';
+			filteredPrecons.forEach(precon => {
+				html += `
+					<div style="border:1px solid #ddd; padding:1em; margin-bottom:1em; border-radius:4px; background:#f9f9f9;">
+						<h4 style="margin:0 0 0.5em 0;">${precon.name}</h4>
+						<p style="margin:0 0 0.5em 0; font-size:0.9em; color:#666;">
+							<strong>Set:</strong> ${precon.set} | <strong>Colors:</strong> ${precon.colors}
+						</p>
+						<button class="button small primary" onclick="importPrecon('${precon.name}', '${precon.colors}')">
+							Import Deck
+						</button>
+					</div>
+				`;
+			});
+
+			resultsDiv.innerHTML = html;
+		}
+
+		async function importPrecon(deckName, colors) {
+			const precon = preconDatabase.find(p => p.name === deckName);
+			if (!precon) return;
+
+			try {
+				const deckData = {
+					name: `${deckName} (Imported)`,
+					deckType: 'Constructed',
+					colors: colors,
+					description: `Imported preconstructed deck: ${deckName}`,
+					cards: precon.cards.map(c => ({ name: c.name, quantity: c.quantity }))
+				};
+
+				const result = await firebaseDB.createDeck(deckData);
+				if (result.success) {
+					closeModal('preconModal');
+					alert(`Deck "${deckName}" imported successfully!`);
+					loadDecks();
+				} else {
+					alert('Failed to import deck: ' + result.error);
+				}
+			} catch (error) {
+				console.error('Import error:', error);
+				alert('Error importing precon: ' + error.message);
+			}
+		}
+
+		// Add event listener for precon search
+		document.addEventListener('DOMContentLoaded', () => {
+			const preconSearch = document.getElementById('preconSearch');
+			if (preconSearch) {
+				preconSearch.addEventListener('input', searchPrecons);
+			}
+		});
+
 		// Modal management
 		function closeModal(modalId) {
 			document.getElementById(modalId).style.display = 'none';
