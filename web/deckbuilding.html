@@ -621,14 +621,14 @@
 			}
 
 			let html = '';
-			filteredPrecons.forEach(precon => {
+			filteredPrecons.forEach((precon, index) => {
 				html += `
 					<div style="border:1px solid #ddd; padding:1em; margin-bottom:1em; border-radius:4px; background:#f9f9f9;">
-						<h4 style="margin:0 0 0.5em 0;">${precon.name}</h4>
+						<h4 style="margin:0 0 0.5em 0;">${escapeHtml(precon.name)}</h4>
 						<p style="margin:0 0 0.5em 0; font-size:0.9em; color:#666;">
-							<strong>Set:</strong> ${precon.set} | <strong>Colors:</strong> ${precon.colors}
+							<strong>Set:</strong> ${escapeHtml(precon.set)} | <strong>Colors:</strong> ${escapeHtml(precon.colors)}
 						</p>
-						<button class="button small primary" onclick="importPrecon('${precon.name}', '${precon.colors}')">
+						<button class="button small primary" data-deck-index="${index}" onclick="importPreconByIndex(this.dataset.deckIndex)">
 							Import Deck
 						</button>
 					</div>
@@ -636,6 +636,39 @@
 			});
 
 			resultsDiv.innerHTML = html;
+		}
+
+		function escapeHtml(text) {
+			const div = document.createElement('div');
+			div.textContent = text;
+			return div.innerHTML;
+		}
+
+		async function importPreconByIndex(index) {
+			const precon = preconDatabase[parseInt(index)];
+			if (!precon) return;
+
+			try {
+				const deckData = {
+					name: `${precon.name} (Imported)`,
+					deckType: 'Constructed',
+					colors: precon.colors,
+					description: `Imported preconstructed deck: ${precon.name}`,
+					cards: precon.cards.map(c => ({ name: c.name, quantity: c.quantity }))
+				};
+
+				const result = await firebaseDB.createDeck(deckData);
+				if (result.success) {
+					closeModal('preconModal');
+					alert(`Deck "${precon.name}" imported successfully!`);
+					loadDecks();
+				} else {
+					alert('Failed to import deck: ' + result.error);
+				}
+			} catch (error) {
+				console.error('Import error:', error);
+				alert('Error importing precon: ' + error.message);
+			}
 		}
 
 		async function importPrecon(deckName, colors) {
