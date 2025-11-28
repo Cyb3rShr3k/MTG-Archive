@@ -591,29 +591,59 @@
 		// Precon modal management
 		function openPreconModal() {
 			document.getElementById('preconModal').style.display = 'block';
-			document.getElementById('preconResults').innerHTML = '<p>Enter a deck name or set to search precons...</p>';
+			searchPrecons(); // Load all precons on open
 		}
 
 		// Sample precons database (can be replaced with API call later)
 		const preconDatabase = [
-			{ name: 'Planeswalker Fire Mastery', set: '2024', colors: 'RW', cards: [{ name: 'Lightning Bolt', quantity: 3 }, { name: 'Mountain', quantity: 10 }] },
-			{ name: 'Mystic Reflection', set: '2024', colors: 'UG', cards: [{ name: 'Counterspell', quantity: 2 }, { name: 'Island', quantity: 10 }] },
-			{ name: 'Eldritch Evocation', set: '2024', colors: 'UBR', cards: [{ name: 'Dark Ritual', quantity: 3 }, { name: 'Swamp', quantity: 8 }] }
+			// 2024 Precons
+			{ name: 'Planeswalker Fire Mastery', set: '2024', colors: 'RW', cards: [{ name: 'Lightning Bolt', quantity: 3 }, { name: 'Mountain', quantity: 20 }, { name: 'Plains', quantity: 20 }, { name: 'Chandra, Pyromaster', quantity: 1 }] },
+			{ name: 'Mystic Reflection', set: '2024', colors: 'UG', cards: [{ name: 'Counterspell', quantity: 2 }, { name: 'Island', quantity: 20 }, { name: 'Forest', quantity: 20 }, { name: 'Tamiyo, Collector of Tales', quantity: 1 }] },
+			{ name: 'Eldritch Evocation', set: '2024', colors: 'UBR', cards: [{ name: 'Dark Ritual', quantity: 3 }, { name: 'Swamp', quantity: 15 }, { name: 'Island', quantity: 10 }, { name: 'Mountain', quantity: 10 }, { name: 'Nicol Bolas, Dragon-God', quantity: 1 }] },
+			
+			// Commander Precons
+			{ name: 'Atraxa, Praetor\'s Voice', set: 'Commander', colors: 'WUBG', cards: [{ name: 'Atraxa, Praetor\'s Voice', quantity: 1 }, { name: 'Sol Ring', quantity: 1 }, { name: 'Command Tower', quantity: 1 }] },
+			{ name: 'Edgar Markov', set: 'Commander', colors: 'WBR', cards: [{ name: 'Edgar Markov', quantity: 1 }, { name: 'Vampire', quantity: 10 }, { name: 'Swamp', quantity: 10 }] },
+			{ name: 'The Scarab God', set: 'Commander', colors: 'UB', cards: [{ name: 'The Scarab God', quantity: 1 }, { name: 'Zombie', quantity: 10 }, { name: 'Island', quantity: 10 }] },
+			{ name: 'Meren of Clan Nel Toth', set: 'Commander', colors: 'BG', cards: [{ name: 'Meren of Clan Nel Toth', quantity: 1 }, { name: 'Creature', quantity: 15 }, { name: 'Swamp', quantity: 10 }] },
+			{ name: 'Brago, King Eternal', set: 'Commander', colors: 'WU', cards: [{ name: 'Brago, King Eternal', quantity: 1 }, { name: 'Island', quantity: 12 }, { name: 'Plains', quantity: 12 }] },
+			
+			// Modern Horizons Precons
+			{ name: 'Boros Aggro', set: 'Modern Horizons', colors: 'WR', cards: [{ name: 'Lightning Bolt', quantity: 4 }, { name: 'Plains', quantity: 12 }, { name: 'Mountain', quantity: 12 }] },
+			{ name: 'Blue Control', set: 'Modern Horizons', colors: 'U', cards: [{ name: 'Counterspell', quantity: 4 }, { name: 'Island', quantity: 24 }] },
+			{ name: 'Green Stompy', set: 'Modern Horizons', colors: 'G', cards: [{ name: 'Tusk Elephant', quantity: 4 }, { name: 'Forest', quantity: 24 }] },
+			{ name: 'Black Control', set: 'Modern Horizons', colors: 'B', cards: [{ name: 'Inquisition of Kozilek', quantity: 4 }, { name: 'Swamp', quantity: 24 }] },
+			
+			// Ravnica Precons
+			{ name: 'Selesnya Tokens', set: 'Ravnica Allegiance', colors: 'WG', cards: [{ name: 'Token Creator', quantity: 8 }, { name: 'Plains', quantity: 12 }, { name: 'Forest', quantity: 12 }] },
+			{ name: 'Izzet Spellslinger', set: 'Ravnica Allegiance', colors: 'UR', cards: [{ name: 'Spell Queller', quantity: 4 }, { name: 'Island', quantity: 12 }, { name: 'Mountain', quantity: 12 }] },
+			{ name: 'Golgari Midrange', set: 'Ravnica Allegiance', colors: 'BG', cards: [{ name: 'Assassin\'s Trophy', quantity: 4 }, { name: 'Swamp', quantity: 12 }, { name: 'Forest', quantity: 12 }] },
+			{ name: 'Azorius Control', set: 'Ravnica Allegiance', colors: 'WU', cards: [{ name: 'Supreme Verdict', quantity: 2 }, { name: 'Plains', quantity: 12 }, { name: 'Island', quantity: 12 }] },
+			
+			// Dominaria Precons
+			{ name: 'Red Aggro', set: 'Dominaria', colors: 'R', cards: [{ name: 'Goblin', quantity: 8 }, { name: 'Mountain', quantity: 20 }] },
+			{ name: 'Blue Flyers', set: 'Dominaria', colors: 'U', cards: [{ name: 'Flying Creature', quantity: 8 }, { name: 'Island', quantity: 20 }] },
+			{ name: 'White Lifegain', set: 'Dominaria', colors: 'W', cards: [{ name: 'Soul Warden', quantity: 4 }, { name: 'Plains', quantity: 20 }] },
+			
+			// Core Set 2021 Precons
+			{ name: 'Basri\'s Might', set: 'Core Set 2021', colors: 'W', cards: [{ name: 'Basri Ket', quantity: 1 }, { name: 'Plains', quantity: 24 }] },
+			{ name: 'Mu Yanling\'s Mastery', set: 'Core Set 2021', colors: 'U', cards: [{ name: 'Mu Yanling', quantity: 1 }, { name: 'Island', quantity: 24 }] },
+			{ name: 'Liliana\'s Triumph', set: 'Core Set 2021', colors: 'B', cards: [{ name: 'Liliana, Waker of the Dead', quantity: 1 }, { name: 'Swamp', quantity: 24 }] },
+			{ name: 'Chandra\'s Incinerator', set: 'Core Set 2021', colors: 'R', cards: [{ name: 'Chandra, Heart of Fire', quantity: 1 }, { name: 'Mountain', quantity: 24 }] },
+			{ name: 'Nissa\'s Awakening', set: 'Core Set 2021', colors: 'G', cards: [{ name: 'Nissa, Vital Force', quantity: 1 }, { name: 'Forest', quantity: 24 }] }
 		];
 
 		function searchPrecons() {
 			const searchQuery = document.getElementById('preconSearch').value.toLowerCase();
 			const resultsDiv = document.getElementById('preconResults');
 
-			if (!searchQuery) {
-				resultsDiv.innerHTML = '<p>Enter a deck name or set to search...</p>';
-				return;
-			}
-
-			const filteredPrecons = preconDatabase.filter(p =>
-				p.name.toLowerCase().includes(searchQuery) ||
-				p.set.toLowerCase().includes(searchQuery)
-			);
+			// If no search query, show all precons
+			const filteredPrecons = !searchQuery 
+				? preconDatabase 
+				: preconDatabase.filter(p =>
+					p.name.toLowerCase().includes(searchQuery) ||
+					p.set.toLowerCase().includes(searchQuery)
+				);
 
 			if (filteredPrecons.length === 0) {
 				resultsDiv.innerHTML = '<p>No precons found. Try another search.</p>';

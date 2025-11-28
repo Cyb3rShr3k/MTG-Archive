@@ -591,29 +591,36 @@
 		// Precon modal management
 		function openPreconModal() {
 			document.getElementById('preconModal').style.display = 'block';
-			document.getElementById('preconResults').innerHTML = '<p>Enter a deck name or set to search precons...</p>';
+			searchPrecons(); // Load all precons on open
 		}
 
 		// Sample precons database (can be replaced with API call later)
 		const preconDatabase = [
-			{ name: 'Planeswalker Fire Mastery', set: '2024', colors: 'RW', cards: [{ name: 'Lightning Bolt', quantity: 3 }, { name: 'Mountain', quantity: 10 }] },
-			{ name: 'Mystic Reflection', set: '2024', colors: 'UG', cards: [{ name: 'Counterspell', quantity: 2 }, { name: 'Island', quantity: 10 }] },
-			{ name: 'Eldritch Evocation', set: '2024', colors: 'UBR', cards: [{ name: 'Dark Ritual', quantity: 3 }, { name: 'Swamp', quantity: 8 }] }
+			{ name: 'Planeswalker Fire Mastery', set: '2024', colors: 'RW', cards: [{ name: 'Lightning Bolt', quantity: 3 }, { name: 'Mountain', quantity: 20 }] },
+			{ name: 'Mystic Reflection', set: '2024', colors: 'UG', cards: [{ name: 'Counterspell', quantity: 2 }, { name: 'Island', quantity: 20 }] },
+			{ name: 'Eldritch Evocation', set: '2024', colors: 'UBR', cards: [{ name: 'Dark Ritual', quantity: 3 }, { name: 'Swamp', quantity: 15 }] },
+			{ name: 'Atraxa, Praetor\'s Voice', set: 'Commander', colors: 'WUBG', cards: [{ name: 'Atraxa', quantity: 1 }, { name: 'Sol Ring', quantity: 1 }] },
+			{ name: 'Edgar Markov', set: 'Commander', colors: 'WBR', cards: [{ name: 'Edgar Markov', quantity: 1 }, { name: 'Vampire', quantity: 10 }] },
+			{ name: 'Boros Aggro', set: 'Modern Horizons', colors: 'WR', cards: [{ name: 'Lightning Bolt', quantity: 4 }, { name: 'Plains', quantity: 12 }] },
+			{ name: 'Blue Control', set: 'Modern Horizons', colors: 'U', cards: [{ name: 'Counterspell', quantity: 4 }, { name: 'Island', quantity: 24 }] },
+			{ name: 'Green Stompy', set: 'Modern Horizons', colors: 'G', cards: [{ name: 'Forest', quantity: 24 }] },
+			{ name: 'Red Aggro', set: 'Dominaria', colors: 'R', cards: [{ name: 'Mountain', quantity: 20 }] },
+			{ name: 'White Lifegain', set: 'Dominaria', colors: 'W', cards: [{ name: 'Plains', quantity: 20 }] },
+			{ name: 'Selesnya Tokens', set: 'Ravnica', colors: 'WG', cards: [{ name: 'Plains', quantity: 12 }, { name: 'Forest', quantity: 12 }] },
+			{ name: 'Izzet Spellslinger', set: 'Ravnica', colors: 'UR', cards: [{ name: 'Island', quantity: 12 }, { name: 'Mountain', quantity: 12 }] }
 		];
 
 		function searchPrecons() {
 			const searchQuery = document.getElementById('preconSearch').value.toLowerCase();
 			const resultsDiv = document.getElementById('preconResults');
 
-			if (!searchQuery) {
-				resultsDiv.innerHTML = '<p>Enter a deck name or set to search...</p>';
-				return;
-			}
-
-			const filteredPrecons = preconDatabase.filter(p =>
-				p.name.toLowerCase().includes(searchQuery) ||
-				p.set.toLowerCase().includes(searchQuery)
-			);
+			// If no search query, show all precons
+			const filteredPrecons = !searchQuery 
+				? preconDatabase 
+				: preconDatabase.filter(p =>
+					p.name.toLowerCase().includes(searchQuery) ||
+					p.set.toLowerCase().includes(searchQuery)
+				);
 
 			if (filteredPrecons.length === 0) {
 				resultsDiv.innerHTML = '<p>No precons found. Try another search.</p>';
