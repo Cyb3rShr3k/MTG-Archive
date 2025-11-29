@@ -600,6 +600,9 @@
 			}
 		}
 
+		// Precon database cache
+		let preconDatabase = [];
+
 		// Precon modal management
 		async function openPreconModal() {
 			const modal = document.getElementById('preconModal');
@@ -747,19 +750,7 @@
 				alert('Failed to import precon deck. Check console for details.');
 			}
 		}
-				if (result.success) {
-					closeModal('preconModal');
-					alert(`Deck "${precon.name}" imported successfully!`);
-					loadDecks();
-				} else {
-					alert('Failed to import deck: ' + result.error);
-				}
-			} catch (error) {
-				console.error('Import error:', error);
-				alert('Error importing precon: ' + error.message);
-			}
-		}
-
+		
 		async function importPrecon(deckName, colors) {
 			const precon = preconDatabase.find(p => p.name === deckName);
 			if (!precon) return;
