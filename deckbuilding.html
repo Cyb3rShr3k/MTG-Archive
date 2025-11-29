@@ -62,7 +62,7 @@
 			background-color: rgba(0,0,0,0.6);
 		}
 		.modal-content {
-			background-color: #242943;
+			background-color: #ffffff;
 			margin: 3% auto;
 			padding: 2em;
 			border: 1px solid #888;
@@ -71,10 +71,10 @@
 			max-width: 1200px;
 			max-height: 85vh;
 			overflow-y: auto;
-			color: #fff;
+			color: #333;
 		}
 		.modal-close {
-			color: #aaa;
+			color: #666;
 			float: right;
 			font-size: 28px;
 			font-weight: bold;
@@ -82,6 +82,18 @@
 		}
 		.modal-close:hover {
 			color: #f56a6a;
+		}
+		.modal-content h2 {
+			color: #333;
+			margin-bottom: 1em;
+		}
+		.modal-content input {
+			background-color: #f5f5f5;
+			color: #333;
+			border: 1px solid #ddd;
+		}
+		.modal-content input::placeholder {
+			color: #999;
 		}
 		.card-search-result {
 			padding: 0.5em;
@@ -269,7 +281,7 @@
 			
 			<div class="row gtr-uniform">
 				<div class="col-12">
-					<input type="text" id="preconSearch" placeholder="Search precons by name or set..." />
+					<input type="text" id="preconSearch" placeholder="Search precons by name or set..." onkeyup="searchPrecons()" />
 				</div>
 				<div class="col-12">
 					<div id="preconResults" style="max-height:500px; overflow-y:auto; margin-top:1em;"></div>
@@ -589,49 +601,82 @@
 		}
 
 		// Precon modal management
-		function openPreconModal() {
-			document.getElementById('preconModal').style.display = 'block';
-			searchPrecons(); // Load all precons on open
+		async function openPreconModal() {
+			const modal = document.getElementById('preconModal');
+			const resultsDiv = document.getElementById('preconResults');
+			
+			modal.style.display = 'block';
+			resultsDiv.innerHTML = '<p style="color:#888;">Loading precons from database...</p>';
+			
+			// Load precons if not already cached
+			if (preconDatabase.length === 0) {
+				await loadPresconDecks();
+			}
+			
+			// Display all precons
+			searchPrecons();
 		}
 
-		// Sample precons database (can be replaced with API call later)
-		const preconDatabase = [
-			// 2024 Precons
-			{ name: 'Planeswalker Fire Mastery', set: '2024', colors: 'RW', cards: [{ name: 'Lightning Bolt', quantity: 3 }, { name: 'Mountain', quantity: 20 }, { name: 'Plains', quantity: 20 }, { name: 'Chandra, Pyromaster', quantity: 1 }] },
-			{ name: 'Mystic Reflection', set: '2024', colors: 'UG', cards: [{ name: 'Counterspell', quantity: 2 }, { name: 'Island', quantity: 20 }, { name: 'Forest', quantity: 20 }, { name: 'Tamiyo, Collector of Tales', quantity: 1 }] },
-			{ name: 'Eldritch Evocation', set: '2024', colors: 'UBR', cards: [{ name: 'Dark Ritual', quantity: 3 }, { name: 'Swamp', quantity: 15 }, { name: 'Island', quantity: 10 }, { name: 'Mountain', quantity: 10 }, { name: 'Nicol Bolas, Dragon-God', quantity: 1 }] },
-			
-			// Commander Precons
-			{ name: 'Atraxa, Praetor\'s Voice', set: 'Commander', colors: 'WUBG', cards: [{ name: 'Atraxa, Praetor\'s Voice', quantity: 1 }, { name: 'Sol Ring', quantity: 1 }, { name: 'Command Tower', quantity: 1 }] },
-			{ name: 'Edgar Markov', set: 'Commander', colors: 'WBR', cards: [{ name: 'Edgar Markov', quantity: 1 }, { name: 'Vampire', quantity: 10 }, { name: 'Swamp', quantity: 10 }] },
-			{ name: 'The Scarab God', set: 'Commander', colors: 'UB', cards: [{ name: 'The Scarab God', quantity: 1 }, { name: 'Zombie', quantity: 10 }, { name: 'Island', quantity: 10 }] },
-			{ name: 'Meren of Clan Nel Toth', set: 'Commander', colors: 'BG', cards: [{ name: 'Meren of Clan Nel Toth', quantity: 1 }, { name: 'Creature', quantity: 15 }, { name: 'Swamp', quantity: 10 }] },
-			{ name: 'Brago, King Eternal', set: 'Commander', colors: 'WU', cards: [{ name: 'Brago, King Eternal', quantity: 1 }, { name: 'Island', quantity: 12 }, { name: 'Plains', quantity: 12 }] },
-			
-			// Modern Horizons Precons
-			{ name: 'Boros Aggro', set: 'Modern Horizons', colors: 'WR', cards: [{ name: 'Lightning Bolt', quantity: 4 }, { name: 'Plains', quantity: 12 }, { name: 'Mountain', quantity: 12 }] },
-			{ name: 'Blue Control', set: 'Modern Horizons', colors: 'U', cards: [{ name: 'Counterspell', quantity: 4 }, { name: 'Island', quantity: 24 }] },
-			{ name: 'Green Stompy', set: 'Modern Horizons', colors: 'G', cards: [{ name: 'Tusk Elephant', quantity: 4 }, { name: 'Forest', quantity: 24 }] },
-			{ name: 'Black Control', set: 'Modern Horizons', colors: 'B', cards: [{ name: 'Inquisition of Kozilek', quantity: 4 }, { name: 'Swamp', quantity: 24 }] },
-			
-			// Ravnica Precons
-			{ name: 'Selesnya Tokens', set: 'Ravnica Allegiance', colors: 'WG', cards: [{ name: 'Token Creator', quantity: 8 }, { name: 'Plains', quantity: 12 }, { name: 'Forest', quantity: 12 }] },
-			{ name: 'Izzet Spellslinger', set: 'Ravnica Allegiance', colors: 'UR', cards: [{ name: 'Spell Queller', quantity: 4 }, { name: 'Island', quantity: 12 }, { name: 'Mountain', quantity: 12 }] },
-			{ name: 'Golgari Midrange', set: 'Ravnica Allegiance', colors: 'BG', cards: [{ name: 'Assassin\'s Trophy', quantity: 4 }, { name: 'Swamp', quantity: 12 }, { name: 'Forest', quantity: 12 }] },
-			{ name: 'Azorius Control', set: 'Ravnica Allegiance', colors: 'WU', cards: [{ name: 'Supreme Verdict', quantity: 2 }, { name: 'Plains', quantity: 12 }, { name: 'Island', quantity: 12 }] },
-			
-			// Dominaria Precons
-			{ name: 'Red Aggro', set: 'Dominaria', colors: 'R', cards: [{ name: 'Goblin', quantity: 8 }, { name: 'Mountain', quantity: 20 }] },
-			{ name: 'Blue Flyers', set: 'Dominaria', colors: 'U', cards: [{ name: 'Flying Creature', quantity: 8 }, { name: 'Island', quantity: 20 }] },
-			{ name: 'White Lifegain', set: 'Dominaria', colors: 'W', cards: [{ name: 'Soul Warden', quantity: 4 }, { name: 'Plains', quantity: 20 }] },
-			
-			// Core Set 2021 Precons
-			{ name: 'Basri\'s Might', set: 'Core Set 2021', colors: 'W', cards: [{ name: 'Basri Ket', quantity: 1 }, { name: 'Plains', quantity: 24 }] },
-			{ name: 'Mu Yanling\'s Mastery', set: 'Core Set 2021', colors: 'U', cards: [{ name: 'Mu Yanling', quantity: 1 }, { name: 'Island', quantity: 24 }] },
-			{ name: 'Liliana\'s Triumph', set: 'Core Set 2021', colors: 'B', cards: [{ name: 'Liliana, Waker of the Dead', quantity: 1 }, { name: 'Swamp', quantity: 24 }] },
-			{ name: 'Chandra\'s Incinerator', set: 'Core Set 2021', colors: 'R', cards: [{ name: 'Chandra, Heart of Fire', quantity: 1 }, { name: 'Mountain', quantity: 24 }] },
-			{ name: 'Nissa\'s Awakening', set: 'Core Set 2021', colors: 'G', cards: [{ name: 'Nissa, Vital Force', quantity: 1 }, { name: 'Forest', quantity: 24 }] }
-		];
+		// Load Commander precons from the database
+		async function loadPresconDecks() {
+			try {
+				// Fetch from the backend API endpoint - list_precon_decks is already public
+				const response = await fetch('/api/list_precon_decks?query=');
+				if (!response.ok) {
+					throw new Error('Failed to load precons from backend: ' + response.statusText);
+				}
+				
+				const data = await response.json();
+				console.log('Raw API response:', data);
+				
+				// Transform backend data to match UI format
+				// Data comes back as either an array or wrapped object
+				const decks = Array.isArray(data) ? data : (data.result || data.data || []);
+				
+				preconDatabase = decks.map(deck => ({
+					name: deck.name || deck.deck_name || 'Unknown Deck',
+					set: deck.deck_type || 'Commander',
+					colors: deck.colors || 'WUBRG',
+					deckId: deck.deck_id,
+					cardCount: deck.card_count || 0,
+					cards: [] // Will be loaded on demand
+				}));
+				
+				console.log(`Loaded ${preconDatabase.length} precons from database:`, preconDatabase);
+			} catch (error) {
+				console.warn('Could not load from backend, using fallback Scryfall API:', error);
+				await loadPresconDecksFromScryfall();
+			}
+		}
+
+		// Fallback: Load from Scryfall API if backend unavailable
+		async function loadPresconDecksFromScryfall() {
+			try {
+				// Search for legendary creatures from Commander sets
+				const response = await fetch(
+					'https://api.scryfall.com/cards/search?q=is:legendary%20is:creature%20set:c21%20OR%20set:c20%20OR%20set:c19%20OR%20set:c18'
+				);
+				
+				if (!response.ok) throw new Error('Scryfall API error');
+				
+				const data = await response.json();
+				
+				// Transform Scryfall data to match UI format
+				preconDatabase = (data.data || []).slice(0, 20).map(card => ({
+					name: card.name,
+					set: 'Commander',
+					colors: card.color_identity?.join('') || 'WUBRG',
+					cards: [{ name: card.name, quantity: 1 }],
+					scryfallId: card.id,
+					imageUrl: card.image_uris?.normal
+				}));
+				
+				console.log(`Loaded ${preconDatabase.length} precons from Scryfall API`);
+			} catch (error) {
+				console.error('Failed to load precons:', error);
+				preconDatabase = [];
+			}
+		}
 
 		function searchPrecons() {
 			const searchQuery = document.getElementById('preconSearch').value.toLowerCase();
@@ -646,15 +691,15 @@
 				);
 
 			if (filteredPrecons.length === 0) {
-				resultsDiv.innerHTML = '<p>No precons found. Try another search.</p>';
+				resultsDiv.innerHTML = '<p style="color: #666; text-align: center; padding: 2em;">No precons found. Try another search.</p>';
 				return;
 			}
 
 			let html = '';
 			filteredPrecons.forEach((precon, index) => {
 				html += `
-					<div style="border:1px solid #ddd; padding:1em; margin-bottom:1em; border-radius:4px; background:#f9f9f9;">
-						<h4 style="margin:0 0 0.5em 0;">${escapeHtml(precon.name)}</h4>
+					<div style="border:1px solid #ddd; padding:1em; margin-bottom:1em; border-radius:4px; background:#fafafa; color: #333;">
+						<h4 style="margin:0 0 0.5em 0; color: #333;">${escapeHtml(precon.name)}</h4>
 						<p style="margin:0 0 0.5em 0; font-size:0.9em; color:#666;">
 							<strong>Set:</strong> ${escapeHtml(precon.set)} | <strong>Colors:</strong> ${escapeHtml(precon.colors)}
 						</p>
@@ -684,10 +729,24 @@
 					deckType: 'Constructed',
 					colors: precon.colors,
 					description: `Imported preconstructed deck: ${precon.name}`,
-					cards: precon.cards.map(c => ({ name: c.name, quantity: c.quantity }))
+					cards: precon.cards && precon.cards.length > 0 
+						? precon.cards.map(c => ({ name: c.name, quantity: c.quantity }))
+						: [{ name: precon.name, quantity: 1 }]
 				};
 
 				const result = await firebaseDB.createDeck(deckData);
+				if (result) {
+					alert(`Deck "${precon.name}" imported successfully!`);
+					// Optionally reload the deck list
+					if (window.loadAllDecks) {
+						await window.loadAllDecks();
+					}
+				}
+			} catch (error) {
+				console.error('Error importing precon:', error);
+				alert('Failed to import precon deck. Check console for details.');
+			}
+		}
 				if (result.success) {
 					closeModal('preconModal');
 					alert(`Deck "${precon.name}" imported successfully!`);
