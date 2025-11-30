@@ -604,8 +604,10 @@
 		async function openPreconModal() {
 			const modal = document.getElementById('preconModal');
 			const resultsDiv = document.getElementById('preconResults');
+			const searchInput = document.getElementById('preconSearch');
 			
 			modal.style.display = 'block';
+			searchInput.value = ''; // Clear previous search
 			resultsDiv.innerHTML = '<p style="color:#888;">Loading precons from database...</p>';
 			
 			// Load precons if not already cached
@@ -613,7 +615,7 @@
 				await loadPresconDecks();
 			}
 			
-			// Display all precons
+			// Display all precons after loading
 			searchPrecons();
 		}
 
@@ -685,13 +687,19 @@
 			const searchQuery = document.getElementById('preconSearch').value.toLowerCase();
 			const resultsDiv = document.getElementById('preconResults');
 
+			console.log('Searching for:', searchQuery, 'in', preconDatabase.length, 'precons');
+
 			// If no search query, show all precons
 			const filteredPrecons = !searchQuery 
 				? preconDatabase 
-				: preconDatabase.filter(p =>
-					p.name.toLowerCase().includes(searchQuery) ||
-					p.set.toLowerCase().includes(searchQuery)
-				);
+				: preconDatabase.filter(p => {
+					const nameMatch = p.name.toLowerCase().includes(searchQuery);
+					const setMatch = p.set.toLowerCase().includes(searchQuery);
+					console.log(`Checking ${p.name}: name=${nameMatch}, set=${setMatch}`);
+					return nameMatch || setMatch;
+				});
+
+			console.log('Filtered results:', filteredPrecons.length, 'precons');
 
 			if (filteredPrecons.length === 0) {
 				resultsDiv.innerHTML = '<p style="color: #666; text-align: center; padding: 2em;">No precons found. Try another search.</p>';
