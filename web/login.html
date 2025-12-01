@@ -68,6 +68,7 @@
             margin: 1.5em 0;
             display: flex;
             justify-content: center;
+            width: 100%;
         }
         .skip-link {
             text-align: center;
@@ -141,7 +142,6 @@
                     { 
                         theme: 'dark',
                         size: 'large',
-                        width: '400px',
                         text: 'signin_with'
                     }
                 );
@@ -214,7 +214,7 @@
                     if (typeof google !== 'undefined' && google.accounts) {
                         clearInterval(checkReady);
                         console.log('✅ Google Sign-In library loaded');
-                        initializeGoogleSignIn();
+                        initializeGoogleSignIn();  // <-- IMPORTANT: Actually initialize it!
                         resolve();
                     } else if (attempts > 50) {
                         clearInterval(checkReady);
