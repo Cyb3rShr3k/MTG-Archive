@@ -619,8 +619,9 @@
 			searchPrecons();
 		}
 
-		// Fetch precons from database and cache them
+		// Fetch precons from database and cache them - also store filtered search results
 		let preconDatabase = [];
+		let currentFilteredPrecons = [];
 
 		// Load Commander precons from the database with full deck info from Scryfall
 		async function loadPresconDecks() {
@@ -722,7 +723,20 @@
 			const searchQuery = document.getElementById('preconSearch').value.toLowerCase();
 			const resultsDiv = document.getElementById('preconResults');
 
-			console.log('Searching for:', searchQuery, 'in', preconDatabase.length, 'precons');
+			console.log('=== searchPrecons called ===');
+			console.log('Search query:', searchQuery);
+			console.log('Total precons in database:', preconDatabase.length);
+			
+			if (preconDatabase.length === 0) {
+				console.warn('preconDatabase is empty!');
+				resultsDiv.innerHTML = '<p style="color: #666; text-align: center; padding: 2em;">Loading precons...</p>';
+				return;
+			}
+			
+			console.log('First 5 precons in database:');
+			preconDatabase.slice(0, 5).forEach((p, i) => {
+				console.log(`  ${i}: ${p.name}`);
+			});
 
 			// If no search query, show all precons
 			const filteredPrecons = !searchQuery 
@@ -730,11 +744,20 @@
 				: preconDatabase.filter(p => {
 					const nameMatch = p.name.toLowerCase().includes(searchQuery);
 					const setMatch = p.set.toLowerCase().includes(searchQuery);
-					console.log(`Checking ${p.name}: name=${nameMatch}, set=${setMatch}`);
-					return nameMatch || setMatch;
+					const result = nameMatch || setMatch;
+					if (result) {
+						console.log(`✓ Match: ${p.name}`);
+					}
+					return result;
 				});
 
+			// Store the filtered precons for import button clicks
+			currentFilteredPrecons = filteredPrecons;
+
 			console.log('Filtered results:', filteredPrecons.length, 'precons');
+			if (filteredPrecons.length > 0) {
+				console.log('First filtered result:', filteredPrecons[0].name);
+			}
 
 			if (filteredPrecons.length === 0) {
 				resultsDiv.innerHTML = '<p style="color: #666; text-align: center; padding: 2em;">No precons found. Try another search.</p>';
@@ -749,7 +772,7 @@
 						<p style="margin:0 0 0.5em 0; font-size:0.9em; color:#666;">
 							<strong>Set:</strong> ${escapeHtml(precon.set)} | <strong>Colors:</strong> ${escapeHtml(precon.colors)}
 						</p>
-						<button class="button small primary" data-deck-index="${index}" onclick="importPreconByIndex(this.dataset.deckIndex)">
+						<button class="button small primary" data-precon-index="${index}" onclick="importPreconFromFiltered(this.dataset.preconIndex)">
 							Import Deck
 						</button>
 					</div>
@@ -765,9 +788,26 @@
 			return div.innerHTML;
 		}
 
+		// Import precon from the filtered results array
+		async function importPreconFromFiltered(index) {
+			const precon = currentFilteredPrecons[parseInt(index)];
+			if (!precon) {
+				console.error('Precon not found at index', index);
+				alert('Error: Precon not found');
+				return;
+			}
+			await importPreconInternal(precon);
+		}
+
+		// Legacy function - deprecated
 		async function importPreconByIndex(index) {
 			const precon = preconDatabase[parseInt(index)];
 			if (!precon) return;
+			await importPreconInternal(precon);
+		}
+
+		// Internal function to handle precon import
+		async function importPreconInternal(precon) {
 
 			try {
 				// First try to get full deck from Scryfall
