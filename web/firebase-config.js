@@ -2,26 +2,45 @@
 // REPLACE THESE VALUES WITH YOUR OWN FROM FIREBASE CONSOLE
 // See FIREBASE_SETUP.md for instructions
 
+console.log('firebase-config.js loading...');
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDEMOKEY_REPLACE_WITH_YOUR_KEY",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: "AIzaSyBL8j-Hfi4QImpO7RfDVQ2ficbiuIn9bWs",
+  authDomain: "mtg-archive-357ca.firebaseapp.com",
+  projectId: "mtg-archive-357ca",
+  storageBucket: "mtg-archive-357ca.firebasestorage.app",
+  messagingSenderId: "137025206900",
+  appId: "1:137025206900:web:2ed26329033dec191aaf21"
 };
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+try {
+  // Check if Firebase is available
+  if (typeof firebase === 'undefined') {
+    throw new Error('Firebase SDK not loaded - check script tags');
+  }
 
-// Get references to Firebase services
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
+  console.log('Firebase SDK available, initializing app...');
+  
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  console.log('Firebase app initialized');
 
-// Export for use in other scripts
-window.firebaseServices = {
-  auth,
-  db,
-  storage
-};
+  // Get references to Firebase services
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const storage = firebase.storage();
+
+  console.log('Firebase services loaded:', { auth, db, storage });
+
+  // Export for use in other scripts
+  window.firebaseServices = {
+    auth,
+    db,
+    storage
+  };
+
+  console.log('window.firebaseServices set successfully');
+} catch (error) {
+  console.error('Firebase initialization failed:', error);
+  console.error('Stack:', error.stack);
+}
