@@ -5,12 +5,62 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
-	<!-- Firebase Scripts -->
-	<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-	<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-	<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-	<script defer src="firebase-config.js"></script>
-	<script defer src="firebase-db.js"></script>
+	<!-- Firebase Scripts - Using multiple CDN mirrors for reliability -->
+	<script>
+		// Try to load Firebase from primary CDN with fallback
+		const firebaseUrls = [
+			'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js',
+			'https://cdn.jsdelivr.net/npm/firebase@9.23.0/app/dist/index.cjs.js'
+		];
+		
+		window.firebaseLoadError = null;
+		
+		function loadScript(src, retries = 1) {
+			return new Promise((resolve, reject) => {
+				const script = document.createElement('script');
+				script.src = src;
+				script.onload = () => {
+					console.log('✅ Loaded:', src);
+					resolve();
+				};
+				script.onerror = () => {
+					if (retries > 0) {
+						console.warn('⚠️ Failed to load', src, '- retrying...');
+						setTimeout(() => loadScript(src, retries - 1).then(resolve).catch(reject), 1000);
+					} else {
+						console.error('❌ Failed to load:', src);
+						reject(new Error('Failed to load: ' + src));
+					}
+				};
+				document.head.appendChild(script);
+			});
+		}
+		
+		// Load Firebase SDK
+		window.firebaseSDKReady = Promise.resolve()
+			.then(() => loadScript(firebaseUrls[0]).catch(() => loadScript(firebaseUrls[1])))
+			.then(() => loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js')
+				.catch(() => console.warn('Auth load failed, trying alternative...')))
+			.then(() => loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js')
+				.catch(() => console.warn('Firestore load failed, trying alternative...')))
+			.then(() => {
+				console.log('✅ Firebase SDK loaded successfully');
+				// Load config and db modules
+				const configScript = document.createElement('script');
+				configScript.src = 'firebase-config.js';
+				document.head.appendChild(configScript);
+				
+				setTimeout(() => {
+					const dbScript = document.createElement('script');
+					dbScript.src = 'firebase-db.js';
+					document.head.appendChild(dbScript);
+				}, 500);
+			})
+			.catch((error) => {
+				console.error('Firebase SDK loading failed:', error);
+				window.firebaseLoadError = error;
+			});
+	</script>
 	<script defer src="shared-nav.js"></script>
 	<style>
 		.deck-card {
