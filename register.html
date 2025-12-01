@@ -118,37 +118,44 @@
     <script src="HTML5up/assets/js/main.js"></script>
 
     <script>
-        // Wait for Firebase REST API to load
+        // Wait for Firebase REST API to load with proper timeout
         function waitForFirebaseRest() {
             return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 100; // 10 seconds
+                
                 const checkReady = setInterval(() => {
-                    if (typeof firebaseRest !== 'undefined' || typeof firebaseDB !== 'undefined') {
+                    attempts++;
+                    
+                    if (typeof firebaseDB !== 'undefined' && firebaseDB && typeof firebaseDB.register === 'function') {
                         clearInterval(checkReady);
+                        console.log('✅ Firebase REST API ready');
                         resolve();
+                        return;
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        clearInterval(checkReady);
+                        console.warn('⏰ Firebase REST API loading timeout, continuing anyway...');
+                        resolve();
+                        return;
                     }
                 }, 100);
-                // Timeout after 5 seconds
-                setTimeout(() => {
-                    clearInterval(checkReady);
-                    resolve();
-                }, 5000);
             });
         }
-
-        // Use the REST API
-        const api = window.firebaseRest || window.firebaseDB;
 
         // Initialize register check
         async function initializeRegister() {
             await waitForFirebaseRest();
             
-            if (!api) {
-                console.error('Firebase REST API not loaded');
+            if (!firebaseDB || typeof firebaseDB.register !== 'function') {
+                console.error('Firebase REST API not loaded properly');
+                // Continue anyway - user can still try to register
                 return;
             }
             
             // Check if already logged in
-            const user = api.getCurrentUser();
+            const user = firebaseDB.getCurrentUser();
             if (user) {
                 window.location.href = 'index.html';
             }
@@ -201,13 +208,13 @@
             }
             
             try {
-                if (!api) {
-                    errorMsg.textContent = 'Firebase API not ready. Please refresh the page.';
+                if (!firebaseDB || typeof firebaseDB.register !== 'function') {
+                    errorMsg.textContent = 'Firebase API not initialized. Please refresh the page.';
                     errorMsg.style.display = 'block';
                     return;
                 }
 
-                const result = await api.register(email, username, password);
+                const result = await firebaseDB.register(email, username, password);
                 
                 if (result.success) {
                     successMsg.textContent = 'Registration successful! Redirecting to login...';
