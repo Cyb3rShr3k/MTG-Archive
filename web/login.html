@@ -5,6 +5,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
     <link rel="stylesheet" href="HTML5up/assets/css/main.css" />
+    <!-- Google Sign-In -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Firebase REST API -->
     <script defer src="firebase-rest.js"></script>
     <style>
@@ -56,6 +58,17 @@
         .auth-links a:hover {
             color: #f56a6a;
         }
+        .divider {
+            text-align: center;
+            margin: 1.5em 0;
+            color: #999;
+            font-size: 0.9em;
+        }
+        #googleSignInButton {
+            margin: 1.5em 0;
+            display: flex;
+            justify-content: center;
+        }
         .skip-link {
             text-align: center;
             margin-top: 1em;
@@ -95,6 +108,9 @@
         
         <div id="errorMsg" class="error"></div>
         
+        <!-- Google Sign-In Button -->
+        <div id="googleSignInButton"></div>
+        
         <form id="loginForm">
             <div class="row gtr-uniform">
                 <div class="col-12">
@@ -128,6 +144,103 @@
     <script src="HTML5up/assets/js/main.js"></script>
 
     <script>
+        // Initialize Google Sign-In
+        function initializeGoogleSignIn() {
+            if (typeof google !== 'undefined' && google.accounts) {
+                google.accounts.id.initialize({
+                    client_id: '137025206900-k2iq8lh8hmmj14udc3nvvpasugqqa8cf.apps.googleusercontent.com',
+                    callback: handleGoogleSignInResponse
+                });
+                
+                google.accounts.id.renderButton(
+                    document.getElementById('googleSignInButton'),
+                    { 
+                        theme: 'dark',
+                        size: 'large',
+                        width: '400px',
+                        text: 'signin_with'
+                    }
+                );
+                console.log('✅ Google Sign-In initialized');
+            } else {
+                console.warn('Google Sign-In library not loaded');
+            }
+        }
+        
+        function handleGoogleSignInResponse(response) {
+            console.log('Google Sign-In response received');
+            // Decode JWT to get user info
+            const base64Url = response.credential.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(
+                atob(base64).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+            );
+            const payload = JSON.parse(jsonPayload);
+            
+            console.log('Google user:', payload);
+            
+            // Use email as username if not provided
+            const username = payload.email.split('@')[0];
+            const email = payload.email;
+            
+            // Store Google token
+            if (typeof firebaseDB !== 'undefined' && firebaseDB) {
+                firebaseDB.idToken = response.credential;
+                firebaseDB.currentUser = {
+                    uid: payload.sub,
+                    email: email,
+                    username: username,
+                    googleAuth: true
+                };
+                
+                try {
+                    localStorage.setItem('firebaseDB_token', response.credential);
+                    localStorage.setItem('firebaseDB_user', JSON.stringify(firebaseDB.currentUser));
+                } catch (e) {
+                    console.warn('Could not save to localStorage:', e);
+                }
+            }
+            
+            // Redirect to deckbuilding page
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.style.display = 'none';
+            
+            const successDiv = document.createElement('div');
+            successDiv.style.background = 'rgba(57, 192, 136, 0.2)';
+            successDiv.style.border = '1px solid #39c088';
+            successDiv.style.color = '#39c088';
+            successDiv.style.padding = '1em';
+            successDiv.style.borderRadius = '4px';
+            successDiv.style.marginBottom = '1.5em';
+            successDiv.textContent = 'Sign in successful! Redirecting...';
+            
+            errorMsg.parentElement.insertBefore(successDiv, errorMsg.nextSibling);
+            
+            setTimeout(() => {
+                window.location.href = 'deckbuilding.html';
+            }, 1500);
+        }
+        
+        // Wait for Google Sign-In to load
+        function waitForGoogleSignIn() {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const checkReady = setInterval(() => {
+                    attempts++;
+                    if (typeof google !== 'undefined' && google.accounts) {
+                        clearInterval(checkReady);
+                        console.log('✅ Google Sign-In library loaded');
+                        initializeGoogleSignIn();
+                        resolve();
+                    } else if (attempts > 50) {
+                        clearInterval(checkReady);
+                        console.warn('Google Sign-In library failed to load');
+                        resolve();
+                    }
+                }, 100);
+            });
+        }
+
         // Wait for Firebase REST API to load with proper timeout
         function waitForFirebaseRest() {
             return new Promise((resolve) => {
@@ -156,6 +269,7 @@
 
         // Initialize login check
         async function initializeLogin() {
+            await waitForGoogleSignIn();
             await waitForFirebaseRest();
             
             if (!firebaseDB || typeof firebaseDB.login !== 'function') {
