@@ -3,7 +3,13 @@ const sharedNav = {
     <header id="header">
       <a href="index.html" class="logo"><strong>MTG Archive</strong></a>
       <ul class="icons">
-        <li><a href="#" onclick="event.preventDefault()" id="userMenuToggle" title="User Menu" style="color:#f56a6a;"><strong id="userDisplay">User</strong></a></li>
+        <li id="guestMenu" style="display:none;">
+          <a href="login.html" style="color:#4c84ff; margin-right:1em;"><strong>Sign In</strong></a>
+          <a href="register.html" style="color:#39c088;"><strong>Sign Up</strong></a>
+        </li>
+        <li id="authMenu" style="display:none;">
+          <a href="#" onclick="event.preventDefault()" id="userMenuToggle" title="User Menu" style="color:#f56a6a;"><strong id="userDisplay">User</strong></a>
+        </li>
       </ul>
     </header>
     <div id="userMenu" style="display:none; position:absolute; top:40px; right:20px; background:#242943; border:1px solid #f56a6a; border-radius:4px; padding:1em; min-width:150px; z-index:1000; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
@@ -60,6 +66,8 @@ const sharedNav = {
 function initializeNav() {
   const userMenuToggle = document.getElementById('userMenuToggle');
   const userMenu = document.getElementById('userMenu');
+  const guestMenu = document.getElementById('guestMenu');
+  const authMenu = document.getElementById('authMenu');
 
   if (userMenuToggle) {
     userMenuToggle.addEventListener('click', (e) => {
@@ -79,27 +87,32 @@ function initializeNav() {
   if (typeof firebaseDB !== 'undefined') {
     (async () => {
       try {
-        await firebaseDB.onAuthStateChanged(async (user) => {
-          if (user) {
-            const userInfo = await firebaseDB.getCurrentUserInfo();
-            const username = userInfo?.username || user.email.split('@')[0];
-            const email = user.email;
+        const user = firebaseDB.getCurrentUser();
+        if (user) {
+          // User is authenticated - show auth menu
+          if (guestMenu) guestMenu.style.display = 'none';
+          if (authMenu) authMenu.style.display = 'block';
 
-            document.getElementById('userDisplay').textContent = username;
-            document.getElementById('userDisplayFull').textContent = username;
-            document.getElementById('userEmailDisplay').textContent = email;
+          const userInfo = await firebaseDB.getCurrentUserInfo();
+          const username = userInfo?.username || user.email.split('@')[0];
+          const { email } = user;
 
-            // Load collection stats
-            loadCollectionStats();
-          } else {
-            // Not logged in, redirect to login
-            if (!window.location.pathname.includes('login.html') && !window.location.pathname.includes('register.html')) {
-              window.location.href = 'login.html';
-            }
-          }
-        });
+          document.getElementById('userDisplay').textContent = username;
+          document.getElementById('userDisplayFull').textContent = username;
+          document.getElementById('userEmailDisplay').textContent = email;
+
+          // Load collection stats
+          loadCollectionStats();
+        } else {
+          // User not logged in - show guest menu
+          if (guestMenu) guestMenu.style.display = 'block';
+          if (authMenu) authMenu.style.display = 'none';
+        }
       } catch (error) {
         console.error('Auth initialization error:', error);
+        // Default to guest menu on error
+        if (guestMenu) guestMenu.style.display = 'block';
+        if (authMenu) authMenu.style.display = 'none';
       }
     })();
   }
