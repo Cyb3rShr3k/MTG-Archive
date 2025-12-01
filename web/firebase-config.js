@@ -1,7 +1,4 @@
 // Firebase Configuration
-// REPLACE THESE VALUES WITH YOUR OWN FROM FIREBASE CONSOLE
-// See FIREBASE_SETUP.md for instructions
-
 console.log('firebase-config.js loading...');
 
 const firebaseConfig = {
@@ -13,21 +10,28 @@ const firebaseConfig = {
   appId: "1:137025206900:web:2ed26329033dec191aaf21"
 };
 
-async function initializeFirebaseConfig() {
+// Wait for Firebase SDK to be available, with timeout
+let firebaseInitAttempts = 0;
+const MAX_INIT_ATTEMPTS = 50; // 5 seconds with 100ms checks
+
+function tryInitializeFirebase() {
+  firebaseInitAttempts++;
+  
+  // Check if Firebase SDK is available
+  if (typeof firebase === 'undefined') {
+    if (firebaseInitAttempts < MAX_INIT_ATTEMPTS) {
+      console.log(`Firebase SDK not ready, retrying... (attempt ${firebaseInitAttempts}/${MAX_INIT_ATTEMPTS})`);
+      setTimeout(tryInitializeFirebase, 100);
+    } else {
+      console.error('Firebase SDK failed to load after 5 seconds');
+      alert('Firebase failed to initialize. Please refresh the page.');
+    }
+    return;
+  }
+
+  console.log('Firebase SDK detected, initializing...');
+  
   try {
-    // Wait for SDK loading promise if it exists
-    if (window.firebaseSDKLoading) {
-      console.log('Waiting for Firebase SDK to load...');
-      await window.firebaseSDKLoading;
-    }
-
-    // Check if Firebase is available
-    if (typeof firebase === 'undefined') {
-      throw new Error('Firebase SDK not loaded - check script tags');
-    }
-
-    console.log('Firebase SDK available, initializing app...');
-    
     // Check if already initialized
     if (firebase.apps && firebase.apps.length > 0) {
       console.log('Firebase already initialized, reusing existing app');
@@ -36,40 +40,34 @@ async function initializeFirebaseConfig() {
       const db = firebase.firestore(app);
       const storage = firebase.storage(app);
       
-      window.firebaseServices = {
-        auth,
-        db,
-        storage
-      };
-      console.log('window.firebaseServices set successfully (reused app)');
+      window.firebaseServices = { auth, db, storage };
+      console.log('✅ Firebase services available (reused app)');
       return;
     }
     
-    // Initialize Firebase
+    // Initialize new app
     const app = firebase.initializeApp(firebaseConfig);
-    console.log('Firebase app initialized');
-
-    // Get references to Firebase services
     const auth = firebase.auth(app);
     const db = firebase.firestore(app);
     const storage = firebase.storage(app);
-
-    console.log('Firebase services loaded:', { auth, db, storage });
-
-    // Export for use in other scripts
-    window.firebaseServices = {
-      auth,
-      db,
-      storage
-    };
-
-    console.log('window.firebaseServices set successfully');
+    
+    window.firebaseServices = { auth, db, storage };
+    console.log('✅ Firebase services initialized successfully');
   } catch (error) {
-    console.error('Firebase initialization failed:', error);
-    console.error('Stack:', error.stack);
+    console.error('Firebase initialization error:', error);
+    if (error.code === 'app/duplicate-app') {
+      console.log('App already initialized, fetching services...');
+      const app = firebase.apps[0];
+      window.firebaseServices = {
+        auth: firebase.auth(app),
+        db: firebase.firestore(app),
+        storage: firebase.storage(app)
+      };
+      console.log('✅ Firebase services recovered');
+    }
   }
 }
 
 // Start initialization immediately
-initializeFirebaseConfig();
+tryInitializeFirebase();
 
