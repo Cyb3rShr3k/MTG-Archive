@@ -799,12 +799,15 @@
 		async function importPreconInternal(precon) {
 
 			try {
+				console.log(`Starting import of ${precon.name}...`);
+				
 				// First try to get full deck from Scryfall
 				let cards = [];
 				
 				if (precon.cards && precon.cards.length > 0) {
 					// Use cards from database if available
 					cards = precon.cards;
+					console.log(`Using ${cards.length} cards from precon data`);
 				} else {
 					// Fetch from Scryfall - search for the commander card
 					console.log(`Fetching deck cards for ${precon.name} from Scryfall...`);
@@ -829,14 +832,22 @@
 						: [{ name: precon.name, quantity: 1 }]
 				};
 
+				console.log('Deck data to create:', deckData);
+				
 				const result = await firebaseDB.createDeck(deckData);
-				if (result) {
+				console.log('Create deck result:', result);
+				
+				if (result && result.success) {
 					alert(`Deck "${precon.name}" imported successfully!`);
 					// Optionally reload the deck list
 					if (window.loadAllDecks) {
+						console.log('Reloading deck list...');
 						await window.loadAllDecks();
 					}
 					closeModal('preconModal');
+				} else {
+					console.error('Failed to create deck:', result?.error || 'Unknown error');
+					alert('Failed to create deck: ' + (result?.error || 'Unknown error'));
 				}
 			} catch (error) {
 				console.error('Error importing precon:', error);
