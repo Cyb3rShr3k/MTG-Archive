@@ -1,0 +1,189 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>Firebase Diagnostic Tool</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<style>
+		body {
+			font-family: monospace;
+			background: #1a1a1a;
+			color: #0f0;
+			padding: 20px;
+		}
+		.status {
+			padding: 10px;
+			margin: 10px 0;
+			border: 1px solid #0f0;
+			border-radius: 4px;
+		}
+		.status.ok { background: rgba(0, 255, 0, 0.1); }
+		.status.error { background: rgba(255, 0, 0, 0.1); border-color: #f00; color: #f00; }
+		.status.pending { background: rgba(255, 255, 0, 0.1); border-color: #ff0; color: #ff0; }
+		h2 { color: #0f0; margin-top: 20px; }
+		code { display: block; padding: 10px; background: #000; margin: 10px 0; }
+	</style>
+</head>
+<body>
+	<h1>🔧 Firebase Diagnostic Tool</h1>
+	<p>This page helps diagnose Firebase SDK loading issues.</p>
+	
+	<h2>1. SDK Script Loading</h2>
+	<div id="sdkStatus"></div>
+
+	<h2>2. Firebase Object</h2>
+	<div id="firebaseStatus"></div>
+
+	<h2>3. Configuration</h2>
+	<div id="configStatus"></div>
+
+	<h2>4. Services</h2>
+	<div id="servicesStatus"></div>
+
+	<h2>5. Console Output</h2>
+	<div id="console" style="height: 400px; overflow-y: auto; border: 1px solid #0f0; padding: 10px; background: #000;"></div>
+
+	<!-- Load Firebase -->
+	<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+	<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+	<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+
+	<script>
+		// Capture console logs
+		const consoleLogs = [];
+		const originalLog = console.log;
+		const originalError = console.error;
+		const originalWarn = console.warn;
+
+		console.log = function(...args) {
+			originalLog.apply(console, args);
+			consoleLogs.push('✓ ' + args.join(' '));
+			updateConsole();
+		};
+		console.error = function(...args) {
+			originalError.apply(console, args);
+			consoleLogs.push('✗ ' + args.join(' '));
+			updateConsole();
+		};
+		console.warn = function(...args) {
+			originalWarn.apply(console, args);
+			consoleLogs.push('⚠ ' + args.join(' '));
+			updateConsole();
+		};
+
+		function updateConsole() {
+			const consoleDiv = document.getElementById('console');
+			consoleDiv.innerHTML = consoleLogs.map(log => log + '<br>').join('');
+			consoleDiv.scrollTop = consoleDiv.scrollHeight;
+		}
+
+		// Monitor SDK loading
+		function checkSDKs() {
+			const sdkDiv = document.getElementById('sdkStatus');
+			let html = '';
+
+			// Check firebase-app
+			if (window.firebase) {
+				html += '<div class="status ok">✅ firebase-app.js loaded</div>';
+			} else {
+				html += '<div class="status error">❌ firebase-app.js NOT loaded</div>';
+			}
+
+			sdkDiv.innerHTML = html;
+		}
+
+		// Monitor Firebase object
+		function checkFirebase() {
+			const firebaseDiv = document.getElementById('firebaseStatus');
+			let html = '';
+
+			if (typeof firebase !== 'undefined') {
+				html += '<div class="status ok">✅ firebase object available</div>';
+				html += '<div class="status">Version: ' + firebase.SDK_VERSION + '</div>';
+				if (firebase.apps && firebase.apps.length > 0) {
+					html += '<div class="status ok">✅ Firebase apps initialized: ' + firebase.apps.length + '</div>';
+					firebase.apps.forEach((app, i) => {
+						html += '<div class="status ok">  App ' + i + ': ' + (app.name || 'default') + '</div>';
+					});
+				} else {
+					html += '<div class="status pending">⏳ No apps initialized yet</div>';
+				}
+			} else {
+				html += '<div class="status error">❌ firebase object NOT available</div>';
+			}
+
+			firebaseDiv.innerHTML = html;
+		}
+
+		// Monitor config
+		function checkConfig() {
+			const configDiv = document.getElementById('configStatus');
+			let html = '';
+
+			const firebaseConfig = {
+				apiKey: "AIzaSyBL8j-Hfi4QImpO7RfDVQ2ficbiuIn9bWs",
+				authDomain: "mtg-archive-357ca.firebaseapp.com",
+				projectId: "mtg-archive-357ca",
+				storageBucket: "mtg-archive-357ca.firebasestorage.app",
+				messagingSenderId: "137025206900",
+				appId: "1:137025206900:web:2ed26329033dec191aaf21"
+			};
+
+			if (firebaseConfig.projectId) {
+				html += '<div class="status ok">✅ Firebase config present</div>';
+				html += '<code>Project ID: ' + firebaseConfig.projectId + '</code>';
+				html += '<code>Auth Domain: ' + firebaseConfig.authDomain + '</code>';
+			}
+
+			configDiv.innerHTML = html;
+		}
+
+		// Monitor services
+		function checkServices() {
+			const servicesDiv = document.getElementById('servicesStatus');
+			let html = '';
+
+			if (window.firebaseServices) {
+				html += '<div class="status ok">✅ firebaseServices available</div>';
+				if (window.firebaseServices.db) {
+					html += '<div class="status ok">✅ Firestore available</div>';
+				} else {
+					html += '<div class="status error">❌ Firestore NOT available</div>';
+				}
+				if (window.firebaseServices.auth) {
+					html += '<div class="status ok">✅ Auth available</div>';
+				} else {
+					html += '<div class="status error">❌ Auth NOT available</div>';
+				}
+			} else {
+				html += '<div class="status error">❌ firebaseServices NOT available</div>';
+				html += '<div class="status pending">This means firebase-config.js has not run yet</div>';
+			}
+
+			servicesDiv.innerHTML = html;
+		}
+
+		// Run checks periodically
+		function runDiagnostics() {
+			checkSDKs();
+			checkFirebase();
+			checkConfig();
+			checkServices();
+		}
+
+		// Run immediately
+		runDiagnostics();
+
+		// Run every 500ms to watch for changes
+		setInterval(runDiagnostics, 500);
+
+		// Log when page is fully loaded
+		window.addEventListener('load', () => {
+			console.log('Page fully loaded');
+			runDiagnostics();
+		});
+
+		console.log('Diagnostic tool started...');
+	</script>
+</body>
+</html>
