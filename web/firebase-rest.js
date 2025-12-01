@@ -19,6 +19,9 @@ class FirebaseRestAPI {
         'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + this.apiKey,
         {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({
             email: email,
             password: password,
@@ -29,7 +32,9 @@ class FirebaseRestAPI {
 
       const data = await response.json();
       if (!response.ok) {
-        return { success: false, error: data.error?.message || 'Registration failed' };
+        const errorMsg = data.error?.message || JSON.stringify(data.error) || 'Registration failed';
+        console.error('Registration error:', data);
+        return { success: false, error: errorMsg };
       }
 
       // Store auth token and user info
@@ -50,6 +55,7 @@ class FirebaseRestAPI {
 
       return { success: true, userId: data.localId, message: 'Registration successful!' };
     } catch (error) {
+      console.error('Register catch error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -60,6 +66,9 @@ class FirebaseRestAPI {
         'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + this.apiKey,
         {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({
             email: email,
             password: password,
@@ -70,7 +79,9 @@ class FirebaseRestAPI {
 
       const data = await response.json();
       if (!response.ok) {
-        return { success: false, error: data.error?.message || 'Login failed' };
+        const errorMsg = data.error?.message || JSON.stringify(data.error) || 'Login failed';
+        console.error('Login error:', data);
+        return { success: false, error: errorMsg };
       }
 
       this.idToken = data.idToken;
@@ -81,6 +92,7 @@ class FirebaseRestAPI {
 
       return { success: true, userId: data.localId, message: 'Login successful!' };
     } catch (error) {
+      console.error('Login catch error:', error);
       return { success: false, error: error.message };
     }
   }
