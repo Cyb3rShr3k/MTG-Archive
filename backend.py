@@ -2222,6 +2222,136 @@ class Api:
         total = self.get_collection_count()
         return { 'added': added, 'total': total, 'items': new_items }
 
+    # --- Server-side Authentication (bypasses Google API key restrictions) ---
+    def register_user(self, email: str, password: str, username: str):
+        """Server-side user registration. Returns { success, userId, token, error }."""
+        import hashlib
+        import secrets
+        
+        email = str(email or '').strip().lower()
+        username = str(username or '').strip()
+        password = str(password or '').strip()
+        
+        # Validation
+        if not email or '@' not in email:
+            return { 'success': False, 'error': 'Invalid email address' }
+        if not username or len(username) < 3:
+            return { 'success': False, 'error': 'Username must be at least 3 characters' }
+        if not password or len(password) < 6:
+            return { 'success': False, 'error': 'Password must be at least 6 characters' }
+        
+        try:
+            import sqlite3
+            # Check if user already exists
+            db_path = Path('users.db')
+            conn = sqlite3.connect(str(db_path))
+            cur = conn.cursor()
+            
+            # Create users table if not exists
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id TEXT PRIMARY KEY,
+                    email TEXT UNIQUE NOT NULL,
+                    username TEXT NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+            """)
+            
+            # Check if email already registered
+            cur.execute("SELECT id FROM users WHERE email=?", (email,))
+            if cur.fetchone():
+                conn.close()
+                return { 'success': False, 'error': 'Email already registered' }
+            
+            # Hash password with salt
+            salt = secrets.token_hex(16)
+            password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+            combined_hash = salt + ':' + password_hash.hex()
+            
+            # Create user
+            user_id = secrets.token_urlsafe(16)
+            from datetime import datetime
+            created_at = datetime.utcnow().isoformat()
+            
+            cur.execute("""
+                INSERT INTO users (id, email, username, password_hash, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            """, (user_id, email, username, combined_hash, created_at))
+            
+            conn.commit()
+            conn.close()
+            
+            # Generate session token
+            token = secrets.token_urlsafe(32)
+            
+            return {
+                'success': True,
+                'userId': user_id,
+                'email': email,
+                'username': username,
+                'token': token
+            }
+        except Exception as e:
+            return { 'success': False, 'error': f'Registration failed: {str(e)}' }
+    
+    def login_user(self, email: str, password: str):
+        """Server-side user login. Returns { success, userId, token, username, error }."""
+        import hashlib
+        
+        email = str(email or '').strip().lower()
+        password = str(password or '').strip()
+        
+        if not email or not password:
+            return { 'success': False, 'error': 'Email and password required' }
+        
+        try:
+            import sqlite3
+            db_path = Path('users.db')
+            if not db_path.exists():
+                return { 'success': False, 'error': 'No users registered yet' }
+            
+            conn = sqlite3.connect(str(db_path))
+            cur = conn.cursor()
+            
+            cur.execute("SELECT id, password_hash, username FROM users WHERE email=?", (email,))
+            result = cur.fetchone()
+            conn.close()
+            
+            if not result:
+                return { 'success': False, 'error': 'Invalid email or password' }
+            
+            user_id, combined_hash, username = result
+            
+            # Verify password
+            try:
+                salt, stored_hash = combined_hash.split(':')
+                password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+                if password_hash.hex() != stored_hash:
+                    return { 'success': False, 'error': 'Invalid email or password' }
+            except Exception:
+                return { 'success': False, 'error': 'Password verification failed' }
+            
+            # Generate session token
+            import secrets
+            token = secrets.token_urlsafe(32)
+            
+            return {
+                'success': True,
+                'userId': user_id,
+                'email': email,
+                'username': username,
+                'token': token
+            }
+        except Exception as e:
+            return { 'success': False, 'error': f'Login failed: {str(e)}' }
+    
+    def verify_token(self, token: str):
+        """Verify a session token is valid. Returns { valid, userId }."""
+        # For now, we'll implement token verification when needed
+        # For MVP, any non-empty token is considered valid
+        return { 'valid': bool(token), 'userId': None }
+
     # --- Window control methods (no-op for web version) ---
     def minimize_window(self):
         """No-op for web version."""

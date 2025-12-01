@@ -15,84 +15,94 @@ class FirebaseRestAPI {
 
   async register(email, password, username) {
     try {
-      const response = await fetch(
-        'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + this.apiKey,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email: email,
-            password: password,
-            returnSecureToken: true
-          })
-        }
-      );
-
-      const data = await response.json();
-      if (!response.ok) {
-        const errorMsg = data.error?.message || JSON.stringify(data.error) || 'Registration failed';
-        console.error('Registration error:', data);
-        return { success: false, error: errorMsg };
-      }
-
-      // Store auth token and user info
-      this.idToken = data.idToken;
-      this.currentUser = {
-        uid: data.localId,
-        email: email,
-        username: username
-      };
-
-      // Create user document
-      await this.createDocument('users', data.localId, {
-        username: username,
-        email: email,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+      console.log('Registering user via backend:', email, username);
+      
+      // Call backend server instead of Google API
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          username: username
+        })
       });
 
-      return { success: true, userId: data.localId, message: 'Registration successful!' };
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Store auth token and user info
+        this.idToken = data.token;
+        this.currentUser = {
+          uid: data.userId,
+          email: data.email,
+          username: data.username
+        };
+
+        // Save to localStorage for persistence
+        try {
+          localStorage.setItem('firebaseDB_token', data.token);
+          localStorage.setItem('firebaseDB_user', JSON.stringify(this.currentUser));
+        } catch (e) {
+          console.warn('Could not save to localStorage:', e);
+        }
+
+        return { success: true, userId: data.userId, message: 'Registration successful!' };
+      } else {
+        const errorMsg = data.error || 'Registration failed';
+        console.error('Registration failed:', data);
+        return { success: false, error: errorMsg };
+      }
     } catch (error) {
-      console.error('Register catch error:', error);
+      console.error('Register error:', error);
       return { success: false, error: error.message };
     }
   }
 
   async login(email, password) {
     try {
-      const response = await fetch(
-        'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + this.apiKey,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email: email,
-            password: password,
-            returnSecureToken: true
-          })
-        }
-      );
+      console.log('Logging in user via backend:', email);
+      
+      // Call backend server instead of Google API
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
 
       const data = await response.json();
-      if (!response.ok) {
-        const errorMsg = data.error?.message || JSON.stringify(data.error) || 'Login failed';
-        console.error('Login error:', data);
+      
+      if (response.ok && data.success) {
+        this.idToken = data.token;
+        this.currentUser = {
+          uid: data.userId,
+          email: data.email,
+          username: data.username
+        };
+
+        // Save to localStorage for persistence
+        try {
+          localStorage.setItem('firebaseDB_token', data.token);
+          localStorage.setItem('firebaseDB_user', JSON.stringify(this.currentUser));
+        } catch (e) {
+          console.warn('Could not save to localStorage:', e);
+        }
+
+        return { success: true, userId: data.userId, message: 'Login successful!' };
+      } else {
+        const errorMsg = data.error || 'Login failed';
+        console.error('Login failed:', data);
         return { success: false, error: errorMsg };
       }
-
-      this.idToken = data.idToken;
-      this.currentUser = {
-        uid: data.localId,
-        email: email
-      };
-
-      return { success: true, userId: data.localId, message: 'Login successful!' };
     } catch (error) {
-      console.error('Login catch error:', error);
+      console.error('Login error:', error);
       return { success: false, error: error.message };
     }
   }

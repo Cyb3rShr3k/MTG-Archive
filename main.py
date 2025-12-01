@@ -20,26 +20,27 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 def register():
     """Register a new user."""
     data = request.get_json()
-    username = data.get('username', '').strip()
     email = data.get('email', '').strip()
     password = data.get('password', '')
+    username = data.get('username', '').strip()
     
-    result = user_auth.register_user(username, email, password)
+    result = api.register_user(email, password, username)
     return jsonify(result)
 
 @app.route('/api/login', methods=['POST'])
 def login():
     """Login a user."""
     data = request.get_json()
-    username = data.get('username', '').strip()
+    email = data.get('email', '').strip()
     password = data.get('password', '')
     
-    result = user_auth.login_user(username, password)
+    result = api.login_user(email, password)
     if result.get('success'):
         # Store session token in Flask session
-        session['session_token'] = result['session_token']
-        session['user_id'] = result['user_id']
+        session['token'] = result['token']
+        session['user_id'] = result['userId']
         session['username'] = result['username']
+        session['email'] = result['email']
     
     return jsonify(result)
 
