@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Network & CSP Diagnostic</title>
+	<style>
+		body { font-family: monospace; background: #1a1a1a; color: #0f0; padding: 20px; }
+		.log { padding: 8px; margin: 5px 0; border-left: 3px solid #0f0; background: rgba(0,255,0,0.05); }
+		.error { border-left-color: #f00; color: #f00; background: rgba(255,0,0,0.05); }
+	</style>
+</head>
+<body>
+	<h1>🔍 Network & CSP Diagnostic</h1>
+	<div id="output"></div>
+
+	<script>
+		const output = document.getElementById('output');
+		
+		function log(msg, isError = false) {
+			const div = document.createElement('div');
+			div.className = 'log' + (isError ? ' error' : '');
+			div.textContent = msg;
+			output.appendChild(div);
+			console.log(msg);
+		}
+
+		// Check CSP
+		log('📋 Checking Content Security Policy...');
+		
+		// Try to fetch Firebase SDK
+		log('🌐 Attempting to fetch Firebase SDK...');
+		
+		fetch('https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js', {
+			method: 'HEAD',
+			mode: 'no-cors'
+		})
+		.then(response => {
+			log('✅ gstatic.com is reachable (status: ' + response.status + ')');
+		})
+		.catch(error => {
+			log('❌ Cannot reach gstatic.com: ' + error.message, true);
+		});
+
+		// Try unpkg
+		fetch('https://unpkg.com/firebase@9.23.0/app/dist/index.cjs.js', {
+			method: 'HEAD',
+			mode: 'no-cors'
+		})
+		.then(response => {
+			log('✅ unpkg.com is reachable (status: ' + response.status + ')');
+		})
+		.catch(error => {
+			log('❌ Cannot reach unpkg.com: ' + error.message, true);
+		});
+
+		// Check meta CSP tag
+		const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+		if (cspMeta) {
+			log('⚠️ CSP Meta Tag Found: ' + cspMeta.getAttribute('content'));
+		} else {
+			log('✓ No CSP meta tag in HTML');
+		}
+
+		// Try to inject a script and see what happens
+		log('🧪 Testing script injection...');
+		const testScript = document.createElement('script');
+		testScript.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+		testScript.onerror = () => {
+			log('❌ Script injection failed (blocked by CSP or network)', true);
+		};
+		testScript.onload = () => {
+			log('✅ Script injection succeeded!');
+		};
+		testScript.onerror = function() {
+			log('Script failed to load', true);
+		};
+		
+		log('⏳ Attempting script load (10 second timeout)...');
+		setTimeout(() => {
+			if (!window.firebase) {
+				log('⏰ Script did not load within 10 seconds', true);
+				log('Possible causes:', true);
+				log('  - CSP (Content-Security-Policy) blocking external scripts', true);
+				log('  - Network timeout or firewall blocking CDNs', true);
+				log('  - Firebase Hosting security policy', true);
+			}
+		}, 10000);
+		
+		document.head.appendChild(testScript);
+	</script>
+</body>
+</html>
