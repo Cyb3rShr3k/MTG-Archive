@@ -584,6 +584,10 @@
 			}
 		}
 
+		// Precon database cache - also store the currently displayed filtered list
+		let preconDatabase = [];
+		let currentFilteredPrecons = [];
+
 		// Precon modal management
 		async function openPreconModal() {
 			const modal = document.getElementById('preconModal');
@@ -602,10 +606,6 @@
 			// Display all precons after loading
 			searchPrecons();
 		}
-
-		// Fetch precons from database and cache them - also store filtered search results
-		let preconDatabase = [];
-		let currentFilteredPrecons = [];
 
 		// Load Commander precons from local JSON data (no backend needed for GitHub Pages)
 		async function loadPresconDecks() {
@@ -783,12 +783,15 @@
 		async function importPreconInternal(precon) {
 
 			try {
+				console.log(`Starting import of ${precon.name}...`);
+				
 				// First try to get full deck from Scryfall
 				let cards = [];
 				
 				if (precon.cards && precon.cards.length > 0) {
 					// Use cards from database if available
 					cards = precon.cards;
+					console.log(`Using ${cards.length} cards from precon data`);
 				} else {
 					// Fetch from Scryfall - search for the commander card
 					console.log(`Fetching deck cards for ${precon.name} from Scryfall...`);
@@ -813,20 +816,29 @@
 						: [{ name: precon.name, quantity: 1 }]
 				};
 
+				console.log('Deck data to create:', deckData);
+				
 				const result = await firebaseDB.createDeck(deckData);
-				if (result.success) {
-					closeModal('preconModal');
+				console.log('Create deck result:', result);
+				
+				if (result && result.success) {
 					alert(`Deck "${precon.name}" imported successfully!`);
-					loadDecks();
+					// Optionally reload the deck list
+					if (window.loadAllDecks) {
+						console.log('Reloading deck list...');
+						await window.loadAllDecks();
+					}
+					closeModal('preconModal');
 				} else {
-					alert('Failed to import deck: ' + result.error);
+					console.error('Failed to create deck:', result?.error || 'Unknown error');
+					alert('Failed to create deck: ' + (result?.error || 'Unknown error'));
 				}
 			} catch (error) {
-				console.error('Import error:', error);
-				alert('Error importing precon: ' + error.message);
+				console.error('Error importing precon:', error);
+				alert('Failed to import precon deck. Check console for details.');
 			}
 		}
-
+		
 		async function importPrecon(deckName, colors) {
 			const precon = preconDatabase.find(p => p.name === deckName);
 			if (!precon) return;
@@ -875,11 +887,12 @@
 
 		// Initialize
 		window.addEventListener('DOMContentLoaded', async () => {
-			// Inject navigation
-			if (typeof sharedNav !== 'undefined') {
-				document.getElementById('headerContainer').innerHTML = sharedNav.header('Deck Building');
-				document.getElementById('sidebarContainer').innerHTML = sharedNav.sidebar;
-				initializeNav();
+			// Wait for Firebase REST API to load
+			for (let i = 0; i < 50; i++) {
+				if (typeof firebaseDB !== 'undefined' || typeof firebaseRest !== 'undefined') {
+					break;
+				}
+				await new Promise(resolve => setTimeout(resolve, 100));
 			}
 
 			// Firebase REST API is ready immediately
@@ -890,6 +903,24 @@
 			}
 
 			console.log('✅ Firebase REST API ready');
+
+			// Check if user is authenticated
+			const user = firebaseDB.getCurrentUser();
+			if (!user) {
+				console.log('User not authenticated, redirecting to login...');
+				window.location.href = 'login.html';
+				return;
+			}
+
+			// Inject navigation
+			if (typeof sharedNav !== 'undefined') {
+				document.getElementById('headerContainer').innerHTML = sharedNav.header('Deck Building');
+				document.getElementById('sidebarContainer').innerHTML = sharedNav.sidebar;
+				initializeNav();
+			}
+
+			console.log('User authenticated:', user.email);
+			loadDecks();
 		});
 	</script>
 

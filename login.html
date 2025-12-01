@@ -5,12 +5,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
     <link rel="stylesheet" href="HTML5up/assets/css/main.css" />
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-    <script src="firebase-config.js"></script>
-    <script src="firebase-db.js"></script>
+    <!-- Firebase REST API -->
+    <script defer src="firebase-rest.js"></script>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -115,21 +111,43 @@
     <script src="HTML5up/assets/js/main.js"></script>
 
     <script>
-        // Wait for Firebase and firebaseDB to load
-        async function initializeLogin() {
-            // Check if already logged in
-            try {
-                await firebaseDB.onAuthStateChanged(user => {
-                    if (user) {
-                        window.location.href = 'index.html';
+        // Wait for Firebase REST API to load
+        function waitForFirebaseRest() {
+            return new Promise((resolve) => {
+                const checkReady = setInterval(() => {
+                    if (typeof firebaseRest !== 'undefined' || typeof firebaseDB !== 'undefined') {
+                        clearInterval(checkReady);
+                        resolve();
                     }
-                });
-            } catch (error) {
-                console.log('Auth check complete');
+                }, 100);
+                // Timeout after 5 seconds
+                setTimeout(() => {
+                    clearInterval(checkReady);
+                    resolve();
+                }, 5000);
+            });
+        }
+
+        // Use the REST API
+        const api = window.firebaseRest || window.firebaseDB;
+
+        // Initialize login check
+        async function initializeLogin() {
+            await waitForFirebaseRest();
+            
+            if (!api) {
+                console.error('Firebase REST API not loaded');
+                return;
+            }
+            
+            // Check if already logged in by trying to access current user
+            const user = api.getCurrentUser();
+            if (user) {
+                window.location.href = 'index.html';
             }
         }
 
-        // Start initialization when DOM is ready
+        // Start initialization
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeLogin);
         } else {
@@ -144,7 +162,13 @@
             const errorMsg = document.getElementById('errorMsg');
             
             try {
-                const result = await firebaseDB.login(email, password);
+                if (!api) {
+                    errorMsg.textContent = 'Firebase API not ready. Please refresh the page.';
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                const result = await api.login(email, password);
                 
                 if (result.success) {
                     window.location.href = 'index.html';
@@ -153,7 +177,7 @@
                     errorMsg.style.display = 'block';
                 }
             } catch (error) {
-                errorMsg.textContent = 'Connection error. Please try again.';
+                errorMsg.textContent = 'Connection error: ' + error.message;
                 errorMsg.style.display = 'block';
                 console.error(error);
             }

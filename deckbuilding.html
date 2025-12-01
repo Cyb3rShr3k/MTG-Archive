@@ -887,11 +887,12 @@
 
 		// Initialize
 		window.addEventListener('DOMContentLoaded', async () => {
-			// Inject navigation
-			if (typeof sharedNav !== 'undefined') {
-				document.getElementById('headerContainer').innerHTML = sharedNav.header('Deck Building');
-				document.getElementById('sidebarContainer').innerHTML = sharedNav.sidebar;
-				initializeNav();
+			// Wait for Firebase REST API to load
+			for (let i = 0; i < 50; i++) {
+				if (typeof firebaseDB !== 'undefined' || typeof firebaseRest !== 'undefined') {
+					break;
+				}
+				await new Promise(resolve => setTimeout(resolve, 100));
 			}
 
 			// Firebase REST API is ready immediately
@@ -902,6 +903,24 @@
 			}
 
 			console.log('✅ Firebase REST API ready');
+
+			// Check if user is authenticated
+			const user = firebaseDB.getCurrentUser();
+			if (!user) {
+				console.log('User not authenticated, redirecting to login...');
+				window.location.href = 'login.html';
+				return;
+			}
+
+			// Inject navigation
+			if (typeof sharedNav !== 'undefined') {
+				document.getElementById('headerContainer').innerHTML = sharedNav.header('Deck Building');
+				document.getElementById('sidebarContainer').innerHTML = sharedNav.sidebar;
+				initializeNav();
+			}
+
+			console.log('User authenticated:', user.email);
+			loadDecks();
 		});
 	</script>
 
