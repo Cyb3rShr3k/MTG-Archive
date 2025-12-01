@@ -5,12 +5,8 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
-	<!-- Firebase Scripts -->
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-	<script src="firebase-config.js"></script>
-	<script src="firebase-db.js"></script>
+	<!-- Firebase REST API -->
+	<script defer src="firebase-rest.js"></script>
 	<script src="shared-nav.js"></script>
 	<style>
 		.stat-card {
@@ -175,17 +171,52 @@
 	<script src="HTML5up/assets/js/breakpoints.min.js"></script>
 	<script src="HTML5up/assets/js/util.js"></script>
 	<script src="HTML5up/assets/js/main.js"></script>
-	<script src="api.js"></script>
 	<script>
 		// Inject navigation components when DOM is ready
-		document.addEventListener('DOMContentLoaded', () => {
+		document.addEventListener('DOMContentLoaded', async () => {
+			// Wait for Firebase REST API
+			for (let i = 0; i < 50; i++) {
+				if (typeof firebaseDB !== 'undefined') break;
+				await new Promise(resolve => setTimeout(resolve, 100));
+			}
+
+			if (typeof firebaseDB === 'undefined') {
+				console.error('Firebase REST API not loaded');
+				document.body.innerHTML = '<h1>Error: Firebase not initialized. Please refresh the page.</h1>';
+				return;
+			}
+
+			// Inject navigation
 			if (typeof sharedNav !== 'undefined') {
 				document.getElementById('headerContainer').innerHTML = sharedNav.header('Dashboard');
 				document.getElementById('sidebarContainer').innerHTML = sharedNav.sidebar;
-				// Re-initialize navigation after injection
 				initializeNav();
 			}
+
+			// Load dashboard stats if user is authenticated
+			const user = firebaseDB.getCurrentUser();
+			if (user) {
+				console.log('User authenticated:', user.email);
+				loadDashboardStats();
+			} else {
+				console.log('User not authenticated - showing guest view');
+			}
 		});
+
+		async function loadDashboardStats() {
+			try {
+				// Load collection count
+				const decks = await firebaseDB.getDecks();
+				document.getElementById('totalDecks').textContent = decks.length;
+				
+				// In a real app, you'd load card collection stats too
+				// For now, just show placeholder
+				document.getElementById('totalCards').textContent = '0';
+				document.getElementById('uniqueCards').textContent = '0';
+			} catch (error) {
+				console.error('Error loading dashboard stats:', error);
+			}
+		}
 	</script>
 
 </body>
