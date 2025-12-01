@@ -1,0 +1,1732 @@
+[
+  {
+    "name": "20 Ways to Win",
+    "deck_id": "20WaysToWin_SLD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "20 Ways to Win",
+    "path": "deck_id:20WaysToWin_SLD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Abzan Armor",
+    "deck_id": "AbzanArmor_TDC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Abzan Armor",
+    "path": "deck_id:AbzanArmor_TDC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Adaptive Enchantment",
+    "deck_id": "AdaptiveEnchantment_C18",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Adaptive Enchantment",
+    "path": "deck_id:AdaptiveEnchantment_C18",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Ahoy Mateys",
+    "deck_id": "AhoyMateys_LCC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Ahoy Mateys",
+    "path": "deck_id:AhoyMateys_LCC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Angels: They're Just Like Us but Cooler and with Wings",
+    "deck_id": "AngelsTheyReJustLikeUsButCoolerAndWithWings_SLD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Angels: They're Just Like Us but Cooler and with Wings",
+    "path": "deck_id:AngelsTheyReJustLikeUsButCoolerAndWithWings_SLD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Animated Army",
+    "deck_id": "AnimatedArmy_BLC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Animated Army",
+    "path": "deck_id:AnimatedArmy_BLC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Arcane Maelstrom",
+    "deck_id": "ArcaneMaelstrom_C20",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Arcane Maelstrom",
+    "path": "deck_id:ArcaneMaelstrom_C20",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Arcane Wizardry",
+    "deck_id": "ArcaneWizardry_C17",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Arcane Wizardry",
+    "path": "deck_id:ArcaneWizardry_C17",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Arm for Battle",
+    "deck_id": "ArmForBattle_CMR",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Arm for Battle",
+    "path": "deck_id:ArmForBattle_CMR",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Aura of Courage",
+    "deck_id": "AuraOfCourage_AFC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Aura of Courage",
+    "path": "deck_id:AuraOfCourage_AFC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Bedecked Brokers",
+    "deck_id": "BedeckedBrokers_NCC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Bedecked Brokers",
+    "path": "deck_id:BedeckedBrokers_NCC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Blame Game",
+    "deck_id": "BlameGame_MKC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Blame Game",
+    "path": "deck_id:BlameGame_MKC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Blast from the Past",
+    "deck_id": "BlastFromThePast_WHO",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Blast from the Past",
+    "path": "deck_id:BlastFromThePast_WHO",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Blood Rites",
+    "deck_id": "BloodRites_LCC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Blood Rites",
+    "path": "deck_id:BloodRites_LCC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Breed Lethality",
+    "deck_id": "BreedLethality_CM2",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Breed Lethality",
+    "path": "deck_id:BreedLethality_CM2",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Breed Lethality",
+    "deck_id": "BreedLethality_C16",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Breed Lethality",
+    "path": "deck_id:BreedLethality_C16",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Buckle Up",
+    "deck_id": "BuckleUp_NEC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Buckle Up",
+    "path": "deck_id:BuckleUp_NEC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Built From Scratch",
+    "deck_id": "BuiltFromScratch_C14",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Built From Scratch",
+    "path": "deck_id:BuiltFromScratch_C14",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Built From Scratch",
+    "deck_id": "BuiltFromScratch_CM2",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Built From Scratch",
+    "path": "deck_id:BuiltFromScratch_CM2",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Cabaretti Cacophony",
+    "deck_id": "CabarettiCacophony_NCC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Cabaretti Cacophony",
+    "path": "deck_id:CabarettiCacophony_NCC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Call for Backup",
+    "deck_id": "CallForBackup_MOC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Call for Backup",
+    "path": "deck_id:CallForBackup_MOC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Call the Spirits",
+    "deck_id": "CallTheSpirits_C15",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Call the Spirits",
+    "path": "deck_id:CallTheSpirits_C15",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Cavalry Charge",
+    "deck_id": "CavalryCharge_MOC",
+    "deck_type": "Commander Deck",
+    "card_count": 0,
+    "filename": "Cavalry Charge",
+    "path": "deck_id:CavalryCharge_MOC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Chaos Incarnate",
+    "deck_id": "ChaosIncarnate_SCD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Chaos Incarnate",
+    "path": "deck_id:ChaosIncarnate_SCD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Corrupting Influence",
+    "deck_id": "CorruptingInfluence_ONC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Corrupting Influence",
+    "path": "deck_id:CorruptingInfluence_ONC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Counter Blitz (FINAL FANTASY X)",
+    "deck_id": "CounterBlitzFinalFantasyX_FIC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Counter Blitz (FINAL FANTASY X)",
+    "path": "deck_id:CounterBlitzFinalFantasyX_FIC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Counter Blitz Collector's Edition (FINAL FANTASY X)",
+    "deck_id": "CounterBlitzCollectorSEditionFinalFantasyX_FIC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Counter Blitz Collector's Edition (FINAL FANTASY X)",
+    "path": "deck_id:CounterBlitzCollectorSEditionFinalFantasyX_FIC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Counter Intelligence",
+    "deck_id": "CounterIntelligence_EOC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Counter Intelligence",
+    "path": "deck_id:CounterIntelligence_EOC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Counterpunch",
+    "deck_id": "Counterpunch_CMD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Counterpunch",
+    "path": "deck_id:Counterpunch_CMD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Coven Counters",
+    "deck_id": "CovenCounters_MIC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Coven Counters",
+    "path": "deck_id:CovenCounters_MIC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Creative Energy",
+    "deck_id": "CreativeEnergy_M3C",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Creative Energy",
+    "path": "deck_id:CreativeEnergy_M3C",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Creative Energy Collector's Edition",
+    "deck_id": "CreativeEnergyCollectorSEdition_M3C",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Creative Energy Collector's Edition",
+    "path": "deck_id:CreativeEnergyCollectorSEdition_M3C",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Deadly Disguise",
+    "deck_id": "DeadlyDisguise_MKC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Deadly Disguise",
+    "path": "deck_id:DeadlyDisguise_MKC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Death Toll",
+    "deck_id": "DeathToll_DSC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Death Toll",
+    "path": "deck_id:DeathToll_DSC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Deep Clue Sea",
+    "deck_id": "DeepClueSea_MKC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Deep Clue Sea",
+    "path": "deck_id:DeepClueSea_MKC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Desert Bloom",
+    "deck_id": "DesertBloom_OTC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Desert Bloom",
+    "path": "deck_id:DesertBloom_OTC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Devour for Power",
+    "deck_id": "DevourForPower_CM2",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Devour for Power",
+    "path": "deck_id:DevourForPower_CM2",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Devour for Power",
+    "deck_id": "DevourForPower_CMD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Devour for Power",
+    "path": "deck_id:DevourForPower_CMD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Divine Convocation",
+    "deck_id": "DivineConvocation_MOC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Divine Convocation",
+    "path": "deck_id:DivineConvocation_MOC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Draconic Destruction",
+    "deck_id": "DraconicDestruction_SCD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Draconic Destruction",
+    "path": "deck_id:DraconicDestruction_SCD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Draconic Dissent",
+    "deck_id": "DraconicDissent_CLB",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Draconic Dissent",
+    "path": "deck_id:DraconicDissent_CLB",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Draconic Domination",
+    "deck_id": "DraconicDomination_C17",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Draconic Domination",
+    "path": "deck_id:DraconicDomination_C17",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Draconic Rage",
+    "deck_id": "DraconicRage_AFC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Draconic Rage",
+    "path": "deck_id:DraconicRage_AFC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Dungeons of Death",
+    "deck_id": "DungeonsOfDeath_AFC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Dungeons of Death",
+    "path": "deck_id:DungeonsOfDeath_AFC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Eldrazi Incursion",
+    "deck_id": "EldraziIncursion_M3C",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Eldrazi Incursion",
+    "path": "deck_id:EldraziIncursion_M3C",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Eldrazi Incursion Collector's Edition",
+    "deck_id": "EldraziIncursionCollectorSEdition_M3C",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Eldrazi Incursion Collector's Edition",
+    "path": "deck_id:EldraziIncursionCollectorSEdition_M3C",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Eldrazi Unbound",
+    "deck_id": "EldraziUnbound_CMM",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Eldrazi Unbound",
+    "path": "deck_id:EldraziUnbound_CMM",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Elven Council",
+    "deck_id": "ElvenCouncil_LTC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Elven Council",
+    "path": "deck_id:ElvenCouncil_LTC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Elven Empire",
+    "deck_id": "ElvenEmpire_KHC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Elven Empire",
+    "path": "deck_id:ElvenEmpire_KHC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Endless Punishment",
+    "deck_id": "EndlessPunishment_DSC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Endless Punishment",
+    "path": "deck_id:EndlessPunishment_DSC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Enduring Enchantments",
+    "deck_id": "EnduringEnchantments_CMM",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Enduring Enchantments",
+    "path": "deck_id:EnduringEnchantments_CMM",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Enhanced Evolution",
+    "deck_id": "EnhancedEvolution_C20",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Enhanced Evolution",
+    "path": "deck_id:EnhancedEvolution_C20",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Entropic Uprising",
+    "deck_id": "EntropicUprising_C16",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Entropic Uprising",
+    "path": "deck_id:EntropicUprising_C16",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Eternal Bargain",
+    "deck_id": "EternalBargain_C13",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Eternal Bargain",
+    "path": "deck_id:EternalBargain_C13",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Eternal Might",
+    "deck_id": "EternalMight_DRC",
+    "deck_type": "Commander Deck",
+    "card_count": 0,
+    "filename": "Eternal Might",
+    "path": "deck_id:EternalMight_DRC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Evasive Maneuvers",
+    "deck_id": "EvasiveManeuvers_CMA",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Evasive Maneuvers",
+    "path": "deck_id:EvasiveManeuvers_CMA",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Evasive Maneuvers",
+    "deck_id": "EvasiveManeuvers_C13",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Evasive Maneuvers",
+    "path": "deck_id:EvasiveManeuvers_C13",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Everyone's Invited!",
+    "deck_id": "EveryoneSInvited_SLD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Everyone's Invited!",
+    "path": "deck_id:EveryoneSInvited_SLD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Exit from Exile",
+    "deck_id": "ExitFromExile_CLB",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Exit from Exile",
+    "path": "deck_id:ExitFromExile_CLB",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Explorers of the Deep",
+    "deck_id": "ExplorersOfTheDeep_LCC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Explorers of the Deep",
+    "path": "deck_id:ExplorersOfTheDeep_LCC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Exquisite Invention",
+    "deck_id": "ExquisiteInvention_C18",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Exquisite Invention",
+    "path": "deck_id:ExquisiteInvention_C18",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Faceless Menace",
+    "deck_id": "FacelessMenace_C19",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Faceless Menace",
+    "path": "deck_id:FacelessMenace_C19",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Fae Dominion",
+    "deck_id": "FaeDominion_WOC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Fae Dominion",
+    "path": "deck_id:FaeDominion_WOC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Family Matters",
+    "deck_id": "FamilyMatters_BLC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Family Matters",
+    "path": "deck_id:FamilyMatters_BLC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Feline Ferocity",
+    "deck_id": "FelineFerocity_C17",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Feline Ferocity",
+    "path": "deck_id:FelineFerocity_C17",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "First Flight",
+    "deck_id": "FirstFlight_SCD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "First Flight",
+    "path": "deck_id:FirstFlight_SCD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Food and Fellowship",
+    "deck_id": "FoodAndFellowship_LTC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Food and Fellowship",
+    "path": "deck_id:FoodAndFellowship_LTC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Forces of the Imperium",
+    "deck_id": "ForcesOfTheImperium_40K",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Forces of the Imperium",
+    "path": "deck_id:ForcesOfTheImperium_40K",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Forces of the Imperium Collector's Edition",
+    "deck_id": "ForcesOfTheImperiumCollectorSEdition_40K",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Forces of the Imperium Collector's Edition",
+    "path": "deck_id:ForcesOfTheImperiumCollectorSEdition_40K",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Forged In Stone",
+    "deck_id": "ForgedInStone_C14",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Forged In Stone",
+    "path": "deck_id:ForgedInStone_C14",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "From Cute to Brute",
+    "deck_id": "FromCuteToBrute_SLD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "From Cute to Brute",
+    "path": "deck_id:FromCuteToBrute_SLD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Grand Larceny",
+    "deck_id": "GrandLarceny_OTC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Grand Larceny",
+    "path": "deck_id:GrandLarceny_OTC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Grave Danger",
+    "deck_id": "GraveDanger_SCD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Grave Danger",
+    "path": "deck_id:GraveDanger_SCD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Graveyard Overdrive",
+    "deck_id": "Graveyard Overdrive_M3C",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Graveyard Overdrive",
+    "path": "deck_id:Graveyard Overdrive_M3C",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Graveyard Overdrive Collector's Edition",
+    "deck_id": "GraveyardOverdriveCollectorSEdition_M3C",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Graveyard Overdrive Collector's Edition",
+    "path": "deck_id:GraveyardOverdriveCollectorSEdition_M3C",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Growing Threat",
+    "deck_id": "GrowingThreat_MOC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Growing Threat",
+    "path": "deck_id:GrowingThreat_MOC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Guided By Nature",
+    "deck_id": "GuidedByNature_C14",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Guided By Nature",
+    "path": "deck_id:GuidedByNature_C14",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Guided by Nature",
+    "deck_id": "GuidedByNature_CMA",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Guided by Nature",
+    "path": "deck_id:GuidedByNature_CMA",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Hail, Caesar",
+    "deck_id": "HailCaesar_PIP",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Hail, Caesar",
+    "path": "deck_id:HailCaesar_PIP",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Heads I Win, Tails You Lose",
+    "deck_id": "HeadsIWinTailsYouLose_SLD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Heads I Win, Tails You Lose",
+    "path": "deck_id:HeadsIWinTailsYouLose_SLD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Heavenly Inferno",
+    "deck_id": "HeavenlyInferno_CMA",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Heavenly Inferno",
+    "path": "deck_id:HeavenlyInferno_CMA",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Heavenly Inferno",
+    "deck_id": "HeavenlyInferno_CMD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Heavenly Inferno",
+    "path": "deck_id:HeavenlyInferno_CMD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Invent Superiority",
+    "deck_id": "InventSuperiority_C16",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Invent Superiority",
+    "path": "deck_id:InventSuperiority_C16",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Jeskai Striker",
+    "deck_id": "JeskaiStriker_TDC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Jeskai Striker",
+    "path": "deck_id:JeskaiStriker_TDC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Jump Scare!",
+    "deck_id": "JumpScare_DSC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Jump Scare!",
+    "path": "deck_id:JumpScare_DSC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Land's Wrath",
+    "deck_id": "LandSWrath_ZNC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Land's Wrath",
+    "path": "deck_id:LandSWrath_ZNC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Legends' Legacy",
+    "deck_id": "LegendsLegacy_DMC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Legends' Legacy",
+    "path": "deck_id:LegendsLegacy_DMC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Limit Break (FINAL FANTASY VII)",
+    "deck_id": "LimitBreakFinalFantasyVii_FIC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Limit Break (FINAL FANTASY VII)",
+    "path": "deck_id:LimitBreakFinalFantasyVii_FIC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Limit Break Collector's Edition (FINAL FANTASY VII)",
+    "deck_id": "LimitBreakCollectorSEditionFinalFantasyVii_FIC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Limit Break Collector's Edition (FINAL FANTASY VII)",
+    "path": "deck_id:LimitBreakCollectorSEditionFinalFantasyVii_FIC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Living Energy",
+    "deck_id": "LivingEnergy_DRC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Living Energy",
+    "path": "deck_id:LivingEnergy_DRC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Lorehold Legacies",
+    "deck_id": "LoreholdLegacies_C21",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Lorehold Legacies",
+    "path": "deck_id:LoreholdLegacies_C21",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Maestros Massacre",
+    "deck_id": "MaestrosMassacre_NCC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Maestros Massacre",
+    "path": "deck_id:MaestrosMassacre_NCC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Mardu Surge",
+    "deck_id": "MarduSurge_TDC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Mardu Surge",
+    "path": "deck_id:MarduSurge_TDC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Masters of Evil",
+    "deck_id": "MastersOfEvil_WHO",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Masters of Evil",
+    "path": "deck_id:MastersOfEvil_WHO",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Merciless Rage",
+    "deck_id": "MercilessRage_C19",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Merciless Rage",
+    "path": "deck_id:MercilessRage_C19",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Mind Flayarrrs",
+    "deck_id": "MindFlayarrrs_CLB",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Mind Flayarrrs",
+    "path": "deck_id:MindFlayarrrs_CLB",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Mind Seize",
+    "deck_id": "MindSeize_C13",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Mind Seize",
+    "path": "deck_id:MindSeize_C13",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Miracle Worker",
+    "deck_id": "MiracleWorker_DSC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Miracle Worker",
+    "path": "deck_id:MiracleWorker_DSC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Mirror Mastery",
+    "deck_id": "MirrorMastery_CMD",
+    "deck_type": "Commander Deck",
+    "card_count": 0,
+    "filename": "Mirror Mastery",
+    "path": "deck_id:MirrorMastery_CMD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Mishra's Burnished Banner",
+    "deck_id": "MishraSBurnishedBanner_BRC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Mishra's Burnished Banner",
+    "path": "deck_id:MishraSBurnishedBanner_BRC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Most Wanted",
+    "deck_id": "MostWanted_OTC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Most Wanted",
+    "path": "deck_id:MostWanted_OTC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Mutant Menace",
+    "deck_id": "MutantMenace_PIP",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Mutant Menace",
+    "path": "deck_id:MutantMenace_PIP",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Mystic Intellect",
+    "deck_id": "MysticIntellect_C19",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Mystic Intellect",
+    "path": "deck_id:MysticIntellect_C19",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Nature of the Beast",
+    "deck_id": "NatureOfTheBeast_C13",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Nature of the Beast",
+    "path": "deck_id:NatureOfTheBeast_C13",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Nature's Vengeance",
+    "deck_id": "NatureSVengeance_C18",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Nature's Vengeance",
+    "path": "deck_id:NatureSVengeance_C18",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Necron Dynasties",
+    "deck_id": "NecronDynasties_40K",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Necron Dynasties",
+    "path": "deck_id:NecronDynasties_40K",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Necron Dynasties Collector's Edition",
+    "deck_id": "NecronDynastiesCollectorSEdition_40K",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Necron Dynasties Collector's Edition",
+    "path": "deck_id:NecronDynastiesCollectorSEdition_40K",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Obscura Operation",
+    "deck_id": "ObscuraOperation_NCC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Obscura Operation",
+    "path": "deck_id:ObscuraOperation_NCC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Open Hostility",
+    "deck_id": "OpenHostility_C16",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Open Hostility",
+    "path": "deck_id:OpenHostility_C16",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Painbow",
+    "deck_id": "Painbow_DMC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Painbow",
+    "path": "deck_id:Painbow_DMC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Paradox Power",
+    "deck_id": "ParadoxPower_WHO",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Paradox Power",
+    "path": "deck_id:ParadoxPower_WHO",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Party Time",
+    "deck_id": "PartyTime_CLB",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Party Time",
+    "path": "deck_id:PartyTime_CLB",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Peace Offering",
+    "deck_id": "PeaceOffering_BLC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Peace Offering",
+    "path": "deck_id:PeaceOffering_BLC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Peer Through Time",
+    "deck_id": "PeerThroughTime_C14",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Peer Through Time",
+    "path": "deck_id:PeerThroughTime_C14",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Phantom Premonition",
+    "deck_id": "PhantomPremonition_KHC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Phantom Premonition",
+    "path": "deck_id:PhantomPremonition_KHC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Planar Portal",
+    "deck_id": "PlanarPortal_AFC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Planar Portal",
+    "path": "deck_id:PlanarPortal_AFC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Planeswalker Party",
+    "deck_id": "PlaneswalkerParty_CMM",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Planeswalker Party",
+    "path": "deck_id:PlaneswalkerParty_CMM",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Plunder the Graves",
+    "deck_id": "PlunderTheGraves_CMA",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Plunder the Graves",
+    "path": "deck_id:PlunderTheGraves_CMA",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Plunder the Graves",
+    "deck_id": "PlunderTheGraves_C15",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Plunder the Graves",
+    "path": "deck_id:PlunderTheGraves_C15",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Political Puppets",
+    "deck_id": "PoliticalPuppets_CMD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Political Puppets",
+    "path": "deck_id:PoliticalPuppets_CMD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Power Hungry",
+    "deck_id": "PowerHungry_C13",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Power Hungry",
+    "path": "deck_id:PowerHungry_C13",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Primal Genesis",
+    "deck_id": "PrimalGenesis_C19",
+    "deck_type": "Commander Deck",
+    "card_count": 0,
+    "filename": "Primal Genesis",
+    "path": "deck_id:PrimalGenesis_C19",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Prismari Performance",
+    "deck_id": "PrismariPerformance_C21",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Prismari Performance",
+    "path": "deck_id:PrismariPerformance_C21",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Quantum Quandrix",
+    "deck_id": "QuantumQuandrix_C21",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Quantum Quandrix",
+    "path": "deck_id:QuantumQuandrix_C21",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Quick Draw",
+    "deck_id": "QuickDraw_OTC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Quick Draw",
+    "path": "deck_id:QuickDraw_OTC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Raining Cats and Dogs",
+    "deck_id": "RainingCatsAndDogs_SLD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Raining Cats and Dogs",
+    "path": "deck_id:RainingCatsAndDogs_SLD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Reap the Tides",
+    "deck_id": "ReapTheTides_CMR",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Reap the Tides",
+    "path": "deck_id:ReapTheTides_CMR",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Rebellion Rising",
+    "deck_id": "RebellionRising_ONC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Rebellion Rising",
+    "path": "deck_id:RebellionRising_ONC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Revenant Recon",
+    "deck_id": "RevenantRecon_MKC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Revenant Recon",
+    "path": "deck_id:RevenantRecon_MKC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Revival Trance (FINAL FANTASY VI)",
+    "deck_id": "RevivalTranceFinalFantasyVi_FIC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Revival Trance (FINAL FANTASY VI)",
+    "path": "deck_id:RevivalTranceFinalFantasyVi_FIC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Revival Trance Collector's Edition (FINAL FANTASY VI)",
+    "deck_id": "RevivalTranceCollectorSEditionFinalFantasyVi_FIC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Revival Trance Collector's Edition (FINAL FANTASY VI)",
+    "path": "deck_id:RevivalTranceCollectorSEditionFinalFantasyVi_FIC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Riders of Rohan",
+    "deck_id": "RidersOfRohan_LTC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Riders of Rohan",
+    "path": "deck_id:RidersOfRohan_LTC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Riveteers Rampage",
+    "deck_id": "RiveteersRampage_NCC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Riveteers Rampage",
+    "path": "deck_id:RiveteersRampage_NCC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Ruthless Regiment",
+    "deck_id": "RuthlessRegiment_C20",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Ruthless Regiment",
+    "path": "deck_id:RuthlessRegiment_C20",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Science!",
+    "deck_id": "Science_PIP",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Science!",
+    "path": "deck_id:Science_PIP",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Scions & Spellcraft (FINAL FANTASY XIV)",
+    "deck_id": "ScionsSpellcraftFinalFantasyXiv_FIC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Scions & Spellcraft (FINAL FANTASY XIV)",
+    "path": "deck_id:ScionsSpellcraftFinalFantasyXiv_FIC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Scions & Spellcraft Collector's Edition (FINAL FANTASY XIV)",
+    "deck_id": "ScionsSpellcraftCollectorSEditionFinalFantasyXiv_FIC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Scions & Spellcraft Collector's Edition (FINAL FANTASY XIV)",
+    "path": "deck_id:ScionsSpellcraftCollectorSEditionFinalFantasyXiv_FIC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Scrappy Survivors",
+    "deck_id": "ScrappySurvivors_PIP",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Scrappy Survivors",
+    "path": "deck_id:ScrappySurvivors_PIP",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Seize Control",
+    "deck_id": "SeizeControl_C15",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Seize Control",
+    "path": "deck_id:SeizeControl_C15",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Silverquill Statement",
+    "deck_id": "SilverquillStatement_C21",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Silverquill Statement",
+    "path": "deck_id:SilverquillStatement_C21",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Sliver Swarm",
+    "deck_id": "SliverSwarm_CMM",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Sliver Swarm",
+    "path": "deck_id:SliverSwarm_CMM",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Sneak Attack",
+    "deck_id": "SneakAttack_ZNC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Sneak Attack",
+    "path": "deck_id:SneakAttack_ZNC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Spirit Squadron",
+    "deck_id": "SpiritSquadron_VOC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Spirit Squadron",
+    "path": "deck_id:SpiritSquadron_VOC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Squirreled Away",
+    "deck_id": "SquirreledAway_BLC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Squirreled Away",
+    "path": "deck_id:SquirreledAway_BLC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Stalwart Unity",
+    "deck_id": "StalwartUnity_C16",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Stalwart Unity",
+    "path": "deck_id:StalwartUnity_C16",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Subjective Reality",
+    "deck_id": "SubjectiveReality_C18",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Subjective Reality",
+    "path": "deck_id:SubjectiveReality_C18",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Sultai Arisen",
+    "deck_id": "SultaiArisen_TDC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Sultai Arisen",
+    "path": "deck_id:SultaiArisen_TDC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Swell the Host",
+    "deck_id": "SwellTheHost_C15",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Swell the Host",
+    "path": "deck_id:SwellTheHost_C15",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Sworn To Darkness",
+    "deck_id": "SwornToDarkness_C14",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Sworn To Darkness",
+    "path": "deck_id:SwornToDarkness_C14",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Symbiotic Swarm",
+    "deck_id": "SymbioticSwarm_C20",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Symbiotic Swarm",
+    "path": "deck_id:SymbioticSwarm_C20",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Temur Roar",
+    "deck_id": "TemurRoar_TDC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Temur Roar",
+    "path": "deck_id:TemurRoar_TDC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "The Hosts of Mordor",
+    "deck_id": "TheHostsOfMordor_LTC",
+    "deck_type": "Commander Deck",
+    "card_count": 0,
+    "filename": "The Hosts of Mordor",
+    "path": "deck_id:TheHostsOfMordor_LTC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "The Ruinous Powers",
+    "deck_id": "TheRuinousPowers_40K",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "The Ruinous Powers",
+    "path": "deck_id:TheRuinousPowers_40K",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "The Ruinous Powers Collector's Edition",
+    "deck_id": "TheRuinousPowersCollectorSEdition_40K",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "The Ruinous Powers Collector's Edition",
+    "path": "deck_id:TheRuinousPowersCollectorSEdition_40K",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Timeless Wisdom",
+    "deck_id": "TimelessWisdom_C20",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Timeless Wisdom",
+    "path": "deck_id:TimelessWisdom_C20",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Timey-Wimey",
+    "deck_id": "TimeyWimey_WHO",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Timey-Wimey",
+    "path": "deck_id:TimeyWimey_WHO",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Tinker Time",
+    "deck_id": "TinkerTime_MOC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Tinker Time",
+    "path": "deck_id:TinkerTime_MOC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Token Triumph",
+    "deck_id": "TokenTriumph_SCD",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Token Triumph",
+    "path": "deck_id:TokenTriumph_SCD",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Tricky Terrain",
+    "deck_id": "TrickyTerrain_M3C",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Tricky Terrain",
+    "path": "deck_id:TrickyTerrain_M3C",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Tricky Terrain Collector's Edition",
+    "deck_id": "TrickyTerrainCollectorSEdition_M3C",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Tricky Terrain Collector's Edition",
+    "path": "deck_id:TrickyTerrainCollectorSEdition_M3C",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Tyranid Swarm",
+    "deck_id": "TyranidSwarm_40K",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Tyranid Swarm",
+    "path": "deck_id:TyranidSwarm_40K",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Tyranid Swarm Collector's Edition",
+    "deck_id": "TyranidSwarmCollectorSEdition_40K",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Tyranid Swarm Collector's Edition",
+    "path": "deck_id:TyranidSwarmCollectorSEdition_40K",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Undead Unleashed",
+    "deck_id": "UndeadUnleashed_MIC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Undead Unleashed",
+    "path": "deck_id:UndeadUnleashed_MIC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Upgrades Unleashed",
+    "deck_id": "UpgradesUnleashed_NEC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Upgrades Unleashed",
+    "path": "deck_id:UpgradesUnleashed_NEC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Urza's Iron Alliance",
+    "deck_id": "UrzaSIronAlliance_BRC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Urza's Iron Alliance",
+    "path": "deck_id:UrzaSIronAlliance_BRC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Vampiric Bloodline",
+    "deck_id": "VampiricBloodline_VOC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Vampiric Bloodline",
+    "path": "deck_id:VampiricBloodline_VOC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Vampiric Bloodlust",
+    "deck_id": "VampiricBloodlust_C17",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Vampiric Bloodlust",
+    "path": "deck_id:VampiricBloodlust_C17",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Veloci-Ramp-Tor",
+    "deck_id": "VelociRampTor_LCC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Veloci-Ramp-Tor",
+    "path": "deck_id:VelociRampTor_LCC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Virtue and Valor",
+    "deck_id": "VirtueAndValor_WOC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Virtue and Valor",
+    "path": "deck_id:VirtueAndValor_WOC",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Wade into Battle",
+    "deck_id": "WadeIntoBattle_C15",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Wade into Battle",
+    "path": "deck_id:WadeIntoBattle_C15",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Wade into Battle",
+    "deck_id": "WadeIntoBattle_CM2",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Wade into Battle",
+    "path": "deck_id:WadeIntoBattle_CM2",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "Witherbloom Witchcraft",
+    "deck_id": "WitherbloomWitchcraft_C21",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "Witherbloom Witchcraft",
+    "path": "deck_id:WitherbloomWitchcraft_C21",
+    "image_uri": "",
+    "size_bytes": 0
+  },
+  {
+    "name": "World Shaper",
+    "deck_id": "WorldShaper_EOC",
+    "deck_type": "Commander Deck",
+    "card_count": 100,
+    "filename": "World Shaper",
+    "path": "deck_id:WorldShaper_EOC",
+    "image_uri": "",
+    "size_bytes": 0
+  }
+]

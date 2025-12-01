@@ -623,37 +623,23 @@
 			searchPrecons();
 		}
 
-		// Load Commander precons from the database with full deck info from Scryfall
+		// Load Commander precons from local JSON data (no backend needed for GitHub Pages)
 		async function loadPresconDecks() {
 			try {
-				// Fetch from the backend API endpoint - list_precon_decks is already public
-				console.log('Attempting to load precons from: /api/list_precon_decks?query=');
-				const response = await fetch('/api/list_precon_decks?query=');
-				console.log('Response status:', response.status, response.statusText);
+				console.log('Loading precons from local precon_decks.json file...');
+				const response = await fetch('/precon_decks.json');
 				
 				if (!response.ok) {
-					console.error('API returned error:', response.status, response.statusText);
-					throw new Error('Failed to load precons from backend: ' + response.statusText);
+					console.error('Failed to load precon_decks.json:', response.status);
+					throw new Error('Failed to load precons from local JSON: ' + response.statusText);
 				}
 				
 				const data = await response.json();
-				console.log('Raw API response: got', data.length, 'items');
-				console.log('Data type:', Array.isArray(data) ? 'array' : 'object');
-				if (!Array.isArray(data) && typeof data === 'object') {
-					console.log('Data keys:', Object.keys(data));
-				}
+				console.log('Raw JSON response: got', data.length, 'precons');
 				
-				// Transform backend data to match UI format
-				// Data comes back as either an array or wrapped object
-				const decks = Array.isArray(data) ? data : (data.result || data.data || []);
-				console.log('Processed decks:', decks.length);
-				if (decks.length > 0) {
-					console.log('First deck:', decks[0]);
-				}
-				
-				preconDatabase = decks.map(deck => ({
-					name: deck.name || deck.deck_name || 'Unknown Deck',
-					set: deck.deck_type || 'Commander',
+				preconDatabase = data.map(deck => ({
+					name: deck.name || 'Unknown Deck',
+					set: deck.set || 'Commander',
 					colors: deck.colors || 'WUBRG',
 					deckId: deck.deck_id,
 					cardCount: deck.card_count || 0,
@@ -661,16 +647,14 @@
 					raw: deck // Keep original data for reference
 				}));
 				
-				console.log(`Loaded ${preconDatabase.length} precons from database`);
+				console.log(`✓ Loaded ${preconDatabase.length} precons from local JSON file`);
 				
 				// Optionally enrich with Scryfall data - but don't block UI
 				enrichPresconDataFromScryfall();
 				
 			} catch (error) {
-				console.error('Failed to load from backend - error details:', error);
-				console.error('Error message:', error.message);
-				console.warn('Falling back to Scryfall API...');
-				await loadPresconDecksFromScryfall();
+				console.error('Failed to load precons:', error.message);
+				alert('Error loading precons. Please refresh the page.');
 			}
 		}
 
@@ -701,36 +685,6 @@
 				} catch (error) {
 					console.warn(`Could not enrich ${precon.name}:`, error);
 				}
-			}
-		}
-
-		// Fallback: Load from Scryfall API if backend unavailable
-		async function loadPresconDecksFromScryfall() {
-			console.warn('=== USING SCRYFALL FALLBACK ===');
-			try {
-				// Search for legendary creatures from Commander sets
-				const response = await fetch(
-					'https://api.scryfall.com/cards/search?q=is:legendary%20is:creature%20set:c21%20OR%20set:c20%20OR%20set:c19%20OR%20set:c18'
-				);
-				
-				if (!response.ok) throw new Error('Scryfall API error');
-				
-				const data = await response.json();
-				
-				// Transform Scryfall data to match UI format
-				preconDatabase = (data.data || []).slice(0, 20).map(card => ({
-					name: card.name,
-					set: 'Commander',
-					colors: card.color_identity?.join('') || 'WUBRG',
-					cards: [{ name: card.name, quantity: 1 }],
-					scryfallId: card.id,
-					imageUrl: card.image_uris?.normal
-				}));
-				
-				console.log(`Loaded ${preconDatabase.length} precons from Scryfall API (FALLBACK - This means backend is not responding)`);
-			} catch (error) {
-				console.error('Failed to load precons:', error);
-				preconDatabase = [];
 			}
 		}
 
