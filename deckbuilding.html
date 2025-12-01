@@ -627,11 +627,31 @@
 		async function loadPresconDecks() {
 			try {
 				console.log('Loading precons from local precon_decks.json file...');
-				const response = await fetch('/precon_decks.json');
+				console.log('Current location:', window.location.href);
 				
-				if (!response.ok) {
-					console.error('Failed to load precon_decks.json:', response.status);
-					throw new Error('Failed to load precons from local JSON: ' + response.statusText);
+				// Try multiple paths for the JSON file
+				const paths = [
+					'./precon_decks.json',
+					'/precon_decks.json',
+					'/MTG-Archive/precon_decks.json'
+				];
+				
+				let response;
+				let successPath;
+				
+				for (const path of paths) {
+					console.log('Trying to fetch from:', path);
+					response = await fetch(path);
+					if (response.ok) {
+						successPath = path;
+						console.log('✓ Successfully loaded from:', path);
+						break;
+					}
+				}
+				
+				if (!response || !response.ok) {
+					console.error('Failed to load precon_decks.json from any path');
+					throw new Error('Could not find precon_decks.json');
 				}
 				
 				const data = await response.json();
