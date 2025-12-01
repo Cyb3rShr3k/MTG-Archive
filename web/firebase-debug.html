@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Firebase SDK Debug - Deep Analysis</title>
+	<style>
+		body { font-family: monospace; background: #1a1a1a; color: #0f0; padding: 20px; }
+		.log { padding: 8px; margin: 5px 0; border-left: 3px solid #0f0; background: rgba(0,255,0,0.05); }
+		.error { border-left-color: #f00; color: #f00; background: rgba(255,0,0,0.05); }
+		.warning { border-left-color: #ff0; color: #ff0; background: rgba(255,255,0,0.05); }
+		.section { margin-top: 30px; border-top: 2px solid #0f0; padding-top: 10px; }
+	</style>
+</head>
+<body>
+	<h1>🔬 Firebase SDK Debug - Deep Analysis</h1>
+	<div id="output"></div>
+
+	<script>
+		const output = document.getElementById('output');
+		
+		function log(msg, type = 'info') {
+			const div = document.createElement('div');
+			div.className = 'log ' + (type === 'error' ? 'error' : type === 'warning' ? 'warning' : '');
+			div.textContent = msg;
+			output.appendChild(div);
+			console.log(msg);
+		}
+
+		// Capture all errors
+		window.addEventListener('error', (event) => {
+			log('❌ GLOBAL ERROR: ' + event.message + ' @ ' + event.filename + ':' + event.lineno, 'error');
+		});
+
+		// Monitor script loading
+		log('📊 SECTION 1: Firebase SDK Loading Attempt');
+		log('Starting direct Firebase SDK load...');
+
+		// Store references to check object mutations
+		const initialWindowKeys = Object.keys(window);
+		log(`Initial window keys: ${initialWindowKeys.length}`);
+
+		// Load Firebase with detailed tracking
+		const firebaseScript = document.createElement('script');
+		firebaseScript.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+		
+		firebaseScript.onload = () => {
+			log('✅ Script onload fired', 'info');
+			
+			// Check what changed
+			const newWindowKeys = Object.keys(window);
+			const addedKeys = newWindowKeys.filter(k => !initialWindowKeys.includes(k));
+			log(`New window keys added: ${addedKeys.length}`);
+			
+			if (addedKeys.length > 0) {
+				log(`First 10 new keys: ${addedKeys.slice(0, 10).join(', ')}`);
+			}
+			
+			// Check for firebase object
+			if (window.firebase) {
+				log('✅ window.firebase IS available!', 'info');
+				log(`firebase.app: ${typeof window.firebase.app}`);
+				log(`firebase.initializeApp: ${typeof window.firebase.initializeApp}`);
+			} else {
+				log('❌ window.firebase NOT available after load', 'error');
+				log('Available firebase-related globals:', 'warning');
+				Object.keys(window).forEach(key => {
+					if (key.toLowerCase().includes('firebase')) {
+						log(`  - ${key}: ${typeof window[key]}`);
+					}
+				});
+			}
+		};
+
+		firebaseScript.onerror = (event) => {
+			log('❌ Script onerror fired: ' + JSON.stringify(event), 'error');
+		};
+
+		firebaseScript.onreadystatechange = () => {
+			log(`Script readyState: ${firebaseScript.readyState}`);
+		};
+
+		log('Appending script to document...');
+		document.head.appendChild(firebaseScript);
+
+		log('📊 SECTION 2: Checking Result After Append');
+
+		// Check immediately
+		setTimeout(() => {
+			log('⏱️ 100ms after append:');
+			log(`firebase available: ${!!window.firebase}`);
+			if (window.firebase) {
+				log(`  - app: ${typeof window.firebase.app}`);
+				log(`  - initializeApp: ${typeof window.firebase.initializeApp}`);
+			}
+		}, 100);
+
+		// Check after 1 second
+		setTimeout(() => {
+			log('⏱️ 1 second after append:');
+			log(`firebase available: ${!!window.firebase}`);
+			if (window.firebase) {
+				log(`  - app: ${typeof window.firebase.app}`);
+				log(`  - initializeApp: ${typeof window.firebase.initializeApp}`);
+			}
+		}, 1000);
+
+		// Check after 5 seconds
+		setTimeout(() => {
+			log('⏱️ 5 seconds after append:');
+			log(`firebase available: ${!!window.firebase}`);
+			if (window.firebase) {
+				log(`  - app: ${typeof window.firebase.app}`);
+				log(`  - initializeApp: ${typeof window.firebase.initializeApp}`);
+			} else {
+				log('❌ Firebase still not available after 5 seconds', 'error');
+				log('Checking for any firebase globals...', 'warning');
+				const fbGlobals = Object.keys(window).filter(k => 
+					k.toLowerCase().includes('firebase') || 
+					k.toLowerCase().includes('fb')
+				);
+				if (fbGlobals.length > 0) {
+					log(`Found ${fbGlobals.length} firebase-related globals:`, 'warning');
+					fbGlobals.forEach(key => {
+						log(`  - ${key}: ${typeof window[key]}`);
+					});
+				} else {
+					log('No firebase-related globals found at all', 'error');
+				}
+			}
+		}, 5000);
+
+		log('📊 SECTION 3: Checking Browser Network Issues');
+		log('If script loaded but firebase not available, likely causes:');
+		log('  1. Script contains syntax error (prevents execution)');
+		log('  2. Script loaded but is CommonJS/UMD (needs different loading)');
+		log('  3. Script initializes asynchronously (needs waiting)');
+		log('  4. Script depends on other scripts loading first');
+	</script>
+</body>
+</html>
