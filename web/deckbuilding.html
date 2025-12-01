@@ -627,17 +627,29 @@
 		async function loadPresconDecks() {
 			try {
 				// Fetch from the backend API endpoint - list_precon_decks is already public
+				console.log('Attempting to load precons from: /api/list_precon_decks?query=');
 				const response = await fetch('/api/list_precon_decks?query=');
+				console.log('Response status:', response.status, response.statusText);
+				
 				if (!response.ok) {
+					console.error('API returned error:', response.status, response.statusText);
 					throw new Error('Failed to load precons from backend: ' + response.statusText);
 				}
 				
 				const data = await response.json();
-				console.log('Raw API response: got', data.length, 'precons');
+				console.log('Raw API response: got', data.length, 'items');
+				console.log('Data type:', Array.isArray(data) ? 'array' : 'object');
+				if (!Array.isArray(data) && typeof data === 'object') {
+					console.log('Data keys:', Object.keys(data));
+				}
 				
 				// Transform backend data to match UI format
 				// Data comes back as either an array or wrapped object
 				const decks = Array.isArray(data) ? data : (data.result || data.data || []);
+				console.log('Processed decks:', decks.length);
+				if (decks.length > 0) {
+					console.log('First deck:', decks[0]);
+				}
 				
 				preconDatabase = decks.map(deck => ({
 					name: deck.name || deck.deck_name || 'Unknown Deck',
@@ -655,7 +667,9 @@
 				enrichPresconDataFromScryfall();
 				
 			} catch (error) {
-				console.warn('Could not load from backend:', error);
+				console.error('Failed to load from backend - error details:', error);
+				console.error('Error message:', error.message);
+				console.warn('Falling back to Scryfall API...');
 				await loadPresconDecksFromScryfall();
 			}
 		}
@@ -692,6 +706,7 @@
 
 		// Fallback: Load from Scryfall API if backend unavailable
 		async function loadPresconDecksFromScryfall() {
+			console.warn('=== USING SCRYFALL FALLBACK ===');
 			try {
 				// Search for legendary creatures from Commander sets
 				const response = await fetch(
@@ -712,7 +727,7 @@
 					imageUrl: card.image_uris?.normal
 				}));
 				
-				console.log(`Loaded ${preconDatabase.length} precons from Scryfall API`);
+				console.log(`Loaded ${preconDatabase.length} precons from Scryfall API (FALLBACK - This means backend is not responding)`);
 			} catch (error) {
 				console.error('Failed to load precons:', error);
 				preconDatabase = [];
