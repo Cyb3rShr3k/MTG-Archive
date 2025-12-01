@@ -395,9 +395,9 @@
 				}, 100);
 				setTimeout(() => {
 					clearInterval(checkFirebase);
-					console.warn('Firebase initialization timeout after 5s');
+					console.warn('Firebase initialization timeout after 10s - continuing anyway');
 					resolve();
-				}, 5000);
+				}, 10000); // Increased from 5s to 10s
 			});
 		}
 

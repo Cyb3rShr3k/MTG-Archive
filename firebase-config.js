@@ -28,14 +28,31 @@ async function initializeFirebaseConfig() {
 
     console.log('Firebase SDK available, initializing app...');
     
+    // Check if already initialized
+    if (firebase.apps && firebase.apps.length > 0) {
+      console.log('Firebase already initialized, reusing existing app');
+      const app = firebase.apps[0];
+      const auth = firebase.auth(app);
+      const db = firebase.firestore(app);
+      const storage = firebase.storage(app);
+      
+      window.firebaseServices = {
+        auth,
+        db,
+        storage
+      };
+      console.log('window.firebaseServices set successfully (reused app)');
+      return;
+    }
+    
     // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+    const app = firebase.initializeApp(firebaseConfig);
     console.log('Firebase app initialized');
 
     // Get references to Firebase services
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
+    const auth = firebase.auth(app);
+    const db = firebase.firestore(app);
+    const storage = firebase.storage(app);
 
     console.log('Firebase services loaded:', { auth, db, storage });
 
