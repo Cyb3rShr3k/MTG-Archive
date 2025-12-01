@@ -5,105 +5,8 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
-	<!-- Firebase Scripts - Using multiple CDN mirrors for maximum reliability -->
-	<script>
-		// Multiple Firebase SDK sources to try - using UMD/global builds that work with script tags
-		const firebaseAppUrls = [
-			'https://cdn.jsdelivr.net/npm/firebase@9.23.0/dist/firebase-app.js',
-			'https://unpkg.com/firebase@9.23.0/dist/firebase-app.js',
-			'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js'
-		];
-		
-		const firebaseAuthUrls = [
-			'https://cdn.jsdelivr.net/npm/firebase@9.23.0/dist/firebase-auth.js',
-			'https://unpkg.com/firebase@9.23.0/dist/firebase-auth.js',
-			'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js'
-		];
-		
-		const firebaseFirestoreUrls = [
-			'https://cdn.jsdelivr.net/npm/firebase@9.23.0/dist/firebase-firestore.js',
-			'https://unpkg.com/firebase@9.23.0/dist/firebase-firestore.js',
-			'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'
-		];
-		
-		window.firebaseLoadError = null;
-		
-		function loadScript(src, timeout = 10000) {
-			return new Promise((resolve, reject) => {
-				const script = document.createElement('script');
-				script.src = src;
-				
-				let timeoutId = setTimeout(() => {
-					console.warn('⚠️ Timeout loading:', src);
-					reject(new Error('Timeout: ' + src));
-				}, timeout);
-				
-				script.onload = () => {
-					clearTimeout(timeoutId);
-					console.log('✅ Loaded:', src);
-					resolve();
-				};
-				
-				script.onerror = () => {
-					clearTimeout(timeoutId);
-					console.error('❌ Failed to load:', src);
-					reject(new Error('Failed: ' + src));
-				};
-				
-				document.head.appendChild(script);
-			});
-		}
-		
-		function tryLoadFromUrls(urls, name) {
-			if (urls.length === 0) {
-				return Promise.reject(new Error('No URLs available for ' + name));
-			}
-			
-			const [url, ...rest] = urls;
-			console.log('Trying to load', name, 'from:', url);
-			
-			return loadScript(url)
-				.catch(error => {
-					console.warn('Failed:', error.message, '- trying next mirror...');
-					return tryLoadFromUrls(rest, name);
-				});
-		}
-		
-		// Load Firebase SDK with fallback chain
-		window.firebaseSDKReady = Promise.resolve()
-			.then(() => {
-				console.log('Starting Firebase SDK load...');
-				return tryLoadFromUrls(firebaseAppUrls, 'firebase-app');
-			})
-			.then(() => {
-				console.log('firebase-app loaded, loading auth...');
-				return tryLoadFromUrls(firebaseAuthUrls, 'firebase-auth');
-			})
-			.then(() => {
-				console.log('firebase-auth loaded, loading firestore...');
-				return tryLoadFromUrls(firebaseFirestoreUrls, 'firebase-firestore');
-			})
-			.then(() => {
-				console.log('✅ All Firebase SDK modules loaded!');
-				// Load config and db modules
-				const configScript = document.createElement('script');
-				configScript.src = 'firebase-config.js';
-				configScript.onload = () => console.log('firebase-config.js loaded');
-				document.head.appendChild(configScript);
-				
-				setTimeout(() => {
-					const dbScript = document.createElement('script');
-					dbScript.src = 'firebase-db.js';
-					dbScript.onload = () => console.log('firebase-db.js loaded');
-					document.head.appendChild(dbScript);
-				}, 1000);
-			})
-			.catch((error) => {
-				console.error('❌ Firebase SDK loading failed:', error);
-				window.firebaseLoadError = error;
-				alert('⚠️ Firebase failed to load. Check your internet connection.');
-			});
-	</script>
+	<!-- Firebase REST API (bypasses SDK CDN issues) -->
+	<script defer src="firebase-rest.js"></script>
 	<script defer src="shared-nav.js"></script>
 	<style>
 		.deck-card {
@@ -404,31 +307,7 @@
 
 		// Wait for Firebase
 		// Wait for Firebase to be fully ready
-		function waitForFirebaseDB() {
-			return new Promise(async (resolve) => {
-				let attempts = 0;
-				const maxAttempts = 100; // 10 seconds with 100ms checks
-				
-				const checkReady = setInterval(() => {
-					attempts++;
-					
-					// Check if everything is ready
-					if (typeof firebaseDB !== 'undefined' && window.firebaseServices && window.firebaseServices.db) {
-						clearInterval(checkReady);
-						console.log('✅ Firebase fully ready');
-						resolve();
-						return;
-					}
-					
-					if (attempts >= maxAttempts) {
-						clearInterval(checkReady);
-						console.warn('⚠️ Firebase initialization timeout (10s) - continuing anyway');
-						resolve();
-						return;
-					}
-				}, 100);
-			});
-		}
+		// Firebase REST API is loaded via defer script, no waiting needed
 
 		// Load all decks
 		async function loadDecks() {
@@ -1003,17 +882,14 @@
 				initializeNav();
 			}
 
-			await waitForFirebaseDB();
+			// Firebase REST API is ready immediately
+			if (typeof firebaseDB === 'undefined') {
+				console.error('Firebase REST API not loaded');
+				alert('Failed to load Firebase. Please refresh the page.');
+				return;
+			}
 
-			// Check authentication
-			firebaseDB.onAuthStateChanged(user => {
-				if (!user) {
-					window.location.href = 'login.html';
-					return;
-				}
-
-				loadDecks();
-			});
+			console.log('✅ Firebase REST API ready');
 		});
 	</script>
 
