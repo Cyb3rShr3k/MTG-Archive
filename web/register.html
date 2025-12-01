@@ -70,6 +70,26 @@
         .auth-links a:hover {
             color: #f56a6a;
         }
+        /* Input field styling */
+        .auth-container input[type="text"],
+        .auth-container input[type="email"],
+        .auth-container input[type="password"] {
+            background-color: #1a1f2e !important;
+            border-color: #444 !important;
+            color: #fff !important;
+        }
+        .auth-container input[type="text"]::placeholder,
+        .auth-container input[type="email"]::placeholder,
+        .auth-container input[type="password"]::placeholder {
+            color: #888 !important;
+        }
+        .auth-container input[type="text"]:focus,
+        .auth-container input[type="email"]:focus,
+        .auth-container input[type="password"]:focus {
+            background-color: #242943 !important;
+            border-color: #4c84ff !important;
+            box-shadow: 0 0 0 2px rgba(76, 132, 255, 0.2) !important;
+        }
     </style>
 </head>
 <body class="is-preload">
