@@ -13,34 +13,45 @@ const firebaseConfig = {
   appId: "1:137025206900:web:2ed26329033dec191aaf21"
 };
 
-try {
-  // Check if Firebase is available
-  if (typeof firebase === 'undefined') {
-    throw new Error('Firebase SDK not loaded - check script tags');
+async function initializeFirebaseConfig() {
+  try {
+    // Wait for SDK loading promise if it exists
+    if (window.firebaseSDKLoading) {
+      console.log('Waiting for Firebase SDK to load...');
+      await window.firebaseSDKLoading;
+    }
+
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined') {
+      throw new Error('Firebase SDK not loaded - check script tags');
+    }
+
+    console.log('Firebase SDK available, initializing app...');
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    console.log('Firebase app initialized');
+
+    // Get references to Firebase services
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    console.log('Firebase services loaded:', { auth, db, storage });
+
+    // Export for use in other scripts
+    window.firebaseServices = {
+      auth,
+      db,
+      storage
+    };
+
+    console.log('window.firebaseServices set successfully');
+  } catch (error) {
+    console.error('Firebase initialization failed:', error);
+    console.error('Stack:', error.stack);
   }
-
-  console.log('Firebase SDK available, initializing app...');
-  
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  console.log('Firebase app initialized');
-
-  // Get references to Firebase services
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  const storage = firebase.storage();
-
-  console.log('Firebase services loaded:', { auth, db, storage });
-
-  // Export for use in other scripts
-  window.firebaseServices = {
-    auth,
-    db,
-    storage
-  };
-
-  console.log('window.firebaseServices set successfully');
-} catch (error) {
-  console.error('Firebase initialization failed:', error);
-  console.error('Stack:', error.stack);
 }
+
+// Start initialization immediately
+initializeFirebaseConfig();

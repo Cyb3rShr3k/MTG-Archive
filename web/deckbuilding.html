@@ -5,12 +5,80 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
-	<!-- Firebase Scripts -->
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-	<script src="firebase-config.js"></script>
-	<script src="firebase-db.js"></script>
+	<!-- Firebase Scripts with async loading and error handling -->
+	<script>
+		// Track Firebase SDK loading
+		window.firebaseSDKLoading = Promise.all([
+			new Promise((resolve, reject) => {
+				const script = document.createElement('script');
+				script.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+				script.async = true;
+				script.onload = () => {
+					console.log('firebase-app.js loaded');
+					resolve();
+				};
+				script.onerror = () => {
+					console.error('Failed to load firebase-app.js');
+					reject(new Error('firebase-app.js failed to load'));
+				};
+				script.timeout = 10000; // 10 second timeout
+				document.head.appendChild(script);
+			}),
+			new Promise((resolve, reject) => {
+				const script = document.createElement('script');
+				script.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+				script.async = true;
+				script.onload = () => {
+					console.log('firebase-auth.js loaded');
+					resolve();
+				};
+				script.onerror = () => {
+					console.error('Failed to load firebase-auth.js');
+					reject(new Error('firebase-auth.js failed to load'));
+				};
+				document.head.appendChild(script);
+			}),
+			new Promise((resolve, reject) => {
+				const script = document.createElement('script');
+				script.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+				script.async = true;
+				script.onload = () => {
+					console.log('firebase-firestore.js loaded');
+					resolve();
+				};
+				script.onerror = () => {
+					console.error('Failed to load firebase-firestore.js');
+					reject(new Error('firebase-firestore.js failed to load'));
+				};
+				document.head.appendChild(script);
+			})
+		]).then(() => {
+			console.log('All Firebase SDK scripts loaded successfully');
+			return true;
+		}).catch(error => {
+			console.error('Firebase SDK loading error:', error);
+			alert('Failed to load Firebase. Some features may not work.');
+			return false;
+		});
+
+		// Load config after SDK is ready
+		window.firebaseSDKLoading.then(() => {
+			const script = document.createElement('script');
+			script.src = 'firebase-config.js';
+			script.async = true;
+			document.head.appendChild(script);
+		});
+
+		// Load database module after config
+		window.firebaseSDKLoading.then(() => {
+			setTimeout(() => {
+				const script = document.createElement('script');
+				script.src = 'firebase-db.js';
+				script.async = true;
+				document.head.appendChild(script);
+			}, 500); // Small delay to ensure config is loaded
+		});
+	</script>
 	<script src="shared-nav.js"></script>
 	<style>
 		.deck-card {
