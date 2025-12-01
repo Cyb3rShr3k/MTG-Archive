@@ -311,15 +311,23 @@
 
 		// Wait for Firebase
 		function waitForFirebaseDB() {
-			return new Promise(resolve => {
-				const checkFirebase = setInterval(() => {
-					if (typeof firebaseDB !== 'undefined') {
+			return new Promise(async (resolve) => {
+				const checkFirebase = setInterval(async () => {
+					if (typeof firebaseDB !== 'undefined' && window.firebaseServices) {
 						clearInterval(checkFirebase);
+						try {
+							// Initialize firebaseDB instance
+							await firebaseDB.initialize();
+							console.log('Firebase initialized successfully');
+						} catch (error) {
+							console.error('Failed to initialize Firebase:', error);
+						}
 						resolve();
 					}
 				}, 100);
 				setTimeout(() => {
 					clearInterval(checkFirebase);
+					console.warn('Firebase initialization timeout after 5s');
 					resolve();
 				}, 5000);
 			});
