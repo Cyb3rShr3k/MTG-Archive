@@ -111,22 +111,6 @@
         <!-- Google Sign-In Button -->
         <div id="googleSignInButton"></div>
         
-        <form id="loginForm">
-            <div class="row gtr-uniform">
-                <div class="col-12">
-                    <input type="text" id="username" name="username" placeholder="Username" required autofocus autocomplete="username" />
-                </div>
-                <div class="col-12">
-                    <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password" />
-                </div>
-                <div class="col-12">
-                    <ul class="actions fit">
-                        <li><button type="submit" class="button primary fit">Login</button></li>
-                    </ul>
-                </div>
-            </div>
-        </form>
-        
         <div class="auth-links">
             <p>Don't have an account? <a href="register.html">Register here</a></p>
         </div>
@@ -291,35 +275,6 @@
         } else {
             initializeLogin();
         }
-
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const errorMsg = document.getElementById('errorMsg');
-            
-            try {
-                if (!firebaseDB || typeof firebaseDB.login !== 'function') {
-                    errorMsg.textContent = 'Firebase API not initialized. Please refresh the page.';
-                    errorMsg.style.display = 'block';
-                    return;
-                }
-
-                const result = await firebaseDB.login(email, password);
-                
-                if (result.success) {
-                    window.location.href = 'index.html';
-                } else {
-                    errorMsg.textContent = result.error || 'Login failed. Please check your credentials.';
-                    errorMsg.style.display = 'block';
-                }
-            } catch (error) {
-                errorMsg.textContent = 'Connection error: ' + error.message;
-                errorMsg.style.display = 'block';
-                console.error(error);
-            }
-        });
     </script>
 
 </body>

@@ -117,30 +117,6 @@
         <!-- Google Sign-In Button -->
         <div id="googleSignInButton"></div>
         
-        <form id="registerForm">
-            <div class="row gtr-uniform">
-                <div class="col-12">
-                    <input type="text" id="username" name="username" placeholder="Username" required autofocus autocomplete="username" />
-                    <div class="requirements">3-20 characters, letters and numbers only</div>
-                </div>
-                <div class="col-12">
-                    <input type="email" id="email" name="email" placeholder="Email" required autocomplete="email" />
-                </div>
-                <div class="col-12">
-                    <input type="password" id="password" name="password" placeholder="Password" required autocomplete="new-password" />
-                    <div class="requirements">Minimum 8 characters</div>
-                </div>
-                <div class="col-12">
-                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" required autocomplete="new-password" />
-                </div>
-                <div class="col-12">
-                    <ul class="actions fit">
-                        <li><button type="submit" class="button primary fit">Create Account</button></li>
-                    </ul>
-                </div>
-            </div>
-        </form>
-        
         <div class="auth-links">
             <p>Already have an account? <a href="login.html">Login here</a></p>
         </div>
@@ -274,16 +250,15 @@
             await waitForGoogleSignIn();
             await waitForFirebaseRest();
             
-            if (!firebaseDB || typeof firebaseDB.register !== 'function') {
+            if (!firebaseDB || typeof firebaseDB.getCurrentUser !== 'function') {
                 console.error('Firebase REST API not loaded properly');
-                // Continue anyway - user can still try to register
                 return;
             }
             
             // Check if already logged in
             const user = firebaseDB.getCurrentUser();
             if (user) {
-                window.location.href = 'index.html';
+                window.location.href = 'deckbuilding.html';
             }
         }
 
@@ -293,71 +268,6 @@
         } else {
             initializeRegister();
         }
-
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const errorMsg = document.getElementById('errorMsg');
-            const successMsg = document.getElementById('successMsg');
-            
-            // Hide previous messages
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
-            
-            // Client-side validation
-            if (username.length < 3 || username.length > 20) {
-                errorMsg.textContent = 'Username must be 3-20 characters.';
-                errorMsg.style.display = 'block';
-                return;
-            }
-            
-            if (!/^[a-zA-Z0-9]+$/.test(username)) {
-                errorMsg.textContent = 'Username can only contain letters and numbers.';
-                errorMsg.style.display = 'block';
-                return;
-            }
-            
-            if (password.length < 8) {
-                errorMsg.textContent = 'Password must be at least 8 characters.';
-                errorMsg.style.display = 'block';
-                return;
-            }
-            
-            if (password !== confirmPassword) {
-                errorMsg.textContent = 'Passwords do not match.';
-                errorMsg.style.display = 'block';
-                return;
-            }
-            
-            try {
-                if (!firebaseDB || typeof firebaseDB.register !== 'function') {
-                    errorMsg.textContent = 'Firebase API not initialized. Please refresh the page.';
-                    errorMsg.style.display = 'block';
-                    return;
-                }
-
-                const result = await firebaseDB.register(email, username, password);
-                
-                if (result.success) {
-                    successMsg.textContent = 'Registration successful! Redirecting to login...';
-                    successMsg.style.display = 'block';
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 2000);
-                } else {
-                    errorMsg.textContent = result.error || 'Registration failed. Email may already exist.';
-                    errorMsg.style.display = 'block';
-                }
-            } catch (error) {
-                errorMsg.textContent = 'Connection error: ' + error.message;
-                errorMsg.style.display = 'block';
-                console.error(error);
-            }
-        });
     </script>
 
 </body>
