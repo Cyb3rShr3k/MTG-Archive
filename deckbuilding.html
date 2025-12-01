@@ -7,21 +7,23 @@
 	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
 	<!-- Firebase Scripts - Using multiple CDN mirrors for maximum reliability -->
 	<script>
-		// Multiple Firebase SDK sources to try
+		// Multiple Firebase SDK sources to try - using UMD/global builds that work with script tags
 		const firebaseAppUrls = [
-			'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js',
-			'https://cdn.jsdelivr.net/npm/firebase@9.23.0/app/dist/index.cjs.js',
-			'https://unpkg.com/firebase@9.23.0/app/dist/index.cjs.js'
+			'https://cdn.jsdelivr.net/npm/firebase@9.23.0/dist/firebase-app.js',
+			'https://unpkg.com/firebase@9.23.0/dist/firebase-app.js',
+			'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js'
 		];
 		
 		const firebaseAuthUrls = [
-			'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js',
-			'https://unpkg.com/firebase@9.23.0/auth/dist/index.cjs.js'
+			'https://cdn.jsdelivr.net/npm/firebase@9.23.0/dist/firebase-auth.js',
+			'https://unpkg.com/firebase@9.23.0/dist/firebase-auth.js',
+			'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js'
 		];
 		
 		const firebaseFirestoreUrls = [
-			'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js',
-			'https://unpkg.com/firebase@9.23.0/firestore/dist/index.cjs.js'
+			'https://cdn.jsdelivr.net/npm/firebase@9.23.0/dist/firebase-firestore.js',
+			'https://unpkg.com/firebase@9.23.0/dist/firebase-firestore.js',
+			'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'
 		];
 		
 		window.firebaseLoadError = null;
