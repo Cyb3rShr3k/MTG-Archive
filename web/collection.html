@@ -1,0 +1,566 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>MTG Archive - My Collection</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
+	<!-- Firebase REST API -->
+	<script defer src="firebase-rest.js"></script>
+	<script defer src="shared-nav.js"></script>
+	<style>
+		.collection-container {
+			max-width: 1400px;
+			margin: 0 auto;
+			padding: 2em 1em;
+		}
+
+		.collection-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 2em;
+			flex-wrap: wrap;
+			gap: 1em;
+		}
+
+		.collection-stats {
+			display: flex;
+			gap: 2em;
+			flex-wrap: wrap;
+		}
+
+		.stat-box {
+			background: #2a2f42;
+			border-left: 3px solid #f56a6a;
+			padding: 1em;
+			border-radius: 4px;
+		}
+
+		.stat-box h4 {
+			margin: 0;
+			color: #f56a6a;
+			font-size: 1.5em;
+		}
+
+		.stat-box p {
+			margin: 0.25em 0 0 0;
+			color: #999;
+			font-size: 0.9em;
+		}
+
+		.collection-controls {
+			display: flex;
+			gap: 1em;
+			flex-wrap: wrap;
+			align-items: center;
+		}
+
+		.collection-controls input {
+			flex: 1;
+			min-width: 200px;
+			padding: 0.75em;
+			background: #1a1e2e;
+			border: 1px solid #333;
+			color: #fff;
+			border-radius: 4px;
+		}
+
+		.collection-controls select {
+			padding: 0.75em;
+			background: #1a1e2e;
+			border: 1px solid #333;
+			color: #fff;
+			border-radius: 4px;
+			cursor: pointer;
+		}
+
+		.cards-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+			gap: 1.5em;
+			margin-top: 2em;
+		}
+
+		.card-item {
+			background: #2a2f42;
+			border: 1px solid #333;
+			border-radius: 4px;
+			overflow: hidden;
+			transition: all 0.3s ease;
+			cursor: pointer;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.card-item:hover {
+			border-color: #f56a6a;
+			transform: translateY(-4px);
+			box-shadow: 0 8px 16px rgba(245, 106, 106, 0.2);
+		}
+
+		.card-image-container {
+			height: 240px;
+			background: #1a1e2e;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+		}
+
+		.card-image {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+
+		.card-info {
+			padding: 1em;
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.card-name {
+			font-weight: bold;
+			color: #fff;
+			margin: 0 0 0.5em 0;
+			font-size: 0.95em;
+		}
+
+		.card-details {
+			font-size: 0.85em;
+			color: #999;
+			margin: 0 0 0.5em 0;
+		}
+
+		.card-mana {
+			color: #f56a6a;
+			font-size: 0.9em;
+			margin: 0 0 0.5em 0;
+		}
+
+		.card-quantity {
+			background: #1a1e2e;
+			padding: 0.5em;
+			border-radius: 4px;
+			text-align: center;
+			color: #f56a6a;
+			font-weight: bold;
+			margin-top: auto;
+		}
+
+		.empty-state {
+			text-align: center;
+			padding: 4em 2em;
+			color: #999;
+		}
+
+		.empty-state h3 {
+			color: #ccc;
+		}
+
+		.loading {
+			text-align: center;
+			padding: 2em;
+			color: #999;
+		}
+
+		.filter-tags {
+			display: flex;
+			gap: 0.5em;
+			flex-wrap: wrap;
+			margin-top: 1em;
+		}
+
+		.filter-tag {
+			background: #1a1e2e;
+			border: 1px solid #f56a6a;
+			color: #f56a6a;
+			padding: 0.5em 1em;
+			border-radius: 4px;
+			font-size: 0.85em;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			gap: 0.5em;
+		}
+
+		.filter-tag:hover {
+			background: #f56a6a;
+			color: #1a1e2e;
+		}
+
+		.filter-tag .remove {
+			font-weight: bold;
+		}
+
+		.results-info {
+			color: #999;
+			font-size: 0.9em;
+			margin-bottom: 1em;
+		}
+
+		@media (max-width: 768px) {
+			.cards-grid {
+				grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+				gap: 1em;
+			}
+
+			.collection-header {
+				flex-direction: column;
+				align-items: flex-start;
+			}
+
+			.collection-controls {
+				width: 100%;
+				flex-direction: column;
+			}
+
+			.collection-controls input,
+			.collection-controls select {
+				width: 100%;
+			}
+		}
+	</style>
+</head>
+<body class="is-preload">
+	<div id="wrapper">
+		<!-- Header (injected by shared-nav.js) -->
+		<div id="headerContainer"></div>
+
+		<!-- Main Content -->
+		<div id="main">
+			<div class="inner">
+				<div class="collection-container">
+					<!-- Collection Header -->
+					<div class="collection-header">
+						<div>
+							<h1>My Collection</h1>
+							<p style="color: #999; margin-top: 0.5em;">Browse and manage your Magic: The Gathering cards</p>
+						</div>
+						<div class="collection-stats">
+							<div class="stat-box">
+								<h4 id="totalCardsDisplay">0</h4>
+								<p>Total Cards</p>
+							</div>
+							<div class="stat-box">
+								<h4 id="uniqueCardsDisplay">0</h4>
+								<p>Unique Cards</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Controls -->
+					<div class="collection-controls">
+						<input type="text" id="searchInput" placeholder="Search cards by name..." />
+						<select id="typeFilter">
+							<option value="">All Types</option>
+							<option value="Creature">Creature</option>
+							<option value="Instant">Instant</option>
+							<option value="Sorcery">Sorcery</option>
+							<option value="Enchantment">Enchantment</option>
+							<option value="Artifact">Artifact</option>
+							<option value="Land">Land</option>
+							<option value="Planeswalker">Planeswalker</option>
+						</select>
+						<select id="sortBy">
+							<option value="name">Sort by Name</option>
+							<option value="set">Sort by Set</option>
+							<option value="cmc">Sort by Mana Cost</option>
+							<option value="colors">Sort by Color</option>
+							<option value="type">Sort by Type</option>
+						</select>
+						<button class="button small primary" onclick="clearFilters()">Clear Filters</button>
+					</div>
+
+					<!-- Filter Tags -->
+					<div class="filter-tags" id="filterTags"></div>
+
+					<!-- Results Info -->
+					<div class="results-info" id="resultsInfo"></div>
+
+					<!-- Loading State -->
+					<div class="loading" id="loadingState" style="display: none;">
+						<p>Loading your collection...</p>
+					</div>
+
+					<!-- Cards Grid -->
+					<div class="cards-grid" id="cardsGrid"></div>
+
+					<!-- Empty State -->
+					<div class="empty-state" id="emptyState" style="display: none;">
+						<h3>No cards found</h3>
+						<p>Your collection is empty. Add cards to get started!</p>
+						<a href="card_addition.html" class="button">Add Cards</a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Sidebar (injected by shared-nav.js) -->
+		<div id="sidebarContainer"></div>
+	</div>
+
+	<!-- Scripts -->
+	<script src="HTML5up/assets/js/jquery.min.js"></script>
+	<script src="HTML5up/assets/js/browser.min.js"></script>
+	<script src="HTML5up/assets/js/breakpoints.min.js"></script>
+	<script src="HTML5up/assets/js/util.js"></script>
+	<script src="HTML5up/assets/js/main.js"></script>
+
+	<script>
+		let allCards = [];
+		let filteredCards = [];
+		let currentFilters = {};
+		let currentSort = 'name';
+
+		// Initialize
+		document.addEventListener('DOMContentLoaded', () => {
+			if (typeof sharedNav !== 'undefined') {
+				document.getElementById('headerContainer').innerHTML = sharedNav.header('My Collection');
+				document.getElementById('sidebarContainer').innerHTML = sharedNav.sidebar;
+				initializeNav();
+			}
+			
+			loadCollection();
+			
+			// Set up event listeners
+			document.getElementById('searchInput').addEventListener('keyup', debounce(() => applyFilters(), 300));
+			document.getElementById('typeFilter').addEventListener('change', applyFilters);
+			document.getElementById('sortBy').addEventListener('change', (e) => {
+				currentSort = e.target.value;
+				displayCards();
+			});
+		});
+
+		// Load collection from backend
+		async function loadCollection() {
+			try {
+				document.getElementById('loadingState').style.display = 'block';
+				document.getElementById('cardsGrid').innerHTML = '';
+				
+				if (typeof firebaseDB === 'undefined') {
+					console.error('firebaseDB not available');
+					showEmptyState();
+					return;
+				}
+
+				// Get user's collection
+				const collection = await firebaseDB.getCollection();
+				if (!collection || collection.length === 0) {
+					showEmptyState();
+					document.getElementById('loadingState').style.display = 'none';
+					return;
+				}
+
+				allCards = collection;
+				filteredCards = [...allCards];
+				
+				// Update stats
+				updateStats();
+				
+				// Display cards
+				displayCards();
+				
+			} catch (error) {
+				console.error('Error loading collection:', error);
+				showEmptyState();
+			} finally {
+				document.getElementById('loadingState').style.display = 'none';
+			}
+		}
+
+		// Update collection statistics
+		function updateStats() {
+			const totalCount = allCards.reduce((sum, card) => sum + (card.quantity || 1), 0);
+			const uniqueCount = new Set(allCards.map(c => c.name)).size;
+
+			document.getElementById('totalCardsDisplay').textContent = totalCount.toLocaleString();
+			document.getElementById('uniqueCardsDisplay').textContent = uniqueCount.toLocaleString();
+		}
+
+		// Debounce helper
+		function debounce(fn, delay) {
+			let timeoutId;
+			return function(...args) {
+				clearTimeout(timeoutId);
+				timeoutId = setTimeout(() => fn.apply(this, args), delay);
+			};
+		}
+
+		// Apply all filters
+		function applyFilters() {
+			const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+			const typeFilter = document.getElementById('typeFilter').value;
+
+			currentFilters = {};
+			if (searchTerm) currentFilters.search = searchTerm;
+			if (typeFilter) currentFilters.type = typeFilter;
+
+			filteredCards = allCards.filter(card => {
+				// Search filter
+				if (currentFilters.search && !card.name.toLowerCase().includes(currentFilters.search)) {
+					return false;
+				}
+
+				// Type filter
+				if (currentFilters.type) {
+					const cardTypes = Array.isArray(card.types) ? card.types.join(' ') : (card.types || '');
+					if (!cardTypes.includes(currentFilters.type)) {
+						return false;
+					}
+				}
+
+				return true;
+			});
+
+			updateFilterTags();
+			updateResultsInfo();
+			displayCards();
+		}
+
+		// Update filter tags display
+		function updateFilterTags() {
+			const tagsContainer = document.getElementById('filterTags');
+			tagsContainer.innerHTML = '';
+
+			Object.entries(currentFilters).forEach(([key, value]) => {
+				const tag = document.createElement('div');
+				tag.className = 'filter-tag';
+				tag.innerHTML = `${key}: ${value} <span class="remove">×</span>`;
+				tag.onclick = () => removeFilter(key);
+				tagsContainer.appendChild(tag);
+			});
+		}
+
+		// Remove a specific filter
+		function removeFilter(key) {
+			delete currentFilters[key];
+			if (key === 'search') {
+				document.getElementById('searchInput').value = '';
+			} else if (key === 'type') {
+				document.getElementById('typeFilter').value = '';
+			}
+			applyFilters();
+		}
+
+		// Clear all filters
+		function clearFilters() {
+			document.getElementById('searchInput').value = '';
+			document.getElementById('typeFilter').value = '';
+			currentFilters = {};
+			filteredCards = [...allCards];
+			updateFilterTags();
+			updateResultsInfo();
+			displayCards();
+		}
+
+		// Update results info
+		function updateResultsInfo() {
+			const info = document.getElementById('resultsInfo');
+			const total = allCards.length;
+			const showing = filteredCards.length;
+			
+			if (total === 0) {
+				info.textContent = '';
+				return;
+			}
+
+			if (showing === total) {
+				info.textContent = `Showing all ${total} unique cards`;
+			} else {
+				info.textContent = `Showing ${showing} of ${total} unique cards`;
+			}
+		}
+
+		// Sort and display cards
+		function displayCards() {
+			// Sort cards
+			const sorted = [...filteredCards].sort((a, b) => {
+				switch (currentSort) {
+					case 'set':
+						return (a.set_code || '').localeCompare(b.set_code || '');
+					case 'cmc':
+						return (a.cmc || 0) - (b.cmc || 0);
+					case 'colors':
+						return (a.colors || '').localeCompare(b.colors || '');
+					case 'type':
+						return (a.types || '').localeCompare(b.types || '');
+					case 'name':
+					default:
+						return a.name.localeCompare(b.name);
+				}
+			});
+
+			const grid = document.getElementById('cardsGrid');
+			const emptyState = document.getElementById('emptyState');
+
+			if (sorted.length === 0) {
+				grid.innerHTML = '';
+				emptyState.style.display = 'block';
+				return;
+			}
+
+			emptyState.style.display = 'none';
+			grid.innerHTML = sorted.map(card => createCardElement(card)).join('');
+		}
+
+		// Create a card element
+		function createCardElement(card) {
+			const imageUrl = card.image_url || card.image_path || '';
+			const quantity = card.quantity || 1;
+			const setCode = card.set_code || 'Unknown';
+			const cmc = card.cmc || 0;
+			const types = Array.isArray(card.types) ? card.types.join(' / ') : (card.types || 'Unknown');
+			const mana = card.mana_cost || '';
+
+			const imageSrc = imageUrl ? `style="background-image: url('${escapeHtml(imageUrl)}')" onerror="this.style.backgroundImage='url()';"` : '';
+
+			return `
+				<div class="card-item" onclick="viewCardDetails(${escapeHtml(JSON.stringify(card).replace(/'/g, '&apos;'))})">
+					<div class="card-image-container">
+						${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(card.name)}" class="card-image" onerror="this.style.display='none'">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#666;"><span>${escapeHtml(card.name.substring(0, 20))}</span></div>`}
+					</div>
+					<div class="card-info">
+						<div class="card-name">${escapeHtml(card.name)}</div>
+						<div class="card-details">
+							<div>${escapeHtml(setCode)}</div>
+							<div style="color:#ccc; font-size:0.8em;">${escapeHtml(types)}</div>
+						</div>
+						<div class="card-quantity">×${quantity}</div>
+					</div>
+				</div>
+			`;
+		}
+
+		// View card details (optional modal)
+		function viewCardDetails(card) {
+			console.log('Card details:', card);
+			// Could open a modal with full card details here
+		}
+
+		// Show empty state
+		function showEmptyState() {
+			document.getElementById('cardsGrid').innerHTML = '';
+			document.getElementById('emptyState').style.display = 'block';
+			document.getElementById('resultsInfo').textContent = '';
+		}
+
+		// Escape HTML
+		function escapeHtml(text) {
+			if (typeof text !== 'string') {
+				try {
+					text = JSON.stringify(text);
+				} catch {
+					return '';
+				}
+			}
+			const div = document.createElement('div');
+			div.textContent = text;
+			return div.innerHTML;
+		}
+	</script>
+
+</body>
+</html>
