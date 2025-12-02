@@ -9,6 +9,47 @@
 	<script defer src="firebase-rest.js"></script>
 	<script defer src="shared-nav.js"></script>
 	<style>
+		.sidebar-toggle {
+			position: fixed;
+			top: 60px;
+			left: 20px;
+			z-index: 999;
+			background: #f56a6a;
+			color: white;
+			border: none;
+			padding: 0.5em 0.75em;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 1.2em;
+			transition: all 0.3s ease;
+			display: none;
+		}
+
+		.sidebar-toggle:hover {
+			background: #ff6b6b;
+			transform: scale(1.1);
+		}
+
+		#sidebarContainer {
+			transition: all 0.3s ease;
+		}
+
+		#sidebarContainer.collapsed #sidebar {
+			transform: translateX(-100%);
+			opacity: 0;
+			pointer-events: none;
+		}
+
+		#sidebar {
+			transition: all 0.3s ease;
+		}
+
+		@media (max-width: 1280px) {
+			.sidebar-toggle {
+				display: block;
+			}
+		}
+
 		.collection-container {
 			max-width: 1400px;
 			margin: 0 auto;
@@ -228,6 +269,9 @@
 	<div id="wrapper">
 		<!-- Header (injected by shared-nav.js) -->
 		<div id="headerContainer"></div>
+
+		<!-- Sidebar Toggle Button -->
+		<button id="sidebarToggleBtn" class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">☰</button>
 
 		<!-- Main Content -->
 		<div id="main">
@@ -560,6 +604,39 @@
 			div.textContent = text;
 			return div.innerHTML;
 		}
+
+		// Sidebar toggle functionality
+		function toggleSidebar() {
+			const sidebarContainer = document.getElementById('sidebarContainer');
+			const toggleBtn = document.getElementById('sidebarToggleBtn');
+			
+			if (sidebarContainer.classList.contains('collapsed')) {
+				sidebarContainer.classList.remove('collapsed');
+				toggleBtn.textContent = '☰';
+				toggleBtn.title = 'Hide Sidebar';
+				localStorage.setItem('sidebarState', 'expanded');
+			} else {
+				sidebarContainer.classList.add('collapsed');
+				toggleBtn.textContent = '➤';
+				toggleBtn.title = 'Show Sidebar';
+				localStorage.setItem('sidebarState', 'collapsed');
+			}
+		}
+
+		// Restore sidebar state from localStorage
+		function restoreSidebarState() {
+			const sidebarState = localStorage.getItem('sidebarState');
+			if (sidebarState === 'collapsed') {
+				const sidebarContainer = document.getElementById('sidebarContainer');
+				const toggleBtn = document.getElementById('sidebarToggleBtn');
+				sidebarContainer.classList.add('collapsed');
+				toggleBtn.textContent = '➤';
+				toggleBtn.title = 'Show Sidebar';
+			}
+		}
+
+		// Restore sidebar state when page loads
+		document.addEventListener('DOMContentLoaded', restoreSidebarState);
 	</script>
 
 </body>
