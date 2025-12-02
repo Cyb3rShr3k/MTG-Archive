@@ -200,11 +200,25 @@ class FirebaseRestAPI {
             addedAt: new Date().toISOString()
           });
         }
+        
+        // Also add to backend user collection
+        try {
+          await fetch('/api/add_to_user_collection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              card_name: cardName,
+              quantity: quantity
+            })
+          });
+        } catch (e) {
+          console.warn('Could not add to backend collection:', e);
+        }
       }
       
       try {
         localStorage.setItem(`collection_${this.currentUser.uid}`, JSON.stringify(collection));
-        console.log('✅ Cards added to collection');
+        console.log('✅ Cards added to collection (local + backend)');
       } catch (e) {
         console.warn('Could not save collection to localStorage:', e);
       }
@@ -268,6 +282,28 @@ class FirebaseRestAPI {
         console.log('✅ Deck saved to localStorage:', deckId);
       } catch (e) {
         console.warn('Could not save to localStorage:', e);
+      }
+      
+      // Also save to backend user collection database
+      try {
+        const deckDataForBackend = {
+          deck_name: deckData.name,
+          items: deckData.cards || [],
+          deck_type: deckData.deckType || 'Commander',
+          commander: deckData.commander || null
+        };
+        
+        const response = await fetch('/api/save_user_deck', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(deckDataForBackend)
+        });
+        
+        if (response.ok) {
+          console.log('✅ Deck also saved to backend database');
+        }
+      } catch (e) {
+        console.warn('Could not save to backend:', e);
       }
       
       // Also add cards to collection

@@ -70,4 +70,3 @@ function tryInitializeFirebase() {
 
 // Start initialization immediately
 tryInitializeFirebase();
-
