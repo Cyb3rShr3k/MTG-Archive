@@ -3,13 +3,7 @@ const sharedNav = {
     <header id="header">
       <a href="index.html" class="logo"><strong>MTG Archive</strong></a>
       <ul class="icons">
-        <li id="guestMenu" style="display:none;">
-          <a href="login.html" style="color:#4c84ff; margin-right:1em;"><strong>Sign In</strong></a>
-          <a href="login.html" style="color:#39c088;"><strong>Sign Up</strong></a>
-        </li>
-        <li id="authMenu" style="display:none;">
-          <a href="#" onclick="event.preventDefault()" id="userMenuToggle" title="User Menu" style="color:#f56a6a;"><strong id="userDisplay">User</strong></a>
-        </li>
+        <li><a href="#" onclick="event.preventDefault()" id="userMenuToggle" title="User Menu" style="color:#f56a6a;"><strong id="userDisplay">User</strong></a></li>
       </ul>
     </header>
     <div id="userMenu" style="display:none; position:absolute; top:40px; right:20px; background:#242943; border:1px solid #f56a6a; border-radius:4px; padding:1em; min-width:150px; z-index:1000; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
@@ -44,8 +38,8 @@ const sharedNav = {
             <li>
               <span class="opener" onclick="toggleSubmenu(event)">Collection</span>
               <ul id="collectionMenu" style="display:none;">
-                <li><span id="totalCardsMenu">0 Cards</span></li>
-                <li><span id="uniqueCardsMenu">0 Unique</span></li>
+                <li><a href="collection.html" id="totalCardsMenu" style="text-decoration:none;">0 Cards</a></li>
+                <li><a href="collection.html" id="uniqueCardsMenu" style="text-decoration:none;">0 Unique</a></li>
               </ul>
             </li>
           </ul>
@@ -66,8 +60,6 @@ const sharedNav = {
 function initializeNav() {
   const userMenuToggle = document.getElementById('userMenuToggle');
   const userMenu = document.getElementById('userMenu');
-  const guestMenu = document.getElementById('guestMenu');
-  const authMenu = document.getElementById('authMenu');
 
   if (userMenuToggle) {
     userMenuToggle.addEventListener('click', (e) => {
@@ -87,36 +79,27 @@ function initializeNav() {
   if (typeof firebaseDB !== 'undefined') {
     (async () => {
       try {
-        const user = firebaseDB.getCurrentUser();
-        if (user) {
-          // User is authenticated - show auth menu
-          if (guestMenu) guestMenu.style.display = 'none';
-          if (authMenu) authMenu.style.display = 'block';
+        await firebaseDB.onAuthStateChanged(async (user) => {
+          if (user) {
+            const userInfo = await firebaseDB.getCurrentUserInfo();
+            const username = userInfo?.username || user.email.split('@')[0];
+            const email = user.email;
 
-          const userInfo = await firebaseDB.getCurrentUserInfo();
-          const username = userInfo?.username || user.email.split('@')[0];
-          const { email } = user;
+            document.getElementById('userDisplay').textContent = username;
+            document.getElementById('userDisplayFull').textContent = username;
+            document.getElementById('userEmailDisplay').textContent = email;
 
-          const userDisplay = document.getElementById('userDisplay');
-          const userDisplayFull = document.getElementById('userDisplayFull');
-          const userEmailDisplay = document.getElementById('userEmailDisplay');
-          
-          if (userDisplay) userDisplay.textContent = username;
-          if (userDisplayFull) userDisplayFull.textContent = username;
-          if (userEmailDisplay) userEmailDisplay.textContent = email;
-
-          // Load collection stats
-          loadCollectionStats();
-        } else {
-          // User not logged in - show guest menu
-          if (guestMenu) guestMenu.style.display = 'block';
-          if (authMenu) authMenu.style.display = 'none';
-        }
+            // Load collection stats
+            loadCollectionStats();
+          } else {
+            // Not logged in, redirect to login
+            if (!window.location.pathname.includes('login.html') && !window.location.pathname.includes('register.html')) {
+              window.location.href = 'login.html';
+            }
+          }
+        });
       } catch (error) {
         console.error('Auth initialization error:', error);
-        // Default to guest menu on error
-        if (guestMenu) guestMenu.style.display = 'block';
-        if (authMenu) authMenu.style.display = 'none';
       }
     })();
   }
@@ -125,14 +108,11 @@ function initializeNav() {
 async function loadCollectionStats() {
   try {
     const count = await firebaseDB.getCollectionCount();
-    const collection = await firebaseDB.getCollection();
-    const uniqueCount = new Set(collection.map(c => c.name)).size;
+    const cards = await firebaseDB.getCollectionCards();
+    const uniqueCount = new Set(cards.map(c => c.name)).size;
 
-    const totalCardsMenu = document.getElementById('totalCardsMenu');
-    const uniqueCardsMenu = document.getElementById('uniqueCardsMenu');
-    
-    if (totalCardsMenu) totalCardsMenu.textContent = count + ' Cards';
-    if (uniqueCardsMenu) uniqueCardsMenu.textContent = uniqueCount + ' Unique';
+    document.getElementById('totalCardsMenu').textContent = count + ' Cards';
+    document.getElementById('uniqueCardsMenu').textContent = uniqueCount + ' Unique';
   } catch (error) {
     console.error('Error loading stats:', error);
   }
@@ -156,16 +136,7 @@ function toggleSubmenu(event) {
 async function logoutUser(event) {
   event.preventDefault();
   try {
-    // Clear localStorage
-    localStorage.removeItem('firebaseDB_token');
-    localStorage.removeItem('firebaseDB_user');
-    
-    // Clear firebaseDB session
-    if (typeof firebaseDB !== 'undefined') {
-      firebaseDB.idToken = null;
-      firebaseDB.currentUser = null;
-    }
-    
+    await firebaseDB.logout();
     window.location.href = 'login.html';
   } catch (error) {
     console.error('Logout error:', error);

@@ -5,10 +5,55 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 	<link rel="stylesheet" href="HTML5up/assets/css/main.css" />
-	<!-- Firebase REST API -->
-	<script defer src="firebase-rest.js"></script>
+	<!-- Firebase Scripts -->
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+	<script src="firebase-config.js"></script>
+	<script src="firebase-db.js"></script>
 	<script src="shared-nav.js"></script>
 	<style>
+		.sidebar-toggle {
+			position: fixed;
+			top: 75px;
+			left: 20px;
+			z-index: 999;
+			background: #f56a6a;
+			color: white;
+			border: none;
+			padding: 0.5em 0.75em;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 1.2em;
+			transition: all 0.3s ease;
+			display: block;
+		}
+
+		.sidebar-toggle:hover {
+			background: #ff6b6b;
+			transform: scale(1.1);
+		}
+
+		#sidebarContainer {
+			transition: all 0.3s ease;
+		}
+
+		#sidebarContainer.collapsed #sidebar {
+			transform: translateX(-100%);
+			opacity: 0;
+			pointer-events: none;
+		}
+
+		#sidebar {
+			transition: all 0.3s ease;
+		}
+
+		@media (max-width: 1280px) {
+			.sidebar-toggle {
+				display: block;
+			}
+		}
+
 		.stat-card {
 			background: linear-gradient(135deg, rgba(245, 106, 106, 0.1) 0%, rgba(76, 132, 255, 0.1) 100%);
 			padding: 2em;
@@ -47,6 +92,9 @@
 
 	<!-- Wrapper -->
 	<div id="wrapper">
+
+		<!-- Sidebar Toggle Button -->
+		<button id="sidebarToggleBtn" class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">☰</button>
 
 		<!-- Main -->
 		<div id="main">
@@ -132,13 +180,13 @@
 								<p>Import complete preconstructed decks from our database.</p>
 							</div>
 						</article>
-						<article class="quick-action-card" onclick="window.location.href='deckbuilding.html#search'">
-							<span class="icon solid fa-search"></span>
-							<div class="content">
-								<h3>Browse Collection</h3>
-								<p>Search and filter your entire card collection.</p>
-							</div>
-						</article>
+					<article class="quick-action-card" onclick="window.location.href='collection.html'">
+						<span class="icon solid fa-search"></span>
+						<div class="content">
+							<h3>Browse Collection</h3>
+							<p>Search and filter your entire card collection.</p>
+						</div>
+					</article>
 						<article class="quick-action-card" onclick="window.location.href='card_addition.html#csv'">
 							<span class="icon solid fa-file-csv"></span>
 							<div class="content">
@@ -171,52 +219,52 @@
 	<script src="HTML5up/assets/js/breakpoints.min.js"></script>
 	<script src="HTML5up/assets/js/util.js"></script>
 	<script src="HTML5up/assets/js/main.js"></script>
+	<script src="api.js"></script>
 	<script>
 		// Inject navigation components when DOM is ready
-		document.addEventListener('DOMContentLoaded', async () => {
-			// Wait for Firebase REST API
-			for (let i = 0; i < 50; i++) {
-				if (typeof firebaseDB !== 'undefined') break;
-				await new Promise(resolve => setTimeout(resolve, 100));
-			}
-
-			if (typeof firebaseDB === 'undefined') {
-				console.error('Firebase REST API not loaded');
-				document.body.innerHTML = '<h1>Error: Firebase not initialized. Please refresh the page.</h1>';
-				return;
-			}
-
-			// Inject navigation
+		document.addEventListener('DOMContentLoaded', () => {
 			if (typeof sharedNav !== 'undefined') {
 				document.getElementById('headerContainer').innerHTML = sharedNav.header('Dashboard');
 				document.getElementById('sidebarContainer').innerHTML = sharedNav.sidebar;
+				// Re-initialize navigation after injection
 				initializeNav();
 			}
-
-			// Load dashboard stats if user is authenticated
-			const user = firebaseDB.getCurrentUser();
-			if (user) {
-				console.log('User authenticated:', user.email);
-				loadDashboardStats();
-			} else {
-				console.log('User not authenticated - showing guest view');
-			}
 		});
+	</script>
 
-		async function loadDashboardStats() {
-			try {
-				// Load collection count
-				const decks = await firebaseDB.getDecks();
-				document.getElementById('totalDecks').textContent = decks.length;
-				
-				// In a real app, you'd load card collection stats too
-				// For now, just show placeholder
-				document.getElementById('totalCards').textContent = '0';
-				document.getElementById('uniqueCards').textContent = '0';
-			} catch (error) {
-				console.error('Error loading dashboard stats:', error);
+	<script>
+		// Sidebar toggle functionality
+		function toggleSidebar() {
+			const sidebarContainer = document.getElementById('sidebarContainer');
+			const toggleBtn = document.getElementById('sidebarToggleBtn');
+			
+			if (sidebarContainer.classList.contains('collapsed')) {
+				sidebarContainer.classList.remove('collapsed');
+				toggleBtn.textContent = '☰';
+				toggleBtn.title = 'Hide Sidebar';
+				localStorage.setItem('sidebarState', 'expanded');
+			} else {
+				sidebarContainer.classList.add('collapsed');
+				toggleBtn.textContent = '➤';
+				toggleBtn.title = 'Show Sidebar';
+				localStorage.setItem('sidebarState', 'collapsed');
 			}
 		}
+
+		// Restore sidebar state from localStorage
+		function restoreSidebarState() {
+			const sidebarState = localStorage.getItem('sidebarState');
+			if (sidebarState === 'collapsed') {
+				const sidebarContainer = document.getElementById('sidebarContainer');
+				const toggleBtn = document.getElementById('sidebarToggleBtn');
+				sidebarContainer.classList.add('collapsed');
+				toggleBtn.textContent = '➤';
+				toggleBtn.title = 'Show Sidebar';
+			}
+		}
+
+		// Restore sidebar state when page loads
+		document.addEventListener('DOMContentLoaded', restoreSidebarState);
 	</script>
 
 </body>
