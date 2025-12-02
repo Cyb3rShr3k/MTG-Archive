@@ -687,33 +687,11 @@
 		}
 
 		// Enrich precon data with Scryfall commander info (async, non-blocking)
+		// DISABLED: We get all card data from decklist_cards.db, no need to query Scryfall
 		async function enrichPresconDataFromScryfall() {
-			console.log('Enriching precon data with Scryfall commander info...');
-			
-			for (const precon of preconDatabase) {
-				try {
-					// Search for legendary creatures matching the deck name
-					const response = await fetch(
-						`https://api.scryfall.com/cards/search?q=is:legendary is:creature "${precon.name}"&unique=cards`
-					);
-					
-					if (response.ok) {
-						const data = await response.json();
-						if (data.data && data.data.length > 0) {
-							const card = data.data[0];
-							precon.colors = card.color_identity?.join('') || precon.colors;
-							precon.cards = [{ name: card.name, quantity: 1 }];
-							precon.commanderName = card.name;
-							precon.commanderImage = card.image_uris?.normal;
-							console.log(`Enriched ${precon.name} with commander ${card.name}`);
-						}
-					}
-					// Add small delay to avoid rate limiting
-					await new Promise(resolve => setTimeout(resolve, 100));
-				} catch (error) {
-					console.warn(`Could not enrich ${precon.name}:`, error);
-				}
-			}
+			// This function is no longer needed since all data comes from the local SQLite database
+			console.log('Scryfall enrichment skipped - using local database');
+			return;
 		}
 
 		function searchPrecons() {
