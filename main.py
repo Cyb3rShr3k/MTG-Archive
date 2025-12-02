@@ -41,6 +41,12 @@ def login():
         session['user_id'] = result['userId']
         session['username'] = result['username']
         session['email'] = result['email']
+        
+        # Initialize user's collection database on login
+        user_id = result['userId']
+        api._current_user_id = user_id
+        api.init_user_collection(user_id)
+        print(f"✓ Initialized collection for user {user_id}")
     
     return jsonify(result)
 
@@ -125,18 +131,7 @@ def api_proxy(method_name):
         # For now, default to user_id=1 for single-user compatibility
         user_id = 1
     
-    if not hasattr(api, method_name):
-        return jsonify({'error': 'Method not found'}), 404
-    
-    method = getattr(api, method_name)
-    
-    # Get parameters from JSON body or query params
-    if request.method == 'POST':
-        params = request.get_json() or {}
-    else:
-        params = request.args.to_dict()
-    
-    # Inject user_id into params for methods that need it
+    # Set current user in API for per-user methods
     if user_id:
         api._current_user_id = user_id
     

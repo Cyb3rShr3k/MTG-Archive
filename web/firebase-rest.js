@@ -174,6 +174,68 @@ class FirebaseRestAPI {
     }
   }
 
+  // ============ COLLECTION MANAGEMENT ============
+
+  async addToCollection(cards) {
+    if (!this.currentUser) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      const collection = this.getStoredCollection();
+      
+      for (const card of cards) {
+        const cardName = card.name || card;
+        const quantity = card.quantity || 1;
+        
+        // Find existing card entry
+        const existingIndex = collection.findIndex(c => c.name.toLowerCase() === cardName.toLowerCase());
+        
+        if (existingIndex >= 0) {
+          collection[existingIndex].quantity = (collection[existingIndex].quantity || 1) + quantity;
+        } else {
+          collection.push({
+            name: cardName,
+            quantity: quantity,
+            addedAt: new Date().toISOString()
+          });
+        }
+      }
+      
+      try {
+        localStorage.setItem(`collection_${this.currentUser.uid}`, JSON.stringify(collection));
+        console.log('✅ Cards added to collection');
+      } catch (e) {
+        console.warn('Could not save collection to localStorage:', e);
+      }
+      
+      return { success: true, message: 'Cards added to collection' };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  getStoredCollection() {
+    if (!this.currentUser) return [];
+    
+    try {
+      const stored = localStorage.getItem(`collection_${this.currentUser.uid}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.warn('Could not read collection from localStorage:', e);
+      return [];
+    }
+  }
+
+  async getCollection() {
+    return this.getStoredCollection();
+  }
+
+  async getCollectionCount() {
+    const collection = this.getStoredCollection();
+    return collection.reduce((sum, card) => sum + (card.quantity || 1), 0);
+  }
+
   // ============ DECK MANAGEMENT ============
 
   async createDeck(deckData) {
@@ -183,35 +245,36 @@ class FirebaseRestAPI {
 
     try {
       const deckId = `deck_${Date.now()}`;
-      const path = `${this.baseUrl}/decks/${this.currentUser.uid}/decks/${deckId}`;
-
-      const firebaseData = this.toFirestoreValue({
+      
+      // Store deck in localStorage (simpler than Firestore REST API auth issues)
+      const decks = this.getStoredDecks();
+      
+      const newDeck = {
+        id: deckId,
         name: deckData.name,
-        deckType: deckData.deckType || 'Standard',
+        deckType: deckData.deckType || 'Commander',
         commander: deckData.commander || null,
         cards: deckData.cards || [],
         colors: deckData.colors || '',
         description: deckData.description || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
-      });
-
-      const response = await fetch(path, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${this.idToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fields: firebaseData
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        return { success: false, error: error.error?.message || 'Create deck failed' };
+      };
+      
+      decks.push(newDeck);
+      
+      try {
+        localStorage.setItem(`decks_${this.currentUser.uid}`, JSON.stringify(decks));
+        console.log('✅ Deck saved to localStorage:', deckId);
+      } catch (e) {
+        console.warn('Could not save to localStorage:', e);
       }
-
+      
+      // Also add cards to collection
+      if (deckData.cards && deckData.cards.length > 0) {
+        await this.addToCollection(deckData.cards);
+      }
+      
       return { success: true, deckId, message: 'Deck created!' };
     } catch (error) {
       return { success: false, error: error.message };
@@ -224,29 +287,21 @@ class FirebaseRestAPI {
     }
 
     try {
-      const path = `${this.baseUrl}/decks/${this.currentUser.uid}/decks`;
-
-      const response = await fetch(path, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.idToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        return [];
-      }
-
-      const data = await response.json();
-      if (!data.documents) return [];
-
-      return data.documents.map(doc => ({
-        id: doc.name.split('/').pop(),
-        ...this.fromFirestoreValue(doc.fields)
-      }));
+      return this.getStoredDecks();
     } catch (error) {
       console.error('Error getting decks:', error);
+      return [];
+    }
+  }
+
+  getStoredDecks() {
+    if (!this.currentUser) return [];
+    
+    try {
+      const stored = localStorage.getItem(`decks_${this.currentUser.uid}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.warn('Could not read decks from localStorage:', e);
       return [];
     }
   }
@@ -257,25 +312,24 @@ class FirebaseRestAPI {
     }
 
     try {
-      const path = `${this.baseUrl}/decks/${this.currentUser.uid}/decks/${deckId}`;
+      const decks = this.getStoredDecks();
+      const deckIndex = decks.findIndex(d => d.id === deckId);
+      
+      if (deckIndex === -1) {
+        return { success: false, error: 'Deck not found' };
+      }
 
-      deckData.updatedAt = new Date().toISOString();
-      const firebaseData = this.toFirestoreValue(deckData);
+      decks[deckIndex] = {
+        ...decks[deckIndex],
+        ...deckData,
+        updatedAt: new Date().toISOString()
+      };
 
-      const response = await fetch(path, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${this.idToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fields: firebaseData
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        return { success: false, error: error.error?.message || 'Update deck failed' };
+      try {
+        localStorage.setItem(`decks_${this.currentUser.uid}`, JSON.stringify(decks));
+        console.log('✅ Deck updated in localStorage:', deckId);
+      } catch (e) {
+        console.warn('Could not save to localStorage:', e);
       }
 
       return { success: true, message: 'Deck updated!' };
@@ -290,18 +344,14 @@ class FirebaseRestAPI {
     }
 
     try {
-      const path = `${this.baseUrl}/decks/${this.currentUser.uid}/decks/${deckId}`;
+      let decks = this.getStoredDecks();
+      decks = decks.filter(d => d.id !== deckId);
 
-      const response = await fetch(path, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${this.idToken}`
-        }
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        return { success: false, error: error.error?.message || 'Delete deck failed' };
+      try {
+        localStorage.setItem(`decks_${this.currentUser.uid}`, JSON.stringify(decks));
+        console.log('✅ Deck deleted from localStorage:', deckId);
+      } catch (e) {
+        console.warn('Could not save to localStorage:', e);
       }
 
       return { success: true, message: 'Deck deleted!' };
@@ -379,6 +429,29 @@ class FirebaseRestAPI {
   getCurrentUser() {
     return this.currentUser;
   }
+
+  // Get current user info (alias for getCurrentUser for compatibility)
+  async getCurrentUserInfo() {
+    return this.currentUser;
+  }
+
+  // Restore user session from localStorage
+  restoreSession() {
+    try {
+      const token = localStorage.getItem('firebaseDB_token');
+      const userStr = localStorage.getItem('firebaseDB_user');
+      
+      if (token && userStr) {
+        this.idToken = token;
+        this.currentUser = JSON.parse(userStr);
+        console.log('✅ Session restored from localStorage:', this.currentUser.email);
+        return true;
+      }
+    } catch (e) {
+      console.warn('Could not restore session from localStorage:', e);
+    }
+    return false;
+  }
 }
 
 // Initialize with Firebase config
@@ -386,6 +459,9 @@ const firebaseRest = new FirebaseRestAPI(
   'mtg-archive-357ca',
   'AIzaSyDmAJwEgZmtAslI7Ib_UqF6uqNfhcb5S6s'
 );
+
+// Restore session from localStorage on load
+firebaseRest.restoreSession();
 
 // Compatibility wrapper to use as firebaseDB
 const firebaseDB = firebaseRest;

@@ -1118,6 +1118,144 @@ class Api:
             pass
         return { 'path': str(p.resolve()), 'exists': exists, 'size': int(size), 'total': int(total) }
 
+    # --- User-Specific Collections ---
+    def _get_user_collection_path(self, user_id: int | str) -> Path:
+        """Get the path to a user's collection database."""
+        users_dir = Path('users')
+        users_dir.mkdir(exist_ok=True)
+        return users_dir / f"user_{user_id}_collection.db"
+
+    def init_user_collection(self, user_id: int | str = None):
+        """Initialize a user's collection database (copy from template or create new)."""
+        if user_id is None:
+            user_id = self._current_user_id
+        
+        user_db_path = self._get_user_collection_path(user_id)
+        
+        # If already exists, return it
+        if user_db_path.exists():
+            return {'success': True, 'path': str(user_db_path.resolve()), 'message': 'Collection already exists'}
+        
+        try:
+            # Create parent directory
+            user_db_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # If template collection.db exists, copy it; otherwise create empty
+            template_path = Path(self._collection_db_path)
+            if template_path.exists():
+                import shutil
+                shutil.copy2(str(template_path), str(user_db_path))
+                return {'success': True, 'path': str(user_db_path.resolve()), 'message': 'Collection initialized from template'}
+            else:
+                # Create empty database
+                csql.reset_db(user_db_path)
+                return {'success': True, 'path': str(user_db_path.resolve()), 'message': 'Collection created (empty)'}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def get_user_collection_count(self, user_id: int | str = None):
+        """Get card count for user's collection."""
+        if user_id is None:
+            user_id = self._current_user_id
+        
+        user_db_path = self._get_user_collection_path(user_id)
+        if not user_db_path.exists():
+            self.init_user_collection(user_id)
+        
+        try:
+            return csql.count_items(user_db_path)
+        except Exception:
+            return 0
+
+    def get_user_collection_items(self, user_id: int | str = None):
+        """Get all items in user's collection."""
+        if user_id is None:
+            user_id = self._current_user_id
+        
+        user_db_path = self._get_user_collection_path(user_id)
+        if not user_db_path.exists():
+            self.init_user_collection(user_id)
+        
+        try:
+            return csql.load_all(user_db_path)
+        except Exception:
+            return []
+
+    def get_user_decks(self, user_id: int | str = None):
+        """Get all decks for a user."""
+        if user_id is None:
+            user_id = self._current_user_id
+        
+        user_db_path = self._get_user_collection_path(user_id)
+        if not user_db_path.exists():
+            self.init_user_collection(user_id)
+        
+        try:
+            return csql.get_decks(user_db_path)
+        except Exception:
+            return []
+
+    def save_user_deck(self, deck_name: str, items: list[dict], deck_type: str | None = None, commander: str | None = None, user_id: int | str = None):
+        """Save a deck for a user."""
+        if user_id is None:
+            user_id = self._current_user_id
+        
+        user_db_path = self._get_user_collection_path(user_id)
+        if not user_db_path.exists():
+            self.init_user_collection(user_id)
+        
+        import time
+        name = str(deck_name or '')
+        attempts = 0
+        last_err = None
+        
+        while attempts < 6:
+            try:
+                csql.save_deck(user_db_path, name, items or [], deck_type, None, commander)
+                return {'success': True, 'message': f'Deck "{name}" saved'}
+            except Exception as e:
+                msg = str(e)
+                last_err = e
+                if 'database is locked' in msg.lower() or 'busy' in msg.lower():
+                    time.sleep(0.2 * (attempts + 1))
+                    attempts += 1
+                    continue
+                return {'success': False, 'error': msg}
+        
+        return {'success': False, 'error': f"database is locked after retries: {last_err}"}
+
+    def add_to_user_collection(self, card_name: str, quantity: int = 1, user_id: int | str = None):
+        """Add cards to user's collection."""
+        if user_id is None:
+            user_id = self._current_user_id
+        
+        user_db_path = self._get_user_collection_path(user_id)
+        if not user_db_path.exists():
+            self.init_user_collection(user_id)
+        
+        try:
+            csql.add_item(user_db_path, card_name, quantity)
+            return {'success': True, 'message': f'Added {quantity} {card_name} to collection'}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def get_user_collection_db_path(self, user_id: int | str = None):
+        """Get diagnostics for user's collection database."""
+        if user_id is None:
+            user_id = self._current_user_id
+        
+        p = self._get_user_collection_path(user_id)
+        exists = p.exists()
+        size = 0
+        total = 0
+        try:
+            if exists:
+                size = p.stat().st_size
+                total = csql.count_items(p)
+        except Exception:
+            pass
+        return {'path': str(p.resolve()), 'exists': exists, 'size': int(size), 'total': int(total), 'user_id': str(user_id)}
+
     # --- Decks (SQL) ---
     def list_decks(self):
         """Return decks stored in collection.db with their card lists and types."""

@@ -286,6 +286,29 @@
 		</div>
 	</div>
 
+	<!-- Precon Preview Modal -->
+	<div id="preconPreviewModal" class="modal">
+		<div class="modal-content">
+			<span class="modal-close" onclick="closeModal('preconPreviewModal')">&times;</span>
+			<h2 id="previewTitle">Deck Preview</h2>
+			
+			<div class="row gtr-uniform">
+				<div class="col-12">
+					<p id="previewDeckInfo" style="color: #999; margin-bottom: 1em;"></p>
+				</div>
+				<div class="col-12">
+					<div id="previewCardsList" style="max-height:400px; overflow-y:auto; margin-bottom: 1em; padding: 1em; background: #1a1f2e; border-radius: 4px;"></div>
+				</div>
+				<div class="col-6">
+					<button class="button primary" onclick="confirmPreconImport()">Import Deck</button>
+				</div>
+				<div class="col-6">
+					<button class="button" onclick="closeModal('preconPreviewModal')">Cancel</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<!-- Card Preview -->
 	<div id="cardPreview" class="preview-card">
 		<img id="cardPreviewImg" src="" alt="Card Preview" />
@@ -304,6 +327,7 @@
 		let editingDeck = null;
 		let currentDeckCards = [];
 		let searchTimeout = null;
+		let preconToImport = null;
 
 		// Wait for Firebase
 		// Wait for Firebase to be fully ready
@@ -769,7 +793,10 @@
 				alert('Error: Precon not found');
 				return;
 			}
-			await importPreconInternal(precon);
+			
+			// Show preview instead of immediately importing
+			preconToImport = precon;
+			showPreconPreview(precon);
 		}
 
 		// Legacy function - deprecated
@@ -780,35 +807,116 @@
 		}
 
 		// Internal function to handle precon import
+		async function showPreconPreview(precon) {
+			try {
+				console.log(`Showing preview for ${precon.name}...`);
+				
+				// Get cards from decklist_cards.db via API
+				let cards = [];
+				
+				if (precon.deck_id) {
+					try {
+						console.log(`Fetching cards for deck_id: ${precon.deck_id}`);
+						const response = await fetch(`/api/get_decklist_deck_cards?deck_id=${encodeURIComponent(precon.deck_id)}`);
+						if (response.ok) {
+							cards = await response.json();
+							console.log(`Fetched ${cards.length} cards from decklist_cards.db`);
+						}
+					} catch (error) {
+						console.warn('Failed to fetch from API:', error);
+					}
+				}
+				
+				// Fallback: use precon.cards if API call fails
+				if (!cards || cards.length === 0) {
+					if (precon.cards && precon.cards.length > 0) {
+						cards = precon.cards;
+						console.log(`Fallback: Using ${cards.length} cards from precon data`);
+					} else {
+						console.log('No cards available for this precon');
+					}
+				}
+				
+				// Display preview
+				const title = document.getElementById('previewTitle');
+				const info = document.getElementById('previewDeckInfo');
+				const cardsList = document.getElementById('previewCardsList');
+				
+				title.textContent = `${precon.name} - ${cards.length} Cards`;
+				info.textContent = `Set: ${precon.set || 'Unknown'} | Type: ${precon.deck_type || 'Standard'} | Card Count: ${cards.length}`;
+				
+				// Build card list HTML
+				if (cards && cards.length > 0) {
+					const cardHTML = cards.map(card => {
+						const name = card.name || card;
+						const qty = card.quantity || 1;
+						return `<div style="padding: 0.5em 0; border-bottom: 1px solid #333; color: #ccc;">
+							<span style="color: #f56a6a;">${qty}x</span> ${name}
+						</div>`;
+					}).join('');
+					cardsList.innerHTML = cardHTML;
+				} else {
+					cardsList.innerHTML = '<p style="color: #999;">No cards found for this precon.</p>';
+				}
+				
+				// Show preview modal
+				document.getElementById('preconPreviewModal').style.display = 'block';
+				
+			} catch (error) {
+				console.error('Error showing preview:', error);
+				alert('Failed to show preview. Check console for details.');
+			}
+		}
+
+		async function confirmPreconImport() {
+			if (!preconToImport) {
+				alert('No deck selected');
+				return;
+			}
+			
+			// Close preview modal
+			closeModal('preconPreviewModal');
+			
+			// Import the deck
+			await importPreconInternal(preconToImport);
+		}
+
+		// Internal function to handle precon import
 		async function importPreconInternal(precon) {
 
 			try {
 				console.log(`Starting import of ${precon.name}...`);
 				
-				// First try to get full deck from Scryfall
+				// Get cards from decklist_cards.db via API
 				let cards = [];
 				
-				if (precon.cards && precon.cards.length > 0) {
-					// Use cards from database if available
-					cards = precon.cards;
-					console.log(`Using ${cards.length} cards from precon data`);
-				} else {
-					// Fetch from Scryfall - search for the commander card
-					console.log(`Fetching deck cards for ${precon.name} from Scryfall...`);
-					const scryfallRes = await fetch(`https://api.scryfall.com/cards/search?q="${precon.name}"&unique=cards`);
-					if (scryfallRes.ok) {
-						const scryfallData = await scryfallRes.json();
-						if (scryfallData.data && scryfallData.data.length > 0) {
-							const card = scryfallData.data[0];
-							cards = [{ name: card.name, quantity: 1 }];
-							console.log(`Found ${card.name} from Scryfall`);
+				if (precon.deck_id) {
+					try {
+						console.log(`Fetching cards for deck_id: ${precon.deck_id}`);
+						const response = await fetch(`/api/get_decklist_deck_cards?deck_id=${encodeURIComponent(precon.deck_id)}`);
+						if (response.ok) {
+							cards = await response.json();
+							console.log(`Fetched ${cards.length} cards from decklist_cards.db`);
 						}
+					} catch (error) {
+						console.warn('Failed to fetch from API:', error);
+					}
+				}
+				
+				// Fallback: use precon.cards if API call fails
+				if (!cards || cards.length === 0) {
+					if (precon.cards && precon.cards.length > 0) {
+						cards = precon.cards;
+						console.log(`Fallback: Using ${cards.length} cards from precon data`);
+					} else {
+						console.log('No cards available - using precon name as fallback');
+						cards = [{ name: precon.name, quantity: 1 }];
 					}
 				}
 
 				const deckData = {
 					name: `${precon.name} (Imported)`,
-					deckType: 'Constructed',
+					deckType: 'Commander',
 					colors: precon.colors || 'WUBRG',
 					description: `Imported preconstructed deck: ${precon.name}`,
 					cards: cards && cards.length > 0 
@@ -822,7 +930,7 @@
 				console.log('Create deck result:', result);
 				
 				if (result && result.success) {
-					alert(`Deck "${precon.name}" imported successfully!`);
+					alert(`Deck "${precon.name}" imported successfully with ${cards.length} cards!`);
 					// Optionally reload the deck list
 					if (window.loadAllDecks) {
 						console.log('Reloading deck list...');

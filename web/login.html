@@ -105,7 +105,7 @@
 
     <div class="auth-container">
         <h1>MTG Archive</h1>
-        <p class="subtitle">Sign in to your collection</p>
+        <p class="subtitle">Sign in or create account</p>
         
         <div id="errorMsg" class="error"></div>
         
@@ -113,10 +113,6 @@
         <div id="googleSignInButton"></div>
         
         <div class="auth-links">
-            <p>Don't have an account? <a href="register.html">Register here</a></p>
-        </div>
-        
-        <div class="skip-link">
             <p><a href="index.html">Continue as guest</a></p>
         </div>
     </div>
@@ -180,12 +176,13 @@
                 try {
                     localStorage.setItem('firebaseDB_token', response.credential);
                     localStorage.setItem('firebaseDB_user', JSON.stringify(firebaseDB.currentUser));
+                    console.log('✅ User data saved to localStorage');
                 } catch (e) {
                     console.warn('Could not save to localStorage:', e);
                 }
             }
             
-            // Redirect to deckbuilding page
+            // Redirect to main page
             const errorMsg = document.getElementById('errorMsg');
             errorMsg.style.display = 'none';
             
@@ -200,9 +197,10 @@
             
             errorMsg.parentElement.insertBefore(successDiv, errorMsg.nextSibling);
             
+            // Longer delay to ensure localStorage is fully saved before redirect
             setTimeout(() => {
-                window.location.href = 'deckbuilding.html';
-            }, 1500);
+                window.location.href = 'index.html';
+            }, 2000);
         }
         
         // Wait for Google Sign-In to load

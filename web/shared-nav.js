@@ -5,7 +5,7 @@ const sharedNav = {
       <ul class="icons">
         <li id="guestMenu" style="display:none;">
           <a href="login.html" style="color:#4c84ff; margin-right:1em;"><strong>Sign In</strong></a>
-          <a href="register.html" style="color:#39c088;"><strong>Sign Up</strong></a>
+          <a href="login.html" style="color:#39c088;"><strong>Sign Up</strong></a>
         </li>
         <li id="authMenu" style="display:none;">
           <a href="#" onclick="event.preventDefault()" id="userMenuToggle" title="User Menu" style="color:#f56a6a;"><strong id="userDisplay">User</strong></a>
@@ -149,7 +149,16 @@ function toggleSubmenu(event) {
 async function logoutUser(event) {
   event.preventDefault();
   try {
-    await firebaseDB.logout();
+    // Clear localStorage
+    localStorage.removeItem('firebaseDB_token');
+    localStorage.removeItem('firebaseDB_user');
+    
+    // Clear firebaseDB session
+    if (typeof firebaseDB !== 'undefined') {
+      firebaseDB.idToken = null;
+      firebaseDB.currentUser = null;
+    }
+    
     window.location.href = 'login.html';
   } catch (error) {
     console.error('Logout error:', error);
