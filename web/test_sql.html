@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SQL.js Test</title>
+</head>
+<body>
+	<h1>SQL.js Database Test</h1>
+	<div id="output"></div>
+
+	<script src="https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/sql-wasm.js"></script>
+	<script>
+		const output = document.getElementById('output');
+		
+		function log(msg) {
+			console.log(msg);
+			output.innerHTML += '<p>' + msg + '</p>';
+		}
+
+		async function testSQL() {
+			try {
+				log('1. Starting test...');
+				log('2. Checking if initSqlJs exists: ' + (typeof initSqlJs));
+				
+				if (typeof initSqlJs === 'undefined') {
+					log('ERROR: initSqlJs is not defined');
+					// Wait and try again
+					log('3. Waiting 2 seconds and retrying...');
+					await new Promise(r => setTimeout(r, 2000));
+					if (typeof initSqlJs === 'undefined') {
+						log('ERROR: initSqlJs still not defined after waiting');
+						return;
+					}
+				}
+				
+				log('4. Initializing SQL.js...');
+				const SQL = await initSqlJs({
+					locateFile: file => `https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/${file}`
+				});
+				log('5. SQL.js initialized successfully');
+				
+				log('6. Fetching database...');
+				const response = await fetch('decklist_cards.db');
+				if (!response.ok) {
+					log('ERROR: Failed to fetch database: ' + response.status);
+					return;
+				}
+				log('7. Database fetched, size: ' + response.headers.get('content-length') + ' bytes');
+				
+				const arrayBuffer = await response.arrayBuffer();
+				log('8. ArrayBuffer size: ' + arrayBuffer.byteLength + ' bytes');
+				
+				const db = new SQL.Database(new Uint8Array(arrayBuffer));
+				log('9. Database loaded into SQL.js');
+				
+				// Test the query
+				const query = 'SELECT COUNT(*) as cnt FROM cards';
+				const stmt = db.prepare(query);
+				if (stmt.step()) {
+					const row = stmt.getAsObject();
+					log('10. Total cards in DB: ' + row.cnt);
+				}
+				stmt.free();
+				
+				// Test deck query
+				const deckQuery = 'SELECT name, quantity FROM cards WHERE deck_id = ? LIMIT 5';
+				const deckStmt = db.prepare(deckQuery);
+				deckStmt.bind(['AbzanArmor_TDC']);
+				let count = 0;
+				while (deckStmt.step()) {
+					const row = deckStmt.getAsObject();
+					count++;
+					log('11. Card ' + count + ': ' + row.name + ' x' + row.quantity);
+				}
+				deckStmt.free();
+				
+				if (count === 0) {
+					log('ERROR: No cards found for AbzanArmor_TDC');
+				} else {
+					log('SUCCESS: Found ' + count + ' cards for AbzanArmor_TDC');
+				}
+				
+			} catch (error) {
+				log('EXCEPTION: ' + error.message);
+				log('Stack: ' + error.stack);
+			}
+		}
+
+		// Start after DOM load
+		window.addEventListener('load', () => {
+			log('Page loaded, starting test...');
+			setTimeout(testSQL, 500);
+		});
+	</script>
+</body>
+</html>
