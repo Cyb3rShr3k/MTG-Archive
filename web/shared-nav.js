@@ -97,9 +97,13 @@ function initializeNav() {
           const username = userInfo?.username || user.email.split('@')[0];
           const { email } = user;
 
-          document.getElementById('userDisplay').textContent = username;
-          document.getElementById('userDisplayFull').textContent = username;
-          document.getElementById('userEmailDisplay').textContent = email;
+          const userDisplay = document.getElementById('userDisplay');
+          const userDisplayFull = document.getElementById('userDisplayFull');
+          const userEmailDisplay = document.getElementById('userEmailDisplay');
+          
+          if (userDisplay) userDisplay.textContent = username;
+          if (userDisplayFull) userDisplayFull.textContent = username;
+          if (userEmailDisplay) userEmailDisplay.textContent = email;
 
           // Load collection stats
           loadCollectionStats();
@@ -121,11 +125,14 @@ function initializeNav() {
 async function loadCollectionStats() {
   try {
     const count = await firebaseDB.getCollectionCount();
-    const cards = await firebaseDB.getCollectionCards();
-    const uniqueCount = new Set(cards.map(c => c.name)).size;
+    const collection = await firebaseDB.getCollection();
+    const uniqueCount = new Set(collection.map(c => c.name)).size;
 
-    document.getElementById('totalCardsMenu').textContent = count + ' Cards';
-    document.getElementById('uniqueCardsMenu').textContent = uniqueCount + ' Unique';
+    const totalCardsMenu = document.getElementById('totalCardsMenu');
+    const uniqueCardsMenu = document.getElementById('uniqueCardsMenu');
+    
+    if (totalCardsMenu) totalCardsMenu.textContent = count + ' Cards';
+    if (uniqueCardsMenu) uniqueCardsMenu.textContent = uniqueCount + ' Unique';
   } catch (error) {
     console.error('Error loading stats:', error);
   }
